@@ -57,3 +57,4 @@ class UserPost extends HTMLElement {
         }
     }
 }
+ export default UserPost;
