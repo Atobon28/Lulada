@@ -1,10 +1,3 @@
-import { Header } from './Header/Header';
-import { Logo } from './Header/Logo';
-import { Navigation } from './navigation';
-import { ReviewsContainer } from './posts/reviewscontainer';
-import { Suggestions } from './suggestions';
-import { Sidebar } from './Navbar/sidebar';
-
 export class Home extends HTMLElement {
     constructor() {
         super();
