@@ -1,14 +1,14 @@
-class AppLogo extends HTMLElement {
+export class AppLogo extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
         if (this.shadowRoot){
-            this.shadowRoot.innerHTML= `
+            this.shadowRoot.innerHTML= /*html*/ `
             <style>
              .logo{
               display:flex;
               justify-content:center;
-              aling-items:center;
+              align-items:center;
               margin-bottom:20px;
               }
               img{
@@ -18,11 +18,8 @@ class AppLogo extends HTMLElement {
 
               </style>
               <div class="logo">
-                <img src="../Asstes/capa 2.png" alt="lulada logo">
+                <img src="../../../Assets/styles/Capa2.png" alt="lulada logo">
               </div>
-            
-            
-            
             
             `;
 
@@ -30,4 +27,5 @@ class AppLogo extends HTMLElement {
 
     }
 }
-export default AppLogo;
+
+customElements.define("app-logo", AppLogo);

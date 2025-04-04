@@ -1,4 +1,4 @@
-class ButtonNewAccount extends HTMLElement {
+export class ButtonNewAccount extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -44,4 +44,4 @@ class ButtonNewAccount extends HTMLElement {
     }
 }
 
-export default ButtonNewAccount;
+customElements.define("button-new-account", ButtonNewAccount);
