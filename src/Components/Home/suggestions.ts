@@ -38,12 +38,12 @@ class LuladaSuggestions extends HTMLElement {
                         font-weight: bold;
                     }
                     .suggestion-view {
-                        color: #007bff;
+                        color: #AAAB54;
                         font-weight: bold;
                     }
                     .suggestion-view:hover {
                         text-decoration: underline;
-                        color: #0056b3;
+                        color:rgb(114, 114, 56);
                     }
                 </style>
                 

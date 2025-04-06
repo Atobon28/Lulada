@@ -2,8 +2,9 @@ interface LocationSelectEvent extends CustomEvent {
   detail: string;
 }
 
-class Header extends HTMLElement {
+class HeaderHome extends HTMLElement {
   shadowRoot: ShadowRoot;
+  currentSelected: string = 'cali';
 
   constructor() {
     super();
@@ -16,6 +17,8 @@ class Header extends HTMLElement {
                 display: block;
                 width: 100%;
                 background-color: white;
+                position: relative;
+                z-index: 10;
             }
 
             .header-container {
@@ -23,6 +26,9 @@ class Header extends HTMLElement {
                 flex-direction: column;
                 align-items: center;
                 padding: 20px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                width: 100%;
+                position: relative;
             }
 
             .logo-container {
@@ -31,12 +37,19 @@ class Header extends HTMLElement {
                 margin-bottom: 20px;
             }
 
+            .location-tags {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+            }
+
             .location-tags a {
               position: relative;
               text-decoration: none;
               color: #666;
               font-weight: bold;
               padding: 5px 10px;
+              margin: 0 15px;
               transition: all 0.2s ease;
             }
 
@@ -61,6 +74,14 @@ class Header extends HTMLElement {
             .location-tags a:hover::after {
               transform: scaleX(1);
             }
+
+            .location-tags a.active {
+              color: #333;
+            }
+
+            .location-tags a.active::after {
+              transform: scaleX(1);
+            }
         </style>
         
         <div class="header-container">
@@ -68,7 +89,7 @@ class Header extends HTMLElement {
                 <lulada-logo></lulada-logo>
             </div>
             <div class="location-tags">
-                <a href="#" data-section="cali">Cali</a>
+                <a href="#" data-section="cali" class="active">Cali</a>
                 <a href="#" data-section="norte">Norte</a>
                 <a href="#" data-section="sur">Sur</a>
                 <a href="#" data-section="oeste">Oeste</a>
@@ -91,6 +112,14 @@ class Header extends HTMLElement {
         const section: string | null = target.getAttribute('data-section');
         
         if (section) {
+          const prevSelected = this.shadowRoot.querySelector(`.location-tags a[data-section="${this.currentSelected}"]`);
+          if (prevSelected) {
+            prevSelected.classList.remove('active');
+          }
+          
+          this.currentSelected = section;
+          target.classList.add('active');
+          
           this.dispatchEvent(new CustomEvent<string>('location-select', { 
             detail: section,
             bubbles: true,
@@ -102,4 +131,4 @@ class Header extends HTMLElement {
   }
 }
 
-export default Header;
+export default HeaderHome;
