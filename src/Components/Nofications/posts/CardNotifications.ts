@@ -1,4 +1,4 @@
-import "./publications";
+import "./publicationsnotifications";
 
 export class CardNotifications extends HTMLElement {
 
