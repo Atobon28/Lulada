@@ -29,7 +29,7 @@ class BotonLogin extends HTMLElement {
             const button = this.shadowRoot.querySelector(".boton");
             if (button) {
                 button.addEventListener("click", () => {
-                    window.location.href = "home.html";
+                    window.location.href = "/home"; 
                 });
             }
         } else {
