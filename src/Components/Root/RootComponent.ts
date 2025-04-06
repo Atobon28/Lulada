@@ -7,7 +7,9 @@ class RootComponent extends HTMLElement {
         this.seccionActual = 'main';
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
-            
+                <login-page></login-page>
+              
+                
             
             `;
         }

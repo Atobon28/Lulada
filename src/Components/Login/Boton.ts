@@ -8,7 +8,7 @@ class BotonLogin extends HTMLElement {
                 .boton {
                     display: block;
                     width: 100%;
-                    padding: 10px;
+                    padding: 12px;
                     background-color: #AAAB54;
                     border: none;
                     color: white;
@@ -16,10 +16,11 @@ class BotonLogin extends HTMLElement {
                     font-size: 16px;
                     cursor: pointer;
                     text-align: center;
+                    font-weight: bold;
                 }
                 
                 .boton:hover {
-                    background-color: #999A45;
+                    background-color:rgb(132, 134, 58);
                 }
                 </style>
                 <button class="boton">Iniciar sesión</button>
@@ -37,5 +38,5 @@ class BotonLogin extends HTMLElement {
     }
 }
 
+customElements.define("boton-login", BotonLogin);
 export default BotonLogin;
-

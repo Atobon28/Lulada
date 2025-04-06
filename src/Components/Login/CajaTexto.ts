@@ -6,46 +6,35 @@ class CajaDeTexto extends HTMLElement {
             this.shadowRoot.innerHTML = /*html*/ `
                 <style>
                 .input-container {
-                    position: relative;
-                    display: inline-block;
+                    width: 100%;
+                    margin-bottom: 10px;
                 }
                 
                 input {
                     width: 100%;
-                    padding: 10px;
+                    padding: 12px;
                     border: 1px solid #ccc;
                     border-radius: 5px;
-                    color: #aaa;
                     font-size: 16px;
+                    color: #333;
+                    outline: none;
                 }
                 
+
+    
                 </style>
                 <div class="input-container">
-                    <input type="text" value="Nombre de usuario o Correo electrónico">
+                    <input type="text" placeholder="Nombre de usuario o Correo electrónico">
+                    <div class="input-container">
+                    <input type="password" placeholder="Contraseña">
+                </div>
                 </div>
             `;
-
-            const input = this.shadowRoot.querySelector("input");
-            if (input) {
-                input.addEventListener("focus", () => {
-                    if (input.value === "Nombre de usuario o Correo electrónico") {
-                        input.value = "";
-                        input.style.color = "#000";
-                    }
-                });
-                
-                input.addEventListener("blur", () => {
-                    if (input.value === "") {
-                        input.value = "Nombre de usuario o Correo electrónico";
-                        input.style.color = "#aaa";
-                    }
-                });
-            }
         } else {
             console.error('shadowRoot is null');
         }
     }
 }
 
-
+customElements.define('caja-de-texto', CajaDeTexto);
 export default CajaDeTexto;
