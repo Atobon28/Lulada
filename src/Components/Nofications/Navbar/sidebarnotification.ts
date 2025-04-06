@@ -50,31 +50,31 @@ class LuladaSidebar extends HTMLElement {
             </style>
             <div class="menu-items">
                 <div class="menu-item">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4b..." class="menu-icon" alt="Inicio">
+                    <img src="" class="menu-icon" alt="Inicio">
                     <span>Inicio</span>
                 </div>
                 <div class="menu-item">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4b..." class="menu-icon" alt="Notificaciones">
+                    <img src="" class="menu-icon" alt="Notificaciones">
                     <span>Notificaciones</span>
                 </div>
                 <div class="menu-item">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4b..." class="menu-icon" alt="Guardado">
+                    <img src="" class="menu-icon" alt="Guardado">
                     <span>Guardado</span>
                 </div>
                 <div class="menu-item">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4b..." class="menu-icon" alt="Explorar">
+                    <img src="" class="menu-icon" alt="Explorar">
                     <span>Explorar</span>
                 </div>
                 <div class="menu-item">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4b..." class="menu-icon" alt="Antojar">
+                    <img src="" class="menu-icon" alt="Antojar">
                     <span>Antojar</span>
                 </div>
                 <div class="menu-item">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4b..." class="menu-icon" alt="Configuración">
+                    <img src="" class="menu-icon" alt="Configuración">
                     <span>Configuración</span>
                 </div>
                 <div class="menu-item">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4b..." class="menu-icon" alt="Perfil">
+                    <img src="" class="menu-icon" alt="Perfil">
                     <span>Perfil</span>
                 </div>
             </div>

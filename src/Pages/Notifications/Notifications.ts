@@ -1,10 +1,13 @@
-export class Home extends HTMLElement {
+import "../../Components/Nofications/Header/Headernotification";
+import "../../Components/Nofications/Navbar/sidebarnotification";
+import "../../Components/Nofications/posts/CardNotifications";
+
+class LuladaNotifications extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
-        
         if (this.shadowRoot) {
-            this.shadowRoot.innerHTML = `
+            this.shadowRoot.innerHTML = /*html*/ `
                 <style>
                     :host {
                         display: block;
@@ -36,8 +39,10 @@ export class Home extends HTMLElement {
                         max-width: 600px;
                     }
                 </style>
-                
-                <lulada-header></lulada-header>
+
+                <div>
+                    <img>
+                </div>
                 
                 <div class="main-layout">
                     <div class="sidebar">
@@ -48,20 +53,14 @@ export class Home extends HTMLElement {
                         <div class="content-area">
                             <div class="reviews-section">
                                 <div class="reviews-content">
-                                    <lulada-reviews-container></lulada-reviews-container>
+                                    <h2>Notificaciones</h2>
+                                    <card-notifications></card-notifications>
                                 </div>
                             </div>
-                            <lulada-suggestions></lulada-suggestions>
                         </div>
                     </div>
                 </div>
             `;
-
-            this.shadowRoot.addEventListener('location-select', (e: Event) => {
-                const event = e as CustomEvent;
-                console.log(`Selected location: ${event.detail}`);
-                this.filterReviewsByLocation(event.detail);
-            });
 
             this.shadowRoot.addEventListener('menuselect', (e: Event) => {
                 const event = e as CustomEvent;
@@ -69,15 +68,6 @@ export class Home extends HTMLElement {
             });
         }
     }
-
-    filterReviewsByLocation(location: string): void {
-        if (!this.shadowRoot) return;
-        
-        const reviewsContainer = this.shadowRoot.querySelector('lulada-reviews-container');
-        if (reviewsContainer) {
-            reviewsContainer.setAttribute('location-filter', location);
-        }
-    }
 }
 
-customElements.define('lulada-home', Home);
+export default LuladaNotifications;

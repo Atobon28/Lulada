@@ -26,7 +26,7 @@ class Lulada extends HTMLElement {
           </style>
           
           <img 
-              src="https://i.postimg.cc/xdhdVv5d/Recurso-5-ASCAAS.jpg" 
+              src="" 
               alt="Lulada Logo"
           >
       `;

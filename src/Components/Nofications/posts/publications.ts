@@ -13,7 +13,7 @@ export class Publication extends HTMLElement {
         const stars = parseInt(this.getAttribute('stars') || '0');
 
         if (this.shadowRoot) {
-            this.shadowRoot.innerHTML = `
+            this.shadowRoot.innerHTML = /*html*/ `
                 <style>
                     :host {
                         display: block;
@@ -79,7 +79,7 @@ export class Publication extends HTMLElement {
                 <div class="publication-container">
                     <div class="header">
                         <img 
-                            src="https://via.placeholder.com/48" 
+                            src="" 
                             alt="${username}" 
                             class="profile-pic"
                         >
@@ -88,7 +88,7 @@ export class Publication extends HTMLElement {
                     
                     ${hasImage ? `
                         <img 
-                            src="https://via.placeholder.com/600x300" 
+                            src="" 
                             alt="Publication image" 
                             class="publication-image"
                         >
