@@ -9,7 +9,13 @@ import ReviewsContainer from "./Components/Home/posts/reviewscontainer";
 import Navigation from "./Components/Home/navigation";
 import Suggestions from "./Components/Home/suggestions";
 
-
+//Inicio Explorer
+import HeaderExplorer from "./Components/Explore/exploreHeader";
+import ExploreContainer from "./Components/Explore/explorecontainer";
+import ImagesExplore from "./Components/Explore/imagesExplore";
+import TextCard from "./Components/Explore/textCard";
+import Explore from "./Pages/Explore/explore";
+//Final explorer
 
 
 customElements.define('root-component', RootComponent);
@@ -22,4 +28,12 @@ customElements.define('lulada-review', Review);
 customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
+
+//Inicio Explorer
+customElements.define('header-explorer', HeaderExplorer);
+customElements.define('explore-container', ExploreContainer);
+customElements.define('images-explore', ImagesExplore);
+customElements.define('text-card', TextCard);
+customElements.define('lulada-explore', Explore);
+//Final explorer
 
