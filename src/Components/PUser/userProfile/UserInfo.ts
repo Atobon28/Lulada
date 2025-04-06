@@ -63,7 +63,6 @@ class UserInfo extends HTMLElement {
                 width: 13.4375rem;
                 height: 13.4375rem;
                 object-fit: cover;
-                max-width: 100%;
             }
             
             .userTopInfo {
@@ -97,6 +96,14 @@ class UserInfo extends HTMLElement {
                 width: 100%;
                 border: 1px solid #D9D9D9;
                 margin: 0.5rem 0;
+            }
+
+            .location {
+                display: flex;
+                gap: 0.3rem;
+                align-items: center;
+                margin-top: 0.05rem;
+
             }
 
             
@@ -143,7 +150,6 @@ class UserInfo extends HTMLElement {
                 <div class="userTopFoto">
                     <img class="foto" src="${User.foto ?? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcQg-lr5__zRqY3mRg6erzAD9n4BGp3G8VfA&s'}">
                 </div>
-
                 <div class="userTopInfo">
                     <p class="nombreDeUsuario">${User.nombreDeUsuario ?? 'Nombre de usuario por defecto'}</p>
                     <p class="nombre">${User.nombre ?? "Nombre por defecto"}</p>

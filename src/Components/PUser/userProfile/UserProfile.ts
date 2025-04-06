@@ -15,12 +15,20 @@ class UserSelftProfile extends HTMLElement {
                 padding-left: 26px;
                 margin-Top: 0px;
                 }
+
+                .user-publication-Tittle {
+                    margin-left: 5.8rem;
+                    margin-right: 5.8rem;
+                }
+
             </style>
-            <div class="userTopCompleto">
-                <user-info></user-info>
-                <user-edit></user-edit>
+            <div class="user-publication-Tittle">
+                <div class="userTopCompleto">
+                    <user-info></user-info>
+                    <user-edit></user-edit>
+                </div>
+                <h1>Publicaciones</h1>
             </div>
-           <h1>Publicaciones</h1>
             `;
         }
     }

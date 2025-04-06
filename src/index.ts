@@ -23,3 +23,13 @@ customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 
+///////mis imports
+import UserInfo from "./Components/PUser/userProfile/UserInfo";
+customElements.define('user-info', UserInfo);
+import UserSelftProfile from "./Components/PUser/userProfile/UserProfile";
+customElements.define('user-profile', UserSelftProfile);
+import UserEdit from "./Components/PUser/userProfile/EditButton";
+customElements.define('user-edit', UserEdit);
+
+import PUser from "./Pages/PUser/puser";
+customElements.define('puser-component', PUser);

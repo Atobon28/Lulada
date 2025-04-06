@@ -7,7 +7,7 @@ class RootComponent extends HTMLElement {
         this.seccionActual = 'profile';
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
-                <lulada-home></lulada-home>
+                <puser-component></puser-component>
             `;
         }
     }
@@ -30,3 +30,5 @@ class RootComponent extends HTMLElement {
 }
 
 export default RootComponent;
+
+//<lulada-home></lulada-home>
