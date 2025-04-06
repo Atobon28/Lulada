@@ -12,6 +12,7 @@ export class Home extends HTMLElement {
                     }
                     .main-layout {
                         display: flex;
+                        margin-top: 10px;
                     }
                     .sidebar {
                         width: 250px;
@@ -29,9 +30,18 @@ export class Home extends HTMLElement {
                         width: 250px; 
                         padding: 20px 10px;
                     }
+                    .no-content {
+                        padding: 40px;
+                        text-align: center;
+                        color: #666;
+                        font-style: italic;
+                        background-color: #f9f9f9;
+                        border-radius: 8px;
+                        margin-top: 20px;
+                    }
                 </style>
                 
-                <lulada-header></lulada-header>
+                <home-header></home-header>
                 
                 <div class="main-layout">
                     <div class="sidebar">
@@ -52,7 +62,6 @@ export class Home extends HTMLElement {
             this.shadowRoot.addEventListener('location-select', (e: Event) => {
                 const event = e as CustomEvent;
                 console.log("Se seleccionó ubicación: " + event.detail);
-                this.filterReviewsByLocation(event.detail);
             });
 
             this.shadowRoot.addEventListener('menuselect', (e: Event) => {
@@ -61,46 +70,6 @@ export class Home extends HTMLElement {
             });
         }
     }
-
-    filterReviewsByLocation(location: string): void {
-        if (!this.shadowRoot) return;
-    
-        const reviewsContainer = this.shadowRoot.querySelector('lulada-reviews-container');
-        if (!reviewsContainer) return;
-    
-        reviewsContainer.innerHTML = '';
-    
-        if (location.toLowerCase() === 'cali') {
-            const zonas = ['Norte', 'Sur', 'Este', 'Oeste', 'Centro'];
-            const publicacionesPorZona: { [zona: string]: string[] } = {};
-    
-            zonas.forEach(zona => {
-                const cantidad = Math.floor(Math.random() * 5); 
-                publicacionesPorZona[zona] = cantidad > 0 
-                    ? Array.from({ length: cantidad }, (_, i) => `Publicación ${i + 1} en ${zona}`)
-                    : [];
-            });
-    
-            reviewsContainer.innerHTML = zonas.map(zona => {
-                const posts = publicacionesPorZona[zona];
-                if (posts.length === 0) {
-                    return `<div><h3>${zona}</h3><p>No hay publicaciones.</p></div>`;
-                } else {
-                    return `
-                        <div>
-                            <h3>${zona}</h3>
-                            <ul>
-                                ${posts.map(p => `<li>${p}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                }
-            }).join('');
-        } else {
-            reviewsContainer.setAttribute('location-filter', location);
-        }
-    }
-    
 }
 
 export default Home;
