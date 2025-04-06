@@ -42,6 +42,5 @@ class Lulada extends HTMLElement {
     }
   }
   
-  customElements.define('lulada-logo', Lulada);
   
   export default Lulada;
