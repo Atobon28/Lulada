@@ -1,5 +1,3 @@
-import LoginForm from '../../Components/Login/CajaLogin';
-
 class LoginPage extends HTMLElement {
     constructor() {
         super();
