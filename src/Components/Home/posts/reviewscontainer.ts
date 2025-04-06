@@ -2,14 +2,7 @@ import './publications';
 import './reviews';
 
 export class ReviewsContainer extends HTMLElement {
-    reviews: {
-        username: string;
-        text: string;
-        stars: number;
-        restaurant: string;
-        location: string;
-        hasImage?: boolean;
-    }[] = [
+    reviews = [
         {
             username: "CrisTiJauregui",
             text: "El coctel de hierva buena en @BarBurguer esta super delicioso para los amantes como yo de los sabores frescos, costo 20.000 y lo recomiendo 100%",
@@ -19,7 +12,7 @@ export class ReviewsContainer extends HTMLElement {
         },
         {
             username: "DanaBanana",
-            text: "Este @AsianRooftop es terrible! No le quito todas las estrellas porque la mesera era super atenta, el problema es que una margarita y el licor me dijeron que venia aparte, como es posible???? De nunca volver.",
+            text: "Este @AsianRooftop es terrible! No le quito todas las estrellas porque la mesera era super atenta, el problema es que la cocina, terrible, pedi una margarita y era sin licor me dijeron que venia aparte, como es posible???? De nunca volver.",
             stars: 1,
             hasImage: true,
             restaurant: "AsianRooftop",
@@ -77,13 +70,27 @@ export class ReviewsContainer extends HTMLElement {
             <style>
                 :host {
                     display: block;
-                    max-width: 600px;
+                    max-width: 650px;
+                    margin: 0 auto;
+                    padding: 16px;
+                    background-color:rgb(255, 255, 255);
                 }
+
+                lulada-publication {
+                    display: block;
+                    width: 100%;
+                    margin-bottom: 20px;
+                }
+
                 .no-reviews {
                     text-align: center;
-                    padding: 20px;
-                    color: #666;
+                    padding: 24px;
+                    color: black;
                     font-style: italic;
+                    background-color: white;
+                    border-radius: 20px;
+                    box-shadow: 0 30px 30px rgba(0, 0, 0, 0.1);
+                    font-size: 16px;
                 }
             </style>
             
@@ -92,4 +99,4 @@ export class ReviewsContainer extends HTMLElement {
     }
 }
 
-customElements.define('lulada-reviews-container', ReviewsContainer);
+export default ReviewsContainer;

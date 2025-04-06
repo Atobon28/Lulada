@@ -14,32 +14,46 @@ export class Review extends HTMLElement {
                 <style>
                     :host {
                         display: block;
-                        margin-bottom: 10px;
+                        margin-bottom: 20px;
                     }
                     .review {
-                        border: 1px solid #ddd;
-                        border-radius: 8px;
-                        padding: 10px;
+                        background-color: white;
+                        border-radius: 20px;
+                        padding: 20px;
+                        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
                     }
                     .review-header {
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
+                        margin-bottom: 12px;
                     }
                     .stars {
-                        color: gold;
+                        color: #FFD700;
+                        font-size: 24px;
+                        letter-spacing: 2px;
+                    }
+                    .username {
+                        font-weight: bold;
+                        font-size: 16px;
+                        color: #333;
+                    }
+                    .review-text {
+                        font-size: 16px;
+                        line-height: 1.5;
+                        color: #333;
                     }
                 </style>
                 <div class="review">
                     <div class="review-header">
-                        <strong>@${username}</strong>
-                        <div class="stars">${'★'.repeat(stars)}${'☆'.repeat(5-stars)}</div>
+                        <div class="username">@${username}</div>
+                        <div class="stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</div>
                     </div>
-                    <p>${text}</p>
+                    <p class="review-text">${text}</p>
                 </div>
             `;
         }
     }
 }
 
-customElements.define('review', Review);
+export default Review;
