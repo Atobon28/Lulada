@@ -60,4 +60,4 @@ export class Navigation extends HTMLElement {
     }
 }
 
-customElements.define('navigation', Navigation);
+export default Navigation;

@@ -31,21 +31,35 @@ class Header extends HTMLElement {
                 margin-bottom: 20px;
             }
 
-            .location-tags {
-                display: flex;
-                gap: 20px;
-                margin-bottom: 10px;
-            }
             .location-tags a {
-                text-decoration: none;
-                color: #666;
-                font-weight: bold;
-                padding: 5px 10px;
+              position: relative;
+              text-decoration: none;
+              color: #666;
+              font-weight: bold;
+              padding: 5px 10px;
+              transition: all 0.2s ease;
             }
+
+            .location-tags a::after {
+              content: '';
+              position: absolute;
+              left: 0;
+              bottom: 0;
+              height: 2px;
+              width: 100%;
+              background-color: #AAAB54;
+              transform: scaleX(0);
+              transform-origin: left;
+              transition: transform 0.3s ease;
+            }
+
             .location-tags a:hover {
-                color: #333;
-                background-color: #f0f0f0;
-                border-radius: 5px;
+              color: #333;
+              transform: translateY(-2px);
+            }
+
+            .location-tags a:hover::after {
+              transform: scaleX(1);
             }
         </style>
         
@@ -87,7 +101,5 @@ class Header extends HTMLElement {
     });
   }
 }
-
-customElements.define('lulada-header', Header);
 
 export default Header;
