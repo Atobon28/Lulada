@@ -13,6 +13,8 @@ export class Publication extends HTMLElement {
         const hasImage = this.hasAttribute('has-image');
         const stars = parseInt(this.getAttribute('stars') || '0');
 
+        this.bookmarked = this.hasAttribute('bookmarked');
+
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = `
                 <style>

@@ -23,3 +23,6 @@ customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 
+//
+import Save from "./Pages/Save/Save";
+customElements.define('save-page', Save);

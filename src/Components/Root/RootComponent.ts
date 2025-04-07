@@ -7,7 +7,7 @@ class RootComponent extends HTMLElement {
         this.seccionActual = 'profile';
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
-                <lulada-home></lulada-home>
+                <save-page></save-page>
             `;
         }
     }
