@@ -7,7 +7,7 @@ class RootComponent extends HTMLElement {
         this.seccionActual = 'main';
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
-                <register-new-account></register-new-account>              
+                <confirm-role></confirm-role>              
             `;
         }
     }

@@ -39,3 +39,7 @@ customElements.define('lulada-boxtext',BoxText)
 //inicio
 import NewAccount from "./Pages/NewAccount/containernewaccount";
 customElements.define('register-new-account', NewAccount);
+//fin
+//inicio
+import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
+customElements.define('confirm-role', ConfirmRole);
