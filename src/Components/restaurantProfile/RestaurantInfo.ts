@@ -27,7 +27,10 @@ class restaurantInfo extends HTMLElement {
                 border-radius: 0.9375rem;
                 font-family: 'Inter', sans-serif;
                 max-width: 90%;
-                margin: auto;
+                margin: auto;                    
+                margin-left: 5.8rem;
+                margin-right: 5.8rem;
+                
             }
 
             .etiquetados {
@@ -50,7 +53,6 @@ class restaurantInfo extends HTMLElement {
                 width: 13.4375rem;
                 height: 13.4375rem;
                 object-fit: cover;
-                max-width: 100%;
             }
             
             .userTopInfo {
@@ -108,6 +110,10 @@ class restaurantInfo extends HTMLElement {
                 gap: 0.3rem;
                 align-items: center;
             }
+
+            .stars {
+                color: #FFD700;
+            }
             
             /* Responsive */
             @media (max-width: 768px) {
@@ -160,7 +166,10 @@ class restaurantInfo extends HTMLElement {
                     margin: 0.2rem; 
                 }
 
-                
+                .MenuLink:hover {
+                    text-decoration: underline;
+                    color:rgb(114, 114, 56);
+                }
             }
             </style>            
             <div class="userTopCompleto">
@@ -189,16 +198,16 @@ class restaurantInfo extends HTMLElement {
                         </div>
         
                         <div class="stars">
-                            ${'☆'.repeat(5)}
+                            ${'★'.repeat(5)}
                         </div> 
                     </div>
                 </div>
             </div>
                 `) . join('')}
-            </div>
 
             <div class="etiquetados">
                     <h2>Etiquetados</h2>
+            </div>
             </div>
             `
         } 

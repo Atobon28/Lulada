@@ -23,3 +23,9 @@ customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 
+//mis etiquetas
+import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
+customElements.define('restaurant-info', restaurantInfo);
+
+import RestaurantProfile from "./Pages/RestaurantProfile/RestaurantProfile";
+customElements.define('restaurant-profile', RestaurantProfile);
