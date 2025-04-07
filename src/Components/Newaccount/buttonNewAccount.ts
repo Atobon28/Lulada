@@ -44,4 +44,4 @@ export class ButtonNewAccount extends HTMLElement {
     }
 }
 
-customElements.define("button-new-account", ButtonNewAccount);
+export default ButtonNewAccount;

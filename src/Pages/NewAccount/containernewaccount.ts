@@ -1,6 +1,6 @@
-import "./boxtext";
-import "./buttonNewAccount";
-import "./Applogo";
+import "../../Components/Newaccount/boxtext";
+import "../../Components/Newaccount/buttonNewAccount";
+
 
 class RegisterNewAccount extends HTMLElement {
   constructor() {
@@ -46,7 +46,7 @@ class RegisterNewAccount extends HTMLElement {
                     color: white;
                     border: none;
                     padding: 10px;
-                    margin-left: 20px;
+                    margin-left: 10px;
                     width:60%;
                     cursor: pointer;
                     border-radius: 5px;
@@ -69,7 +69,7 @@ class RegisterNewAccount extends HTMLElement {
                     align-items: center;
                 }
                 .container-new-account p {
-                    margin-left: 16px;
+                    margin-left: 12px;
                     margin-bottom: 8px;
                     color: black;
                     font-size: 16px;
@@ -77,21 +77,27 @@ class RegisterNewAccount extends HTMLElement {
 
             </style>
             <div class="main">
-                <app-logo></app-logo>
+                <lulada-logo></lulada-logo>
+                
+                
                 <div class="from-container">
                     <h2 id="title" style="margin-left: 20px">Registrate</h2>
                     <div class="container-input">
-                        <box-text placeholder="Nombre"></box-text>
-                        <box-text placeholder="Apellido"></box-text>
-                        <box-text placeholder="Apodo"></box-text>
-                        <box-text placeholder="Correo Electronico"></box-text>
-                        <box-text placeholder="Contraseña"></box-text>
+                    
+                        <lulada-boxtext placeholder="Nombre"></lulada-boxtext>
+                        <lulada-boxtext placeholder="Apellido"></lulada-boxtext>
+                        <lulada-boxtext placeholder="Apodo"></lulada-boxtext>
+                        <lulada-boxtext placeholder="Correo Electronico"></lulada-boxtext>
+                        <lulada-boxtext placeholder="Contraseña"></lulada-boxtext>
                     </div>
                     <button class="continue-btn">Continuar</button>
                     <div class="line"></div>
                     <div class="container-new-account">
                         <p>¿Ya tienes una cuenta?</p>
                         <button-new-account style="margin-left: 20px"></button-new-account>
+                    </div>
+                    <div class="Buttonregister">
+                    <lulada-button-newaccount></lulada-button-newaccount>
                     </div>
                 </div>
             </div>

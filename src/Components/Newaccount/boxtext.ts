@@ -37,13 +37,7 @@ export class BoxText extends HTMLElement {
                     input.type = "password";
                  }
                 });
-                /*input.addEventListener("blur", ()=>{
-                    if(input.value === ""){
-                        input.value ="correo electronico";
-                        input.style.color = "#000";
-                     }
-
-                });*/
+                
 
             }
 
@@ -56,4 +50,4 @@ export class BoxText extends HTMLElement {
     }
 }
 
-customElements.define("box-text", BoxText);
+export default BoxText;
