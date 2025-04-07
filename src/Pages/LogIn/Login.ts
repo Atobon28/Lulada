@@ -15,7 +15,7 @@ class LoginPage extends HTMLElement {
                         justify-content: center;
                         align-items: center;
                         height: 100vh;
-                        background-color: #FAFAFA;
+                        background-color: white;
                         padding: 20px;
                     }
                     
@@ -33,7 +33,11 @@ class LoginPage extends HTMLElement {
                         flex: 1;
                         padding-right: 40px;
                     }
-
+                    
+                    .logo-section img {
+                        width: 400px; 
+                        height: auto; 
+                    }
                                 
                     
                     @media (max-width: 768px) {
@@ -45,21 +49,27 @@ class LoginPage extends HTMLElement {
                         .logo-section {
                             padding-right: 0;
                         }
+                        
+                        .logo-section img {
+                            width: 150px; 
+                        }
                     }
                 </style>
                 
                <div class="login-page-container">
                     <div class="content-wrapper">
-                        <div class="logo-section">
-                       
-                            </div>
-                          
-                        
-                        <div class="form-section">
-                            <login-form></login-form>
-                        </div>
-                    </div>
-                </div>
+            <div class="logo-section">
+                <img 
+                    src="https://i.postimg.cc/t44LmL1m/Capa-1.png" 
+                    alt="Lulada Logo"
+                >
+            </div>
+            
+            <div class="form-section">
+                <login-form></login-form>
+            </div>
+        </div>
+    </div>
             `;
         } else {
             console.error('shadowRoot is null');
