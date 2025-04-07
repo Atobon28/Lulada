@@ -9,7 +9,7 @@ class RootComponent extends HTMLElement {
             this.shadowRoot.innerHTML= `
                
               
-                <lulada-settings></lulada-settings>
+              <login-page></login-page>
             `;
         }
     }

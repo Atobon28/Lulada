@@ -20,6 +20,11 @@ import LoginPage from "./Pages/LogIn/Login";
 import CajonTexto from "./Components/Settings/CajonTexto";
 import CajonList from "./Components/Settings/CajonList";
 import LuladaSettings from "./Pages/Settings/Settings";
+import CambiarCo from "./Components/Settings/CambiarCorreo/cambiarco";
+import CambiarNU from "./Components/Settings/CambiarNombre/cambiarNU";
+import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontra";
+import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF"
+import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
 //Cierre pagina settings
 
 
@@ -45,4 +50,10 @@ customElements.define("login-page", LoginPage);
 customElements.define("cajon-texto", CajonTexto);
 customElements.define("cajon-list", CajonList);
 customElements.define('lulada-settings', LuladaSettings);
-//cierre pagina settings
+customElements.define('cambiar-correo', CambiarCo);
+customElements.define('cambiar-nombre', CambiarNU);
+customElements.define('cambiar-contraseña', CambiarContra);
+customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
+customElements.define('lulada-cambiar-correo', CambiarCorreoF);
+
+
