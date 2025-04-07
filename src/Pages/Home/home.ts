@@ -1,13 +1,10 @@
-import "../../Components/Nofications/Header/Headernotification";
-import "../../Components/Nofications/Navbar/sidebarnotification";
-import "../../Components/Nofications/posts/CardNotifications";
-
-class LuladaNotifications extends HTMLElement {
+export class Home extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        
         if (this.shadowRoot) {
-            this.shadowRoot.innerHTML = /*html*/ `
+            this.shadowRoot.innerHTML = `
                 <style>
                     :host {
                         display: block;
@@ -43,15 +40,8 @@ class LuladaNotifications extends HTMLElement {
                         margin-top: 20px;
                     }
                 </style>
-<<<<<<<< HEAD:src/Pages/Notifications/Notifications.ts
-
-                <div>
-                    <img>
-                </div>
-========
                 
                 <home-header></home-header>
->>>>>>>> bdd2d3ba70c63466b609def64a669f1223bb39d9:src/Pages/Home/home.ts
                 
                 <div class="main-layout">
                     <div class="sidebar">
@@ -59,34 +49,21 @@ class LuladaNotifications extends HTMLElement {
                     </div>
                     
                     <div class="content">
-<<<<<<<< HEAD:src/Pages/Notifications/Notifications.ts
-                        <div class="content-area">
-                            <div class="reviews-section">
-                                <div class="reviews-content">
-                                    <h2>Notificaciones</h2>
-                                    <card-notifications></card-notifications>
-                                </div>
-                            </div>
-========
                         <div class="reviews-section">
                             <lulada-reviews-container></lulada-reviews-container>
                         </div>
                         <div class="suggestions-section">
                             <lulada-suggestions></lulada-suggestions>
->>>>>>>> bdd2d3ba70c63466b609def64a669f1223bb39d9:src/Pages/Home/home.ts
                         </div>
                     </div>
                 </div>
             `;
 
-<<<<<<<< HEAD:src/Pages/Notifications/Notifications.ts
-========
             this.shadowRoot.addEventListener('location-select', (e: Event) => {
                 const event = e as CustomEvent;
                 console.log("Se seleccionó ubicación: " + event.detail);
             });
 
->>>>>>>> bdd2d3ba70c63466b609def64a669f1223bb39d9:src/Pages/Home/home.ts
             this.shadowRoot.addEventListener('menuselect', (e: Event) => {
                 const event = e as CustomEvent;
                 console.log("Se seleccionó menú: " + event.detail.menuItem);
@@ -95,8 +72,4 @@ class LuladaNotifications extends HTMLElement {
     }
 }
 
-<<<<<<<< HEAD:src/Pages/Notifications/Notifications.ts
-export default LuladaNotifications;
-========
 export default Home;
->>>>>>>> bdd2d3ba70c63466b609def64a669f1223bb39d9:src/Pages/Home/home.ts

@@ -1,18 +1,4 @@
 import RootComponent from "./Components/Root/RootComponent";
-<<<<<<< HEAD
-import Notifications from "./Pages/Notifications/Notifications";
-
-//inicio notificacion
-
-//final notificacion
-
-customElements.define('root-component', RootComponent);
-customElements.define('lulada-notifications', Notifications);
-
-//inicio notificacion
-
-//final notificacion
-=======
 import Home from "./Pages/Home/home"
 import HeaderHome from "./Components/Home/Header/Header";
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
@@ -22,6 +8,9 @@ import Review from "./Components/Home/posts/reviews";
 import ReviewsContainer from "./Components/Home/posts/reviewscontainer";
 import Navigation from "./Components/Home/navigation";
 import Suggestions from "./Components/Home/suggestions";
+import CardNotifications from "./Components/Nofications/CardNotifications";
+
+
 
 
 
@@ -36,5 +25,9 @@ customElements.define('lulada-review', Review);
 customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
+customElements.define('lulada-card-notifications', CardNotifications);
 
->>>>>>> bdd2d3ba70c63466b609def64a669f1223bb39d9
+
+ //inicio
+ import Notifications from "./Pages/Notifications/Notifications";
+ customElements.define('lulada-notifications', Notifications);

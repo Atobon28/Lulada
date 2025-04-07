@@ -1,4 +1,3 @@
-import "./publicationsnotifications";
 
 export class CardNotifications extends HTMLElement {
 
@@ -81,46 +80,80 @@ export class CardNotifications extends HTMLElement {
     if (this.shadowRoot) {
       this.shadowRoot.innerHTML = /*html*/ `
                 <style>
-                    :host {
+                  
+                  :host {
                         display: block;
                         font-family: Arial, sans-serif;
                     }
+                    
+                    .main-layout {
+                        display: flex;
+                        margin-top: 10px;
+                    }
+                    
+                    .sidebar {
+                        width: 150pxpx;
+                    }
+                    
+                    .content {
+                        flex-grow: 1;
+                        display: flex;
+                    }
+                    
+                    .reviews-section {
+                        padding: 90pxpx;
+                        background-color: white;
+                        flex-grow: 1;
+                    }
+                    
+                    .suggestions-section {
+                        width: 150px;
+                        padding: 12px 12px;
+                    }
+                    
                     .notification-card {
                         display: flex;
                         flex-direction: column;
-                        justify-content: center;
-                        gap: 8px;
-                        border: 1px solid #ccc;
+                        border: 1px solid #f0f0f0;
                         border-radius: 16px;
-                        padding: 24px 24px 10px 24px;
+                        padding: 16px;
                         margin: 0px 0px 16px 0px;
                         background-color: #fff;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
                     }
+                    
                     .notification-header {
                         display: flex;
                         align-items: center;
-                        margin-bottom: 8px;
+                        margin-bottom: 16px;
                     }
+                    
                     .profile {
-                        width: 50px;
-                        height: 50px;
-                        border-radius: 50%;
-                        background-color: #ccc;
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 40%;
+                        background-color: #eee;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 24px;
-                        color: white;
+                        font-size: 16px;
+                        color: #888;
                     }
-                    .notification-header {
-                        font-weight: bold;
-                        margin-bottom: 8px;
+                    
+                    .username {
+                        font-size: 14px;
+                        margin: 0;
+                        color: #333;
                     }
-                    .no-reviews {
+                    
+                    .no-content {
+                        padding: 40px;
                         text-align: center;
-                        padding: 20px;
                         color: #666;
                         font-style: italic;
+                        background-color: #f9f9f9;
+                        border-radius: 8px;
+                        margin-top: 20px;
                     }
                 </style>
                 ${this.reviews.length > 0 ? notificationsHTML : '<div class="no-reviews">No hay reseñas para mostrar</div>'}
@@ -129,4 +162,4 @@ export class CardNotifications extends HTMLElement {
   }
 }
 
-customElements.define("card-notifications", CardNotifications);
+export default CardNotifications;
