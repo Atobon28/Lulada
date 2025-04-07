@@ -5,13 +5,18 @@ export class ConfirmRole extends HTMLElement {
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = /*html*/ `
                 <style>
+                    
                     :host {
                         display: flex;
                         justify-content: center;
-                        height: 100%;
+                        align-items: center;
                         width: 100%;
-                        
+                        height: 100vh;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
                     }
+                     
                     
                     .main {
                         width: 100%;
