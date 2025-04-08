@@ -1,6 +1,6 @@
 import RootComponent from "./Components/Root/RootComponent";
 import Home from "./Pages/Home/home"
-import HeaderHome from "./Components/Home/Header/Header";
+import Header from "./Components/Home/Header/Header";
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
 import Lulada from "./Components/Home/Header/logo";
 import Publication from "./Components/Home/posts/publications";
@@ -16,10 +16,9 @@ import BoxText from "./Components/Newaccount/boxtext";
 
 
 
-
 customElements.define('root-component', RootComponent);
 customElements.define('lulada-home', Home);
-customElements.define('home-header', HeaderHome);
+customElements.define('lulada-header', Header);
 customElements.define('lulada-sidebar', LuladaSidebar);
 customElements.define('lulada-logo', Lulada);
 customElements.define('lulada-publication', Publication);
