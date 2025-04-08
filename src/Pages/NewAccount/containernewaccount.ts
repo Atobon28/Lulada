@@ -1,7 +1,3 @@
-import "../../Components/Newaccount/boxtext";
-import "../../Components/Newaccount/buttonNewAccount";
-
-
 class RegisterNewAccount extends HTMLElement {
   constructor() {
     super();
