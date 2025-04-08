@@ -8,6 +8,7 @@ class RootComponent extends HTMLElement {
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
                 <lulada-explore></lulada-explore>
+                <puser-component></puser-component>
             `;
         }
     }
@@ -30,3 +31,5 @@ class RootComponent extends HTMLElement {
 }
 
 export default RootComponent;
+
+//<lulada-home></lulada-home>
