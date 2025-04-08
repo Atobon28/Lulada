@@ -8,6 +8,7 @@ import Review from "./Components/Home/posts/reviews";
 import ReviewsContainer from "./Components/Home/posts/reviewscontainer";
 import Navigation from "./Components/Home/navigation";
 import Suggestions from "./Components/Home/suggestions";
+import CardNotifications from "./Components/Nofications/CardNotifications";
 
 //Inicio Explorer
 import HeaderExplorer from "./Components/Explore/exploreHeader";
@@ -18,10 +19,9 @@ import Explore from "./Pages/Explore/explore";
 //Final explorer
 //Inicio Pagina Login
 import CajaDeTexto from "./Components/Login/CajaTexto";
+import BoxText from "./Components/Newaccount/boxtext";
 import BotonLogin from "./Components/Login/Boton";
-import LoginForm from './Components/Login/CajaLogin';
-import LoginPage from "./Pages/LogIn/Login";
-//Cierre pagina Login
+
 
 //Inicio pagina settings
 import CajonTexto from "./Components/Settings/CajonTexto";
@@ -97,3 +97,17 @@ customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
 customElements.define('lulada-cambiar-correo', CambiarCorreoF);
 
 
+customElements.define('lulada-card-notifications', CardNotifications);
+customElements.define('lulada-boton-login', BotonLogin);
+customElements.define('lulada-boxtext',BoxText)
+
+
+
+
+ //inicio
+ import Notifications from "./Pages/Notifications/Notifications";
+ customElements.define('lulada-notifications', Notifications);
+//fin
+//inicio
+import NewAccount from "./Pages/NewAccount/containernewaccount";
+customElements.define('register-new-account', NewAccount);
