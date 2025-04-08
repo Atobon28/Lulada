@@ -56,6 +56,8 @@ import RestaurantProfile from "./Pages/RestaurantProfile/RestaurantProfile";
 customElements.define('restaurant-info', restaurantInfo);
 customElements.define('restaurant-profile', RestaurantProfile);
 //Final restaurantprofile
-//
+
+//Save
 import Save from "./Pages/Save/Save";
 customElements.define('save-page', Save);
+//Final Save
