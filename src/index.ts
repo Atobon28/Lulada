@@ -48,9 +48,11 @@ customElements.define('puser-component', PUser);
 customElements.define('user-profile', UserSelftProfile);
 customElements.define('user-edit', UserEdit);
 //Final puser
-//mis etiquetas
-import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
-customElements.define('restaurant-info', restaurantInfo);
 
+//restaurantprofile
+import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
 import RestaurantProfile from "./Pages/RestaurantProfile/RestaurantProfile";
+
+customElements.define('restaurant-info', restaurantInfo);
 customElements.define('restaurant-profile', RestaurantProfile);
+//Final restaurantprofile
