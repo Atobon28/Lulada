@@ -34,7 +34,7 @@ export class ConfirmRole extends HTMLElement {
                         justify-content: center;
                         align-items: center;
                         background: white;
-                        padding: 30px;
+                        padding: 80px;
                         border-radius: 20px;
                         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
                         width: 320px;
@@ -141,14 +141,15 @@ export class ConfirmRole extends HTMLElement {
             // Lógica para manejar los checkboxes
             const personCheckbox = this.shadowRoot.getElementById('person-checkbox') as HTMLInputElement;
             const restaurantCheckbox = this.shadowRoot.getElementById('restaurant-checkbox') as HTMLInputElement;
-            const registerButton = this.shadowRoot.getElementById('register-button');
             
-            // Asegúrate de que solo se pueda seleccionar un checkbox a la vez
+            
+            // logica para manejar la seleccionde las chack boxs
             personCheckbox?.addEventListener('change', () => {
                 if (personCheckbox.checked) {
                     restaurantCheckbox.checked = false;
                 }
             });
+            // logica para manejar la seleccionde las chack boxs
 
             restaurantCheckbox?.addEventListener('change', () => {
                 if (restaurantCheckbox.checked) {
@@ -156,23 +157,8 @@ export class ConfirmRole extends HTMLElement {
                 }
             });
 
-            // Lógica del botón de registro
-            registerButton?.addEventListener('click', () => {
-                let selectedType = '';
-                
-                if (personCheckbox?.checked) {
-                    selectedType = 'person';
-                } else if (restaurantCheckbox?.checked) {
-                    selectedType = 'restaurant';
-                }
-
-                if (!selectedType) {
-                    alert('Por favor selecciona un tipo de registro');
-                    return;
-                }
-                
-                
-            });
+            
+           
 
            
             
