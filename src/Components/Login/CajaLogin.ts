@@ -66,6 +66,5 @@ class LoginForm extends HTMLElement {
     }
 }
 
-customElements.define('login-form', LoginForm);
 export default LoginForm;
 

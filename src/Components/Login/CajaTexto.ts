@@ -39,5 +39,5 @@ class CajaDeTexto extends HTMLElement {
     }
 }
 
-customElements.define('caja-de-texto', CajaDeTexto);
+
 export default CajaDeTexto;

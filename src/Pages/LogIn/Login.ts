@@ -77,5 +77,5 @@ class LoginPage extends HTMLElement {
     }
 }
 
-customElements.define('login-page', LoginPage);
+
 export default LoginPage;
