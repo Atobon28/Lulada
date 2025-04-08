@@ -9,7 +9,7 @@ class RootComponent extends HTMLElement {
             this.shadowRoot.innerHTML= `
                
               
-              <login-page></login-page>
+                 <login-page></login-page>
             `;
         }
     }

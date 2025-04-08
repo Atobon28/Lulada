@@ -34,6 +34,4 @@ class CajonList extends HTMLElement {
         }
     }
 }
-
-customElements.define('cajon-list', CajonList);
 export default CajonList;

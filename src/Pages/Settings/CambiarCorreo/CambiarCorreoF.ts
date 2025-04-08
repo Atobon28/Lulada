@@ -223,5 +223,4 @@ class CambiarCorreoF extends HTMLElement {
     }
   }
   
-  customElements.define('lulada-cambiar-correo', CambiarCorreoF);
   export default CambiarCorreoF;

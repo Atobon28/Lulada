@@ -159,6 +159,4 @@ class Cambiarco extends HTMLElement {
   }
 }
 
-
-customElements.define('cambiar-correo', Cambiarco);
 export default Cambiarco;

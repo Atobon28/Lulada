@@ -110,5 +110,4 @@ class LuladaSettings extends HTMLElement {
     }
 }
 
-customElements.define('lulada-settings', LuladaSettings);
 export default LuladaSettings;

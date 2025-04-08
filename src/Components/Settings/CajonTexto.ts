@@ -38,5 +38,4 @@ class CajonTexto extends HTMLElement {
     }
   }
   
-  customElements.define('cajon-texto', CajonTexto);
   export default CajonTexto;

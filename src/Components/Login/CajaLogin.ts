@@ -4,9 +4,7 @@ class LoginForm extends HTMLElement {
         this.attachShadow({ mode: 'open' });
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = /*html*/ `
-
                 <style>
-
                 .login-container {
                     width: 350px;
                     padding: 25px;
@@ -25,11 +23,10 @@ class LoginForm extends HTMLElement {
                 .forgot-password {
                     font-size: 14px;
                     color: #555;
-                    margin: 10px 0;
+                    margin: 15px 0; 
                     cursor: pointer;
                 }
 
-              
                 .register-button {
                     display: block;
                     width: 100%;
@@ -42,14 +39,20 @@ class LoginForm extends HTMLElement {
                     cursor: pointer;
                     text-align: center;
                     font-weight: bold;
+                    margin-top: 5px; 
                 }
 
                 .register-button:hover {
                     background-color: #E09E00;
                 }
+                
+                
+                caja-de-texto {
+                    display: block;
+                    margin-bottom: 15px;
+                }
                 </style>
                 <div class="login-container">
-                
                     <caja-de-texto></caja-de-texto>
                     <boton-login></boton-login>
                     <p class="forgot-password">¿Olvidaste tu contraseña?</p>
@@ -63,6 +66,5 @@ class LoginForm extends HTMLElement {
     }
 }
 
-customElements.define('login-form', LoginForm);
 export default LoginForm;
 

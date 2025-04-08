@@ -193,6 +193,4 @@ class CambiarContraseñaF extends HTMLElement {
     }
   }
   
-  customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
-  
   export default CambiarContraseñaF;

@@ -29,7 +29,7 @@ class BotonLogin extends HTMLElement {
             const button = this.shadowRoot.querySelector(".boton");
             if (button) {
                 button.addEventListener("click", () => {
-                    window.location.href = "home.html";
+                    window.location.href = "/home"; 
                 });
             }
         } else {
@@ -38,5 +38,4 @@ class BotonLogin extends HTMLElement {
     }
 }
 
-customElements.define("boton-login", BotonLogin);
 export default BotonLogin;

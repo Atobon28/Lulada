@@ -223,5 +223,4 @@ class NombreUsuraio extends HTMLElement {
     }
   }
   
-  customElements.define('lulada-cambiar-usuario', NombreUsuraio);
   export default NombreUsuraio;

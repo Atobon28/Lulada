@@ -135,7 +135,4 @@ class CambiarContra extends HTMLElement {
     }
   }
   
-  
-  customElements.define('cambiar-contraseña', CambiarContra);
-  
   export default CambiarContra;

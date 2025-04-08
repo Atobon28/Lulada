@@ -158,7 +158,4 @@ class CambiarNU extends HTMLElement {
       }
     }
   }
- 
-  customElements.define('cambiar-usuario', CambiarNU);
-
   export default CambiarNU;
