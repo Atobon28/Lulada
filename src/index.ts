@@ -14,18 +14,7 @@ import BoxText from "./Components/Newaccount/boxtext";
 
 
 
-//Inicio Pagina Login
-import CajaDeTexto from "./Components/Login/CajaTexto";
-import BotonLogin from "./Components/Login/Boton";
-import LoginForm from './Components/Login/CajaLogin';
-import LoginPage from "./Pages/LogIn/Login";
-//Cierre pagina Login
 
-//Inicio pagina settings
-import CajonTexto from "./Components/Settings/CajonTexto";
-import CajonList from "./Components/Settings/CajonList";
-import LuladaSettings from "./Pages/Settings/Settings";
-//Cierre pagina settings
 
 
 
