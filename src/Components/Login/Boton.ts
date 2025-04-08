@@ -38,5 +38,5 @@ class BotonLogin extends HTMLElement {
     }
 }
 
-customElements.define("boton-login", BotonLogin);
+
 export default BotonLogin;

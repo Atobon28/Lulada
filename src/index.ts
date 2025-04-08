@@ -9,8 +9,9 @@ import ReviewsContainer from "./Components/Home/posts/reviewscontainer";
 import Navigation from "./Components/Home/navigation";
 import Suggestions from "./Components/Home/suggestions";
 import CardNotifications from "./Components/Nofications/CardNotifications";
-import ButtonNewAccount from "./Components/Newaccount/buttonNewAccount";
+
 import BoxText from "./Components/Newaccount/boxtext";
+import BotonLogin from "./Components/Login/Boton";
 
 
 
@@ -27,8 +28,9 @@ customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 customElements.define('lulada-card-notifications', CardNotifications);
-customElements.define('lulada-button-newaccount',ButtonNewAccount)
 customElements.define('lulada-boxtext',BoxText)
+customElements.define('lulada-boton-login', BotonLogin);
+
 
 
  //inicio
