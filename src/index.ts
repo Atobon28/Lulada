@@ -35,6 +35,12 @@ import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontr
 import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF"
 import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
 //Cierre pagina settings
+import ButtonNewAccount from "./Components/Newaccount/buttonNewAccount";
+import BoxText from "./Components/Newaccount/boxtext";
+
+
+
+
 
 
 
@@ -113,3 +119,19 @@ customElements.define('lulada-boxtext',BoxText)
 //inicio
 import NewAccount from "./Pages/NewAccount/containernewaccount";
 customElements.define('register-new-account', NewAccount);
+customElements.define('lulada-card-notifications', CardNotifications);
+customElements.define('lulada-button-newaccount',ButtonNewAccount)
+customElements.define('lulada-boxtext',BoxText)
+
+
+ //inicio
+ import Notifications from "./Pages/Notifications/Notifications";
+ customElements.define('lulada-notifications', Notifications);
+//fin
+//inicio
+import NewAccount from "./Pages/NewAccount/containernewaccount";
+customElements.define('register-new-account', NewAccount);
+//fin
+//inicio
+import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
+customElements.define('confirm-role', ConfirmRole);
