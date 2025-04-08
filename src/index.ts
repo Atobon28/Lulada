@@ -21,6 +21,8 @@ import Explore from "./Pages/Explore/explore";
 import CajaDeTexto from "./Components/Login/CajaTexto";
 import BoxText from "./Components/Newaccount/boxtext";
 import BotonLogin from "./Components/Login/Boton";
+import LoginForm from "./Components/Login/CajaLogin";
+import LoginPage from "./Pages/LogIn/Login";
 
 
 //Inicio pagina settings
