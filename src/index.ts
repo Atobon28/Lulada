@@ -28,8 +28,9 @@ customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 customElements.define('lulada-card-notifications', CardNotifications);
-customElements.define('lulada-boxtext',BoxText)
 customElements.define('lulada-boton-login', BotonLogin);
+customElements.define('lulada-boxtext',BoxText)
+
 
 
 
