@@ -106,12 +106,12 @@ export class Publication extends HTMLElement {
                 
                 <div class="publication-container">
                     <div class="header">
-                        <img 
+                        <img
                             src="https://randomuser.me/api/portraits/thumb/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg" 
                             alt="${username}" 
                             class="profile-pic"
                         >
-                        <div class="username">@${username}</div>
+                        <div class="username">${username}</div>
                     </div>
                     
                     <div class="publication-text">

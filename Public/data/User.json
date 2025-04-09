@@ -4,7 +4,11 @@
         "nombreDeUsuario": "@CristiJauregui",
         "nombre": "Cristina Jauregui", 
         "descripcion": "Me encanta el alcohol, los cocteles me vuelven loca",
-        "rol": "persona"
+        "rol": "persona",
+        "text": "El coctel de hierva buena en @BarBurguer esta super delicioso para los amantes como yo de los sabores frescos, costo 20.000 y lo recomiendo 100%",
+        "stars": 5,
+        "restaurant": "BarBurguer",
+        "location": "centro"
     },
 
     {
@@ -15,5 +19,20 @@
         "locationText": "Calle 123, Ciudad",
         "menuLink": "https://www.barburguer.com/menu",
         "rol": "restaurante"
+    },
+    {
+        "nombreDeUsuario": "@DanaBanana",
+        "text": "Este @AsianRooftop es terrible! No le quito todas las estrellas porque la mesera era super atenta, el problema es que la cocina, terrible, pedi una margarita y era sin licor me dijeron que venia aparte, como es posible???? De nunca volver.",
+        "stars": 1,
+        "hasImage": true,
+        "restaurant": "AsianRooftop",
+        "location": "norte"
+    },
+    {
+        "nombreDeUsuario": "@FoodLover",
+        "text": "La pasta en @Frenchrico es increíble! Los mejores sabores italianos que he probado en mucho tiempo.",
+        "stars": 4,
+        "restaurant": "Frenchrico",
+        "location": "sur"
     }
 ]

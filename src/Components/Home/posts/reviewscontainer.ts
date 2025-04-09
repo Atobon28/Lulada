@@ -1,32 +1,25 @@
 import './publications';
 import './reviews';
+import getUsers from "../../../Services/UserServices";
+
+type User = {
+    foto: string;
+    nombreDeUsuario: string;
+    nombre: string;
+    descripcion: string;
+    locationText: string;
+    MenuLink: string;
+    rol: string;
+    location: string;
+    text: string;
+    stars: number;
+    hasImage: boolean;
+    restaurant: string;
+}
+
 
 export class ReviewsContainer extends HTMLElement {
-    reviews = [
-        {
-            username: "CrisTiJauregui",
-            text: "El coctel de hierva buena en @BarBurguer esta super delicioso para los amantes como yo de los sabores frescos, costo 20.000 y lo recomiendo 100%",
-            stars: 5,
-            restaurant: "BarBurguer",
-            location: "centro"
-        },
-        {
-            username: "DanaBanana",
-            text: "Este @AsianRooftop es terrible! No le quito todas las estrellas porque la mesera era super atenta, el problema es que la cocina, terrible, pedi una margarita y era sin licor me dijeron que venia aparte, como es posible???? De nunca volver.",
-            stars: 1,
-            hasImage: true,
-            restaurant: "AsianRooftop",
-            location: "norte"
-        },
-        {
-            username: "FoodLover",
-            text: "La pasta en @Frenchrico es increíble! Los mejores sabores italianos que he probado en mucho tiempo.",
-            stars: 4,
-            restaurant: "Frenchrico",
-            location: "sur"
-        }
-    ];
-
+    protected users: User[] = [];
     locationFilter: string | null = null;
 
     constructor() {
@@ -37,6 +30,15 @@ export class ReviewsContainer extends HTMLElement {
 
     static get observedAttributes() {
         return ['location-filter'];
+    }
+
+    async connectedCallback() {
+        this.users = await getUsers();
+        this.render();
+    }
+
+    protected FiltroUser() {
+        return this.users.filter(user => user.location === "sur" || user.location === "norte" || user.location === "centro");
     }
 
     attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
@@ -52,16 +54,17 @@ export class ReviewsContainer extends HTMLElement {
         let reviewsHTML = '';
         
         const filteredReviews = this.locationFilter 
-            ? this.reviews.filter(review => review.location === this.locationFilter)
-            : this.reviews;
+            ? this.users.filter(User => User.location === this.locationFilter)
+            : this.users;
+        const filteredUsers = this.FiltroUser();
             
-        filteredReviews.forEach(review => {
+        filteredUsers.forEach(User => {
             reviewsHTML += `
                 <lulada-publication 
-                    username="${review.username}" 
-                    text="${review.text}" 
-                    stars="${review.stars}"
-                    ${review.hasImage ? 'has-image="true"' : ''}
+                    username="${User.nombreDeUsuario}" 
+                    text="${User.text}" 
+                    stars="${User.stars}"
+                    ${User.hasImage ? 'has-image="true"' : ''}
                 ></lulada-publication>
             `;
         });
