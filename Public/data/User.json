@@ -1,0 +1,19 @@
+[
+    {
+        "foto": "https://picsum.photos/800/450?random=1",
+        "nombreDeUsuario": "@CristiJauregui",
+        "nombre": "Cristina Jauregui", 
+        "descripcion": "Me encanta el alcohol, los cocteles me vuelven loca",
+        "rol": "persona"
+    },
+
+    {
+        "foto": "https://marketplace.canva.com/EAFpeiTrl4c/2/0/1600w/canva-abstract-chef-cooking-restaurant-free-logo-a1RYzvS1EFo.jpg",
+        "nombreDeUsuario": "@BarBurguer",
+        "nombre": "Bar Burguer", 
+        "descripcion": "deliciosos comida rapida, hamburguesas, papas fritas y mucho mas",
+        "locationText": "Calle 123, Ciudad",
+        "menuLink": "https://www.barburguer.com/menu",
+        "rol": "restaurante"
+    }
+]
