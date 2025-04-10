@@ -1,4 +1,4 @@
-export class LuladaNotifications extends HTMLElement {
+export class Notifications extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -107,4 +107,4 @@ export class LuladaNotifications extends HTMLElement {
 }
 
 
-export default LuladaNotifications;
+export default Notifications;

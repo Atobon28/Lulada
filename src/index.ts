@@ -4,8 +4,9 @@ import RootComponent from "./Components/Root/RootComponent";
 
 //home
 import Home from "./Pages/Home/home"
-import Header from "./Components/Home/Header/Header";
+
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
+import HeaderHome from "./Components/Home/Header/Header";
 import Lulada from "./Components/Home/Header/logo";
 import Publication from "./Components/Home/posts/publications";
 import Review from "./Components/Home/posts/reviews";
@@ -64,12 +65,12 @@ import CambiarNombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF"
 
 //newaccount
 import BoxText from "./Components/Newaccount/boxtext";
-import ButtonNewAccount from "./Components/Newaccount/buttonNewAccount";
 import NewAccount from "./Pages/NewAccount/containernewaccount";
 //ciere de newaccount
 
 //inicio de confirmRole
 import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
+
 //fin de confirmRole
 
 
@@ -79,7 +80,7 @@ customElements.define('root-component', RootComponent);
 
 //inicio home
 customElements.define('lulada-home', Home);
-customElements.define('lulada-header', Header);
+customElements.define('lulada-header-home', HeaderHome);
 customElements.define('lulada-sidebar', LuladaSidebar);
 customElements.define('lulada-logo', Lulada);
 customElements.define('lulada-publication', Publication);
@@ -134,14 +135,13 @@ customElements.define('lulada-cambiar-nombre', CambiarNombreUsuraio);
 
 //inicio de notifications
 customElements.define('lulada-card-notifications', CardNotifications);
-customElements.define('lulada-boton-login', BotonLogin);
-customElements.define('lulada-boxtext',BoxText)
 customElements.define('lulada-notifications', Notifications);
 //fin de notifications
 
 //inicio de newaccount
 customElements.define('register-new-account', NewAccount);
-customElements.define('lulada-button-newaccount',ButtonNewAccount)
+customElements.define('lulada-boxtext',BoxText)
+
 //fin de newaccount
 
 //inicio de confirmRole
