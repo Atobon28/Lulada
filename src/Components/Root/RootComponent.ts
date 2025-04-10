@@ -7,6 +7,7 @@ class RootComponent extends HTMLElement {
         this.seccionActual = 'main';
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
+            <lulada-home></lulada-home>
 
             `;
         }
@@ -31,4 +32,3 @@ class RootComponent extends HTMLElement {
 
 export default RootComponent;
 
-//<lulada-home></lulada-home>

@@ -1,3 +1,4 @@
+
 export class Home extends HTMLElement {
     constructor() {
         super();
@@ -39,9 +40,48 @@ export class Home extends HTMLElement {
                         border-radius: 8px;
                         margin-top: 20px;
                     }
+                    .nav-bar-abajo {
+                        display: none;
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        background-color: white;
+                        padding: 10px ;
+                        box-shadow;0 -2px 9px rgba(0, 0, 0, 0.1);
+                        
+                    }
+    
+                    .nav-bar-abajo-ul {
+                       display:flex;
+                       jusfify-content:space-around;
+                       list-style: none;
+                       margin:0
+                       padding:0;
+                    
+                    }   
+                    .nav-bar-abajo li {
+                    text-align:center;
+                    }
+                    .nav-bar-abajo button {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        color:#555;
+                        font-size: 12px;
+                        padding: 5px;
+                        } 
+                      
+                    
+                    
+
+
                 </style>
                 
-                <home-header></home-header>
+                <lulada-header-home></lulada-header-home>
                 
                 <div class="main-layout">
                     <div class="sidebar">
@@ -56,6 +96,8 @@ export class Home extends HTMLElement {
                             <lulada-suggestions></lulada-suggestions>
                         </div>
                     </div>
+                    
+
                 </div>
             `;
 
@@ -69,7 +111,8 @@ export class Home extends HTMLElement {
                 console.log("Se seleccionó menú: " + event.detail.menuItem);
             });
         }
+        
+
     }
 }
-
 export default Home;
