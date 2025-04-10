@@ -50,9 +50,15 @@ export class Home extends HTMLElement {
                         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
                     }
 
+                    .lulada-responsive-bar {
+                        display: none;
+                        position: fixed;
+                        bottom: 0;
+                    }
+
                 </style>
                 
-                <home-header></home-header>
+                <lulada-header-complete></lulada-header-complete>
                 
                 <div class="main-layout">
                     <div class="sidebar">
@@ -67,14 +73,10 @@ export class Home extends HTMLElement {
                             <lulada-suggestions></lulada-suggestions>
                         </div>
                     </div>
-                    <div class="nav-bar-abajo">
-                        <ul>
-                            <li><button class="location-button">Ubicación</button></li>
-                            <li><button class="menu-button">Menú</button></li>
-                            <li><button class="reviews-button">Reseñas</button></li>
-                        </ul>
+                    
+                    <div class="lulada-responsive-bar">
+                        <lulada-responsive-bar></lulada-responsive-bar>
                     </div>
-                </div>
             `;
 
             this.shadowRoot.addEventListener('location-select', (e: Event) => {
@@ -90,9 +92,6 @@ export class Home extends HTMLElement {
         //estamos vinculando el bind al resizeHandler este asegura que el componente se mantenga en su forma original  
         this.resizeHandler = this.resizeHandler.bind(this);
         this.resizeHandler(); //llamamos al metodo resizeHandler para que se ejecute una vez al cargar el componente
-       
-     
-
 
     }//metodo de ciclo de vida que se ejecuta cuando se conecta el dom
     connectedCallback() {
@@ -106,19 +105,18 @@ export class Home extends HTMLElement {
     resizeHandler() {
         const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
         const mainLayout = this.shadowRoot?.querySelector ('.main-layout') as HTMLDivElement;
-        const divAbajo = this.shadowRoot?.querySelector('.nav-bar-abajo') as HTMLDivElement;
+        const navBar = this.shadowRoot?.querySelector('.lulada-responsive-bar') as HTMLDivElement;
         const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
-        console.log(mainLayout);
-        if (suggestions && mainLayout && divAbajo){
-            if (window.innerWidth < 900){
-                console.log('oculto')
-                suggestions.style.display = 'none';
-                divAbajo.style.display = 'block';
-                sidebar.style.display = 'none';
+        if (suggestions && mainLayout && navBar && sidebar) {
+            if (window.innerWidth < 900){ // Cuando la pantalla es pequeña
+                sidebar.style.display = 'none'; // Ocultamos la barra lateral
+                suggestions.style.display = 'none'; // Ocultamos las sugerencias
+                navBar.style.display = 'block'; // Mostramos la barra de navegación
+
             }else{
-                console.log('visible')
                 suggestions.style.display = 'block';
-                divAbajo.style.display = 'none';
+                navBar.style.display = 'none';
+                sidebar.style.display = 'block';
             }
         }
 

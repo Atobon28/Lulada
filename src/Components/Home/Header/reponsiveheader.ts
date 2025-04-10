@@ -119,10 +119,10 @@ class reponsiveheader extends HTMLElement {
                     <lulada-logo></lulada-logo>
                 </div>
                 <div class="icons-section">
-                    <div class="icon settings-icon">
+                    <div class="icon settings-icon" data-route="/configurations">
                         <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjQUFBQjU0IiBkPSJNMTkuNDMgMTIuOThjLjA0LS4zMi4wNy0uNjQuMDctLjk4cy0uMDMtLjY2LS4wNy0uOThsMi4xMS0xLjY1Yy4xOS0uMTUuMjQtLjQyLjEyLS42NGwtMi0zLjQ2YS41LjUgMCAwIDAtLjYxLS4yMmwtMi40OSAxYy0uNTItLjQtMS4wOC0uNzMtMS42OS0uOThsLS4zOC0yLjY1QS40OS40OSAwIDAgMCAxNCAyaC00Yy0uMjUgMC0uNDYuMTgtLjQ5LjQybC0uMzggMi42NWMtLjYxLjI1LTEuMTcuNTktMS42OS45OGwtMi40OS0xYS42LjYgMCAwIDAtLjE4LS4wM2MtLjE3IDAtLjM0LjA5LS40My4yNWwtMiAzLjQ2Yy0uMTMuMjItLjA3LjQ5LjEyLjY0bDIuMTEgMS42NWMtLjA0LjMyLS4wNy42NS0uMDcuOThzLjAzLjY2LjA3Ljk4bC0yLjExIDEuNjVjLS4xOS4xNS0uMjQuNDItLjEyLjY0bDIgMy40NmEuNS41IDAgMCAwIC42MS4yMmwyLjQ5LTFjLjUyLjQgMS4wOC43MyAxLjY5Ljk4bC4zOCAyLjY1Yy4wMy4yNC4yNC40Mi40OS40Mmg0Yy4yNSAwIC40Ni0uMTguNDktLjQybC4zOC0yLjY1Yy42MS0uMjUgMS4xNy0uNTkgMS42OS0uOThsMi40OSAxcS4wOS4wMy4xOC4wM2MuMTcgMCAuMzQtLjA5LjQzLS4yNWwyLTMuNDZjLjEyLS4yMi4wNy0uNDktLjEyLS42NHptLTEuOTgtMS43MWMuMDQuMzEuMDUuNTIuMDUuNzNzLS4wMi40My0uMDUuNzNsLS4xNCAxLjEzbC44OS43bDEuMDguODRsLS43IDEuMjFsLTEuMjctLjUxbC0xLjA0LS40MmwtLjkuNjhjLS40My4zMi0uODQuNTYtMS4yNS43M2wtMS4wNi40M2wtLjE2IDEuMTNsLS4yIDEuMzVoLTEuNGwtLjE5LTEuMzVsLS4xNi0xLjEzbC0xLjA2LS40M2MtLjQzLS4xOC0uODMtLjQxLTEuMjMtLjcxbC0uOTEtLjdsLTEuMDYuNDNsLTEuMjcuNTFsLS43LTEuMjFsMS4wOC0uODRsLjg5LS43bC0uMTQtMS4xM2MtLjAzLS4zMS0uMDUtLjU0LS4wNS0uNzRzLjAyLS40My4wNS0uNzNsLjE0LTEuMTNsLS44OS0uN2wtMS4wOC0uODRsLjctMS4yMWwxLjI3LjUxbDEuMDQuNDJsLjktLjY4Yy40My0uMzIuODQtLjU2IDEuMjUtLjczbDEuMDYtLjQzbC4xNi0xLjEzbC4yLTEuMzVoMS4zOWwuMTkgMS4zNWwuMTYgMS4xM2wxLjA2LjQzYy40My4xOC44My40MSAxLjIzLjcxbC45MS43bDEuMDYtLjQzbDEuMjctLjUxbC43IDEuMjFsLTEuMDcuODVsLS44OS43ek0xMiA4Yy0yLjIxIDAtNCAxLjc5LTQgNHMxLjc5IDQgNCA0czQtMS43OSA0LTRzLTEuNzktNC00LTRtMCA2Yy0xLjEgMC0yLS45LTItMnMuOS0yIDItMnMyIC45IDIgMnMtLjkgMi0yIDIiLz48L3N2Zz4=" class="menu-icon" alt="Configuración">
                     </div>
-                    <div class="icon notification-icon">
+                    <div class="icon notification-icon" data-route="/notifications">
                         <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjQUFBQjU0IiBkPSJNNSAxOXEtLjQyNSAwLS43MTItLjI4OFQ0IDE4dC4yODgtLjcxMlQ1IDE3aDF2LTdxMC0yLjA3NSAxLjI1LTMuNjg3VDEwLjUgNC4ydi0uN3EwLS42MjUuNDM4LTEuMDYyVDEyIDJ0MS4wNjMuNDM4VDEzLjUgMy41di43cTIgLjUgMy4yNSAyLjExM1QxOCAxMHY3aDFxLjQyNSAwIC43MTMuMjg4VDIwIDE4dC0uMjg4LjcxM1QxOSAxOXptNyAzcS0uODI1IDAtMS40MTItLjU4N1QxMCAyMGg0cTAgLjgyNS0uNTg3IDEuNDEzVDEyIDIybS00LTVoOHYtN3EwLTEuNjUtMS4xNzUtMi44MjVUMTIgNlQ5LjE3NSA3LjE3NVQ4IDEweiIvPjwvc3ZnPg==" class="menu-icon" alt="Notificaciones">
                     </div>
                 </div>
@@ -137,17 +137,18 @@ class reponsiveheader extends HTMLElement {
         </div>
     `;
             
-
+//se está llamando desde el constructor u otro método dentro de una clase
     this.addEventListeners();
   }
 
   addEventListeners(): void {
+    //ancla nodelistof es unacnla para obtener todos los elementos que tengan la clase location-tags y sean un elemento a
     const locationLinks: NodeListOf<HTMLAnchorElement> = this.shadowRoot.querySelectorAll('.location-tags a');
-    
+    //repetir los link que esta cogiendo
     locationLinks.forEach((link: HTMLAnchorElement) => {
       link.addEventListener('click', (e: Event) => {
         e.preventDefault();
-        
+        //Previene el comportamiento por defecto y En este caso, el clic no cambiará de página, solo ejecutará tu lógica personalizada.
         const target = e.currentTarget as HTMLAnchorElement;
         const section: string | null = target.getAttribute('data-section');
         
@@ -169,6 +170,45 @@ class reponsiveheader extends HTMLElement {
       });
     });
   }
+  connectedCallback(): void {
+    console.log('LuladaSidebar añadido al DOM');
+    this.setupNavigation();
+}
+
+disconnectedCallback(): void {
+    console.log('LuladaSidebar eliminado del DOM');
+}
+
+attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
+    console.log(`Atributo ${name} cambió de ${oldValue} a ${newValue}`);
+}
+
+static get observedAttributes(): string[] {
+    return [];
+}
+
+setupNavigation() {
+    //optiene los divs dentro del shadow dom
+    const divs = this.shadowRoot!.querySelectorAll("div");
+
+    divs.forEach((dv) => {
+        dv.addEventListener("click", () => {
+            //obtiene el atributo data-route del div al que se le dio click
+            const route = dv.getAttribute("data-route");
+            if (route) {
+                //llama el metodo navigate con la ruta como argumento
+                this.navigate(route); 
+            }
+        });
+    });
+}
+
+navigate(route: string) {
+    //crea un evento personalizado 
+    const event = new CustomEvent("navigate", { detail: route });
+    //manda el evento global para que otro componente pueda escucharlo
+    document.dispatchEvent(event); //disparar el evento de navegación
+}
 }
 
 export default reponsiveheader;

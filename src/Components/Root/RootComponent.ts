@@ -4,10 +4,9 @@ class RootComponent extends HTMLElement {
     constructor() {
         super()
         this.attachShadow({ mode: 'open' })
-        this.seccionActual = 'profile';
+        this.seccionActual = 'main';
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
-                <lulada-home></lulada-home>
             `;
         }
     }
@@ -30,3 +29,5 @@ class RootComponent extends HTMLElement {
 }
 
 export default RootComponent;
+
+//<lulada-home></lulada-home>
