@@ -7,11 +7,11 @@ class RootComponent extends HTMLElement {
         this.seccionActual = 'main';
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
-
+  <lulada-cambiar-nombre></lulada-cambiar-nombre>
             `;
         }
     }
-
+       
     // Cuando se presione una de las opciones dentro de sideBar, se cambia la sección actual
     changePage(section: string) { // perfil, confguracion, antojar, ...
         this.seccionActual = section;

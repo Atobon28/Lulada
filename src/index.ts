@@ -59,6 +59,7 @@ import CambiarNU from "./Components/Settings/CambiarNombre/cambiarNU";
 import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontra";
 import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF"
 import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
+import CambiarNombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
 //Cierre pagina settings
 
 //newaccount
@@ -128,6 +129,7 @@ customElements.define('cambiar-nombre', CambiarNU);
 customElements.define('cambiar-contraseña', CambiarContra);
 customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
 customElements.define('lulada-cambiar-correo', CambiarCorreoF);
+customElements.define('lulada-cambiar-nombre', CambiarNombreUsuraio);
 //Cierre pagina settings
 
 //inicio de notifications
