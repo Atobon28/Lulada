@@ -2,6 +2,10 @@
 import RootComponent from "./Components/Root/RootComponent";
 //Root component
 
+//app container
+import LoadPage from "./Components/LoadPages/LoadPage";
+//app container
+
 //home
 import Home from "./Pages/Home/home"
 import Header from "./Components/Home/Header/Header";
@@ -76,6 +80,10 @@ import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
 customElements.define('root-component', RootComponent);
 //fin Root
 
+//app container
+customElements.define('load-pages', LoadPage);
+//fin app container
+
 //inicio home
 customElements.define('lulada-home', Home);
 customElements.define('lulada-header', Header);
@@ -98,7 +106,7 @@ customElements.define('lulada-explore', Explore);
 
 //puser
 customElements.define('user-info', UserInfo);
-customElements.define('puser-component', PUser);
+customElements.define('puser-page', PUser);
 customElements.define('user-profile', UserSelftProfile);
 customElements.define('user-edit', UserEdit);
 //Final puser

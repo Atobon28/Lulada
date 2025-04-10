@@ -1,0 +1,79 @@
+class LoadPage extends HTMLElement {
+    constructor(){
+        super();
+        this.attachShadow({ mode: 'open'});
+    }
+
+    connectedCallback(){
+        this.render();
+        this.setupNavigation();
+    }
+
+    private setupNavigation(){
+        //escuchar los clicks dentro del componente
+        this.shadowRoot!.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement; //obtiene el elemento que disparo el evento
+            const link = target.closest('a'); //busca el enlace mas cercano al elemento clickeado
+
+            if (link && link.href) {
+                e.preventDefault(); //evitar el comportamiento por defecto
+                const path = new URL(link.href).pathname; //obtiene la ruta del enlace
+            }
+        });
+
+        //escuchar evento global (navigate) 
+        document.addEventListener('navigate', (event: Event) => {
+            //convierte el evento a un customevento 
+            const route = (event as CustomEvent).detail; //toma la ruta del evento
+            this.updateView(route); //actualiza la vista a esa ruta
+        });
+    }
+
+    render(){
+        this.shadowRoot!.innerHTML = /*html*/ `
+        <div class="app-container">
+            <main>
+                <lulada-home></lulada-home>
+            </main>
+        </div>
+        `;
+    }
+
+    updateView(route: string){
+        //actualiza el componente dependiendo de la ruta
+        let newComponent = "";
+        //cambiar el componente dependiendo de la ruta
+        switch(route) {
+            case "/home":
+                newComponent = `<lulada-home></lulada-home>`;
+                break;
+            case "/notifications":
+                newComponent = `<lulada-notifications></lulada-notifications>`;
+                break;
+            case "/save":
+                newComponent = `<save-page></save-page>`;
+                break;
+            case "/explore":
+                newComponent = `<lulada-explore></lulada-explore>`;
+                break;
+            //aqui agregar antojar
+            case "/configurations":
+                newComponent = `<lulada-settings></lulada-settings>`;
+                break;
+            case "/profile":
+                newComponent = `<puser-page></puser-page>`;
+                break;
+            default:
+                newComponent = `<lulada-home></lulada-home>`;
+        }
+        //busca el elemento <main> y actualiza su contenido con el nuevo componente
+        const main = this.shadowRoot!.querySelector('main');
+        if (main) {
+            main.innerHTML = newComponent;
+        }
+        //para que la ventana al cambiarla aparezca siempre arriba
+        window.scrollTo(0, 0);
+    }
+}
+
+export default LoadPage;
