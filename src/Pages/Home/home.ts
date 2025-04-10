@@ -41,7 +41,7 @@ export class Home extends HTMLElement {
                     }
                 </style>
                 
-                <home-header></home-header>
+                <lulada-header></lulada-header>
                 
                 <div class="main-layout">
                     <div class="sidebar">
