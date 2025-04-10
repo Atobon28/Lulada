@@ -23,3 +23,11 @@ customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 
+//inico de componete de header 
+import luladaResponsiveHeader from "./Components/Home/Header/reponsiveheader";
+customElements.define('lulada-responsive-header', luladaResponsiveHeader);
+// final responsive header
+
+//inicio de barra
+import luladaResponsiveBar from "./Components/Home/Navbars/responsivebar";
+customElements.define('lulada-responsive-bar', luladaResponsiveBar);
