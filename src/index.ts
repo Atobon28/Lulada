@@ -1,6 +1,12 @@
+import LuladaNotifications from './Pages/Notifications/Notifications';
+import NavigationBar from './Components/Home/Navbars/responsivebar';
 //Root Component
 import RootComponent from "./Components/Root/RootComponent";
 //Root component
+
+//app container
+import LoadPage from "./Components/LoadPages/LoadPage";
+//app container
 
 //home
 import Home from "./Pages/Home/home"
@@ -17,7 +23,6 @@ import Suggestions from "./Components/Home/suggestions";
 
 //inicio de notifications
 import CardNotifications from "./Components/Nofications/CardNotifications";
-import Notifications from "./Pages/Notifications/Notifications";
 //fin de notifications
 
 //Inicio Explorer
@@ -72,14 +77,23 @@ import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
 
 //fin de confirmRole
 
+import luladaResponsiveHeader from "./Components/Home/Header/reponsiveheader";
+import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
+
+
+customElements.define('lulada-header-complete', HeaderCompleto);
 
 //Root
 customElements.define('root-component', RootComponent);
 //fin Root
 
+//app container
+customElements.define('load-pages', LoadPage);
+//fin app container
+
 //inicio home
 customElements.define('lulada-home', Home);
-customElements.define('lulada-header-home', HeaderHome);
+customElements.define('lulada-header', HeaderHome);
 customElements.define('lulada-sidebar', LuladaSidebar);
 customElements.define('lulada-logo', Lulada);
 customElements.define('lulada-publication', Publication);
@@ -89,6 +103,12 @@ customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 //fin home
 
+//inico de componete de header 
+customElements.define('lulada-responsive-header', luladaResponsiveHeader);
+// final responsive header
+
+//inicio de barra
+customElements.define('lulada-responsive-bar', NavigationBar);
 //Inicio Explorer
 customElements.define('header-explorer', HeaderExplorer);
 customElements.define('explore-container', ExploreContainer);
@@ -99,7 +119,7 @@ customElements.define('lulada-explore', Explore);
 
 //puser
 customElements.define('user-info', UserInfo);
-customElements.define('puser-component', PUser);
+customElements.define('puser-page', PUser);
 customElements.define('user-profile', UserSelftProfile);
 customElements.define('user-edit', UserEdit);
 //Final puser
@@ -133,15 +153,16 @@ customElements.define('lulada-cambiar-correo', CambiarCorreoF);
 
 //inicio de notifications
 customElements.define('lulada-card-notifications', CardNotifications);
-customElements.define('lulada-notifications', Notifications);
+customElements.define('lulada-boxtext',BoxText)
+customElements.define('lulada-notifications',LuladaNotifications);
 //fin de notifications
 
 //inicio de newaccount
 customElements.define('register-new-account', NewAccount);
-customElements.define('lulada-boxtext',BoxText)
 
 //fin de newaccount
 
 //inicio de confirmRole
 customElements.define('confirm-role', ConfirmRole);
 //fin de confirmRole
+
