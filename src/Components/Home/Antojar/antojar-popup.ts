@@ -136,7 +136,8 @@ export class AntojarPopupService {
     }
 }
 
+
 // Hacemos el servicio accesible globalmente si se necesita desde otras partes de la app
-(window as any).AntojarPopupService = AntojarPopupService;
+window.AntojarPopupService = AntojarPopupService;
 
 export default AntojarPopupService;

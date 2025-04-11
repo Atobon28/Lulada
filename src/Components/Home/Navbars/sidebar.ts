@@ -106,8 +106,8 @@ class LuladaSidebar extends HTMLElement {
                     if (route === "/antojar") { // Si la ruta es "/antojar"
                         try {
                             // Usar ÚNICAMENTE el servicio global directamente*
-                            if ((window as any).AntojarPopupService) { // Comprueba si existe el servicio en el objeto window
-                                (window as any).AntojarPopupService.getInstance().showPopup(); // Muestra el popup usando el servicio
+                            if (window.AntojarPopupService) { // Comprueba si existe el servicio en el objeto window
+                                window.AntojarPopupService.getInstance().showPopup(); // Muestra el popup usando el servicio
                             } else { // Si no existe el servicio
                                 console.error("AntojarPopupService no está disponible en window"); // Muestra error en consola
                                 // Notificar al usuario que hay un problema*

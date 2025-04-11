@@ -89,7 +89,7 @@ import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
 // IMPORTANTE: Inicializar y exponer el servicio inmediatamente
 const antojarService = AntojarPopupService.getInstance();
 antojarService.initialize();
-(window as any).AntojarPopupService = AntojarPopupService;
+window.AntojarPopupService = AntojarPopupService;
 
 customElements.define('lulada-header-complete', HeaderCompleto);
 
