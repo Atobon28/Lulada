@@ -153,3 +153,11 @@ customElements.define('lulada-button-newaccount',ButtonNewAccount)
 //inicio de confirmRole
 customElements.define('confirm-role', ConfirmRole);
 //fin de confirmRole
+//inico de componete de header 
+import luladaResponsiveHeader from "./Components/Home/Header/reponsiveheader";
+customElements.define('lulada-responsive-header', luladaResponsiveHeader);
+// final responsive header
+
+//inicio de barra
+import luladaResponsiveBar from "./Components/Home/Navbars/responsivebar";
+customElements.define('lulada-responsive-bar', luladaResponsiveBar);
