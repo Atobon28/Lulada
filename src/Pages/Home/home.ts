@@ -1,3 +1,4 @@
+
 export class Home extends HTMLElement {
     constructor() {
         super();
@@ -122,5 +123,4 @@ export class Home extends HTMLElement {
 
     }
 }
-
 export default Home;

@@ -30,4 +30,3 @@ class RootComponent extends HTMLElement {
 
 export default RootComponent;
 
-//<lulada-home></lulada-home>

@@ -71,9 +71,6 @@ class Save extends HTMLElement {
                        <lulada-sidebar></lulada-sidebar>
                    </div>
                     <div class="medium-content">
-                        <div class ="user-profile">
-                            <restaurant-info></restaurant-info>
-                        </div>
                         <div class="content">
                         <div class="reviews-section">
                             <lulada-publication 

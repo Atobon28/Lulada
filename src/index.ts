@@ -10,8 +10,9 @@ import LoadPage from "./Components/LoadPages/LoadPage";
 
 //home
 import Home from "./Pages/Home/home"
-import Header from "./Components/Home/Header/Header";
+
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
+import HeaderHome from "./Components/Home/Header/Header";
 import Lulada from "./Components/Home/Header/logo";
 import Publication from "./Components/Home/posts/publications";
 import Review from "./Components/Home/posts/reviews";
@@ -68,12 +69,12 @@ import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
 
 //newaccount
 import BoxText from "./Components/Newaccount/boxtext";
-import ButtonNewAccount from "./Components/Newaccount/buttonNewAccount";
 import NewAccount from "./Pages/NewAccount/containernewaccount";
 //ciere de newaccount
 
 //inicio de confirmRole
 import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
+
 //fin de confirmRole
 
 import luladaResponsiveHeader from "./Components/Home/Header/reponsiveheader";
@@ -92,8 +93,7 @@ customElements.define('load-pages', LoadPage);
 
 //inicio home
 customElements.define('lulada-home', Home);
-customElements.define('lulada-header', Header);
-customElements.define('lulada-notifications', LuladaNotifications);
+customElements.define('lulada-header', HeaderHome);
 customElements.define('lulada-sidebar', LuladaSidebar);
 customElements.define('lulada-logo', Lulada);
 customElements.define('lulada-publication', Publication);
@@ -153,13 +153,13 @@ customElements.define('lulada-cambiar-correo', CambiarCorreoF);
 
 //inicio de notifications
 customElements.define('lulada-card-notifications', CardNotifications);
-customElements.define('lulada-boton-login', BotonLogin);
 customElements.define('lulada-boxtext',BoxText)
+customElements.define('lulada-notifications',LuladaNotifications);
 //fin de notifications
 
 //inicio de newaccount
 customElements.define('register-new-account', NewAccount);
-customElements.define('lulada-button-newaccount',ButtonNewAccount)
+
 //fin de newaccount
 
 //inicio de confirmRole

@@ -93,7 +93,7 @@ class RegisterNewAccount extends HTMLElement {
                         <button-new-account style="margin-left: 20px"></button-new-account>
                     </div>
                     <div class="Buttonregister">
-                    <lulada-boton-login></lulada-boton-login>
+                    <boton-login></boton-login>
                     </div>
                 </div>
             </div>

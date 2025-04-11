@@ -17,7 +17,7 @@ class LoadPage extends HTMLElement {
 
             if (link && link.href) {
                 e.preventDefault(); //evitar el comportamiento por defecto
-                const path = new URL(link.href).pathname; //obtiene la ruta del enlace
+
             }
         });
 
