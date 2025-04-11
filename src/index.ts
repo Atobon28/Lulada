@@ -80,6 +80,16 @@ import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
 import luladaResponsiveHeader from "./Components/Home/Header/reponsiveheader";
 import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
 
+//inicio de antojar
+import { LuladaAntojar } from './Components/Home/Antojar/antojar';
+import { LuladaAntojarBoton } from './Components/Home/Antojar/antojar-boton';
+import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
+//Fin de antojar
+
+// IMPORTANTE: Inicializar y exponer el servicio inmediatamente
+const antojarService = AntojarPopupService.getInstance();
+antojarService.initialize();
+(window as any).AntojarPopupService = AntojarPopupService;
 
 customElements.define('lulada-header-complete', HeaderCompleto);
 
@@ -166,3 +176,16 @@ customElements.define('register-new-account', NewAccount);
 customElements.define('confirm-role', ConfirmRole);
 //fin de confirmRole
 
+// Registrar los componentes personalizados
+customElements.define('lulada-antojar', LuladaAntojar);
+customElements.define('lulada-antojar-boton', LuladaAntojarBoton);
+//Fin de registrar los componentes personalizados
+
+// Inicializar el servicio cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+  // Inicializar el servicio de popup
+  AntojarPopupService.getInstance().initialize();
+});
+
+// Exportar todo para uso en la aplicación
+export { LuladaAntojar, LuladaAntojarBoton, AntojarPopupService };
