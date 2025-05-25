@@ -1,6 +1,11 @@
+import LuladaNotifications from './Pages/Notifications/Notifications';
 //Root Component
 import RootComponent from "./Components/Root/RootComponent";
 //Root component
+
+//app container
+import LoadPage from "./Components/LoadPages/LoadPage";
+//app container
 
 //home
 import Home from "./Pages/Home/home"
@@ -17,7 +22,6 @@ import Suggestions from "./Components/Home/suggestions";
 
 //inicio de notifications
 import CardNotifications from "./Components/Nofications/CardNotifications";
-import Notifications from "./Pages/Notifications/Notifications";
 //fin de notifications
 
 //Inicio Explorer
@@ -70,17 +74,35 @@ import NewAccount from "./Pages/NewAccount/containernewaccount";
 
 //inicio de confirmRole
 import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
-
 //fin de confirmRole
 
+import luladaResponsiveHeader from "./Components/Home/Header/reponsiveheader";
+import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
+
+//inicio de antojar
+import { LuladaAntojar } from './Components/Home/Antojar/antojar';
+import { LuladaAntojarBoton } from './Components/Home/Antojar/antojar-boton';
+import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
+//Fin de antojar
+
+// IMPORTANTE: Inicializar y exponer el servicio inmediatamente
+const antojarService = AntojarPopupService.getInstance();
+antojarService.initialize();
+window.AntojarPopupService = AntojarPopupService;
+
+customElements.define('lulada-header-complete', HeaderCompleto);
 
 //Root
 customElements.define('root-component', RootComponent);
 //fin Root
 
+//app container
+customElements.define('load-pages', LoadPage);
+//fin app container
+
 //inicio home
 customElements.define('lulada-home', Home);
-customElements.define('lulada-header-home', HeaderHome);
+customElements.define('lulada-header', HeaderHome);
 customElements.define('lulada-sidebar', LuladaSidebar);
 customElements.define('lulada-logo', Lulada);
 customElements.define('lulada-publication', Publication);
@@ -89,6 +111,12 @@ customElements.define('lulada-reviews-container', ReviewsContainer);
 customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 //fin home
+
+//inico de componente de header responsive
+// Asegurar que el archivo se ejecute para registrar lulada-responsive-bar
+void luladaResponsiveHeader; // Referencia para forzar ejecución
+// NOTA: lulada-responsive-header y lulada-responsive-bar se registran automáticamente
+// final responsive header
 
 //Inicio Explorer
 customElements.define('header-explorer', HeaderExplorer);
@@ -100,7 +128,7 @@ customElements.define('lulada-explore', Explore);
 
 //puser
 customElements.define('user-info', UserInfo);
-customElements.define('puser-component', PUser);
+customElements.define('puser-page', PUser);
 customElements.define('user-profile', UserSelftProfile);
 customElements.define('user-edit', UserEdit);
 //Final puser
@@ -135,15 +163,27 @@ customElements.define('lulada-cambiar-nombre', CambiarNombreUsuraio);
 
 //inicio de notifications
 customElements.define('lulada-card-notifications', CardNotifications);
-customElements.define('lulada-notifications', Notifications);
+customElements.define('lulada-boxtext',BoxText)
+customElements.define('lulada-notifications',LuladaNotifications);
 //fin de notifications
 
 //inicio de newaccount
 customElements.define('register-new-account', NewAccount);
-customElements.define('lulada-boxtext',BoxText)
-
 //fin de newaccount
 
 //inicio de confirmRole
 customElements.define('confirm-role', ConfirmRole);
 //fin de confirmRole
+
+// Componentes de antojar se registran automáticamente al importarse
+// NOTA: LuladaAntojar y LuladaAntojarBoton se registran automáticamente
+//Fin de componentes antojar
+
+// Inicializar el servicio cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+  // Inicializar el servicio de popup
+  AntojarPopupService.getInstance().initialize();
+});
+
+// Exportar todo para uso en la aplicación
+export { LuladaAntojar, LuladaAntojarBoton, AntojarPopupService };

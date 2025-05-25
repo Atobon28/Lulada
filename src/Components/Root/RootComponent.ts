@@ -7,7 +7,6 @@ class RootComponent extends HTMLElement {
         this.seccionActual = 'main';
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML= `
-  <lulada-cambiar-nombre></lulada-cambiar-nombre>
             `;
         }
     }

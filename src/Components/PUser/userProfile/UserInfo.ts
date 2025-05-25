@@ -27,7 +27,6 @@ class UserInfo extends HTMLElement {
         return this.users.filter(user => user.rol === "persona");
     }
 
-
     protected render() {
         if (this.shadowRoot) {
             const FiltradosUsers = this.FiltroUser()
@@ -41,6 +40,7 @@ class UserInfo extends HTMLElement {
                 font-family: 'Inter', sans-serif;
                 max-width: 90%;
                 margin: auto;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             }
 
             .etiquetados {
@@ -83,13 +83,13 @@ class UserInfo extends HTMLElement {
                 color: #000;
                 margin-top: 0.4rem;
                 margin-bottom: 0.5rem;
-
             }
             
             .descripcion {
                 font-size: 1rem;
                 color: #333;
                 margin-top: 0.375rem;
+                line-height: 1.4;
             }
             
             hr {
@@ -103,12 +103,33 @@ class UserInfo extends HTMLElement {
                 gap: 0.3rem;
                 align-items: center;
                 margin-top: 0.05rem;
-
             }
 
+            @media (max-width: 1024px) {
+                .userTopCompleto {
+                    max-width: 95%;
+                    padding: 1rem;
+                }
+                
+                .userTopFoto img {
+                    width: 12rem;
+                    height: 12rem;
+                }
+            }
             
-            /* Responsive */
             @media (max-width: 768px) {
+                .userTopCompleto {
+                    max-width: 100%;
+                    margin: 0.5rem;
+                    padding: 1rem;
+                }
+
+                .userTop {
+                    flex-direction: column;
+                    text-align: center;
+                    min-width: auto;
+                    gap: 1rem;
+                }
 
                 .userTopFoto img {
                     width: 10rem;
@@ -117,24 +138,53 @@ class UserInfo extends HTMLElement {
             
                 .nombre {
                     font-size: 1.25rem;
-                    margin: 0.1rem;
+                    margin: 0.3rem 0;
                 }
 
                 .etiquetados {
                     font-size: 0.65rem;
                     font-weight: bold;
+                    margin-left: 1rem;
                 }
             
                 .nombreDeUsuario {
                     font-size: 1rem;
-                    margin: 0.1rem;
+                    margin: 0.3rem 0;
                 }
             
                 .descripcion {
-                    font-size: 0.75rem;
-                    margin: 0.1rem;
+                    font-size: 0.85rem;
+                    margin: 0.3rem 0;
+                    text-align: center;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .userTopCompleto {
+                    margin: 0.25rem;
+                    padding: 0.75rem;
+                }
+
+                .userTopFoto img {
+                    width: 8rem;
+                    height: 8rem;
                 }
                 
+                .nombre {
+                    font-size: 1.1rem;
+                }
+                
+                .nombreDeUsuario {
+                    font-size: 0.9rem;
+                }
+                
+                .descripcion {
+                    font-size: 0.8rem;
+                }
+
+                .etiquetados {
+                    margin-left: 0.5rem;
+                }
             }
             </style>            
             <div class="userTopCompleto">
@@ -146,7 +196,6 @@ class UserInfo extends HTMLElement {
     protected renderUsuario(User: User) {
         return /*html*/ `
             <div class="userTop"> 
-
                 <div class="userTopFoto">
                     <img class="foto" src="${User.foto ?? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcQg-lr5__zRqY3mRg6erzAD9n4BGp3G8VfA&s'}">
                 </div>
@@ -157,7 +206,6 @@ class UserInfo extends HTMLElement {
                     <p class="descripcion">${User.descripcion ?? " "}</p>
                     <div id="additional-info"></div>
                 </div>
-
             </div>
         `;
     } 

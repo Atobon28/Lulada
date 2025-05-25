@@ -1,9 +1,9 @@
-export class Notifications extends HTMLElement {
+export default class LuladaNotifications extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
         if (this.shadowRoot) {
-            this.shadowRoot.innerHTML = /*html*/ `
+            this.shadowRoot.innerHTML = `
             <style>
             :host {
                 display: block;
@@ -90,8 +90,6 @@ export class Notifications extends HTMLElement {
                 </div>
             `;
 
-
-
             this.shadowRoot.addEventListener('location-select', (e: Event) => {
                 const event = e as CustomEvent;
                 console.log("Se seleccionó ubicación: " + event.detail);
@@ -105,6 +103,3 @@ export class Notifications extends HTMLElement {
         }
     }
 }
-
-
-export default Notifications;
