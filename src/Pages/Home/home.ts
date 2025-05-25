@@ -1,36 +1,46 @@
-
 export class Home extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
         
         if (this.shadowRoot) {
-            this.shadowRoot.innerHTML = `
+            this.shadowRoot.innerHTML = /*html*/ `
                 <style>
                     :host {
                         display: block;
-                        font-family: Arial, sans-serif;
+                        font-family: 'Inter', sans-serif;
                     }
+                    
                     .main-layout {
                         display: flex;
                         margin-top: 10px;
+                        min-height: calc(100vh - 100px);
                     }
+                    
                     .sidebar {
                         width: 250px;
+                        flex-shrink: 0;
                     }
+                    
                     .content {
                         flex-grow: 1;
-                        display: flex; 
-                    }
-                    .reviews-section {
+                        display: flex;
+                        gap: 20px;
                         padding: 20px;
+                        min-width: 0;
+                    }
+                    
+                    .reviews-section {
                         background-color: white;
-                        flex-grow: 1; 
+                        flex-grow: 1;
+                        min-width: 0;
                     }
+                    
                     .suggestions-section {
-                        width: 250px; 
-                        padding: 20px 10px;
+                        width: 250px;
+                        flex-shrink: 0;
                     }
+                    
                     .no-content {
                         padding: 40px;
                         text-align: center;
@@ -40,21 +50,79 @@ export class Home extends HTMLElement {
                         border-radius: 8px;
                         margin-top: 20px;
                     }
-                    .nav-bar-abajo {
-                        display: none;
-                        position: fixed;
-                        bottom: 0;
-                        left: 0;
-                        right: 0;
-                        background-color: white;
-                        padding: 10px 0;
-                        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-                    }
 
                     .lulada-responsive-bar {
                         display: none;
                         position: fixed;
                         bottom: 0;
+                        left: 0;
+                        right: 0;
+                        width: 100%;
+                        height: 70px;
+                        z-index: 1000;
+                        background-color: white;
+                        border-top: 1px solid #eaeaea;
+                        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+                    }
+
+                    @media (max-width: 1024px) {
+                        .content {
+                            padding: 15px;
+                            gap: 15px;
+                        }
+                        
+                        .suggestions-section {
+                            width: 200px;
+                        }
+                    }
+
+                    @media (max-width: 900px) {
+                        .main-layout {
+                            flex-direction: column;
+                            margin-top: 5px;
+                            margin-bottom: 80px; 
+                        }
+                        
+                        .sidebar {
+                            display: none !important; 
+                        }
+                        
+                        .content {
+                            flex-direction: column;
+                            padding: 10px;
+                            gap: 10px;
+                        }
+                        
+                        .suggestions-section {
+                            display: none !important; 
+                        }
+                        
+                        .lulada-responsive-bar {
+                            display: block !important;                         }
+                    }
+
+                    @media (max-width: 480px) {
+                        .content {
+                            padding: 8px;
+                        }
+                        
+                        .main-layout {
+                            margin-bottom: 70px;
+                        }
+                        
+                        .lulada-responsive-bar {
+                            height: 60px;
+                        }
+                    }
+
+                    @media (max-width: 900px) and (orientation: landscape) {
+                        .main-layout {
+                            margin-bottom: 60px;
+                        }
+                        
+                        .lulada-responsive-bar {
+                            height: 50px;
+                        }
                     }
 
                 </style>
@@ -74,10 +142,11 @@ export class Home extends HTMLElement {
                             <lulada-suggestions></lulada-suggestions>
                         </div>
                     </div>
-                    
-                    <div class="lulada-responsive-bar">
-                        <lulada-responsive-bar></lulada-responsive-bar>
-                    </div>
+                </div>
+                
+                <div class="lulada-responsive-bar">
+                    <lulada-responsive-bar></lulada-responsive-bar>
+                </div>
             `;
 
             this.shadowRoot.addEventListener('location-select', (e: Event) => {
@@ -90,37 +159,37 @@ export class Home extends HTMLElement {
                 console.log("Se seleccionó menú: " + event.detail.menuItem);
             });
         }
-        //estamos vinculando el bind al resizeHandler este asegura que el componente se mantenga en su forma original  
+        
         this.resizeHandler = this.resizeHandler.bind(this);
-        this.resizeHandler(); //llamamos al metodo resizeHandler para que se ejecute una vez al cargar el componente
-
-    }//metodo de ciclo de vida que se ejecuta cuando se conecta el dom
+        this.resizeHandler(); 
+    }
+    
     connectedCallback() {
-        //llamamos un evento rize que llama el metodo rizehandler que cada vez que se cambie el tamaño de la pantalla
         window.addEventListener('resize', this.resizeHandler);
-    }//es lo contratri que se desconecta de dom de componente
+    }
+    
     disconnectedCallback(){
-        //estoy eliminando el evento para que no hayan fugas
         window.removeEventListener('resize', this.resizeHandler);
-    }//es un metodo que se relizara cada vez que que se redimensione la ventana
+    }
+    
     resizeHandler() {
         const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
-        const mainLayout = this.shadowRoot?.querySelector ('.main-layout') as HTMLDivElement;
+        const mainLayout = this.shadowRoot?.querySelector('.main-layout') as HTMLDivElement;
         const navBar = this.shadowRoot?.querySelector('.lulada-responsive-bar') as HTMLDivElement;
         const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
+        
         if (suggestions && mainLayout && navBar && sidebar) {
-            if (window.innerWidth < 900){ // Cuando la pantalla es pequeña
-                sidebar.style.display = 'none'; // Ocultamos la barra lateral
-                suggestions.style.display = 'none'; // Ocultamos las sugerencias
-                navBar.style.display = 'block'; // Mostramos la barra de navegación
-
-            }else{
+            if (window.innerWidth < 900) { 
+                sidebar.style.display = 'none'; 
+                suggestions.style.display = 'none'; 
+                navBar.style.display = 'block'; 
+            } else {
                 suggestions.style.display = 'block';
                 navBar.style.display = 'none';
                 sidebar.style.display = 'block';
             }
         }
-
     }
 }
+
 export default Home;

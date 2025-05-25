@@ -1,5 +1,4 @@
 import LuladaNotifications from './Pages/Notifications/Notifications';
-import NavigationBar from './Components/Home/Navbars/responsivebar';
 //Root Component
 import RootComponent from "./Components/Root/RootComponent";
 //Root component
@@ -74,7 +73,6 @@ import NewAccount from "./Pages/NewAccount/containernewaccount";
 
 //inicio de confirmRole
 import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
-
 //fin de confirmRole
 
 import luladaResponsiveHeader from "./Components/Home/Header/reponsiveheader";
@@ -89,7 +87,7 @@ import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
 // IMPORTANTE: Inicializar y exponer el servicio inmediatamente
 const antojarService = AntojarPopupService.getInstance();
 antojarService.initialize();
-window.AntojarPopupService = AntojarPopupService;
+(window as any).AntojarPopupService = AntojarPopupService;
 
 customElements.define('lulada-header-complete', HeaderCompleto);
 
@@ -113,12 +111,12 @@ customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 //fin home
 
-//inico de componete de header 
-customElements.define('lulada-responsive-header', luladaResponsiveHeader);
+//inico de componente de header responsive
+// Asegurar que el archivo se ejecute para registrar lulada-responsive-bar
+luladaResponsiveHeader; // Referencia para forzar ejecución
+// NOTA: lulada-responsive-header y lulada-responsive-bar se registran automáticamente
 // final responsive header
 
-//inicio de barra
-customElements.define('lulada-responsive-bar', NavigationBar);
 //Inicio Explorer
 customElements.define('header-explorer', HeaderExplorer);
 customElements.define('explore-container', ExploreContainer);
@@ -169,17 +167,15 @@ customElements.define('lulada-notifications',LuladaNotifications);
 
 //inicio de newaccount
 customElements.define('register-new-account', NewAccount);
-
 //fin de newaccount
 
 //inicio de confirmRole
 customElements.define('confirm-role', ConfirmRole);
 //fin de confirmRole
 
-// Registrar los componentes personalizados
-customElements.define('lulada-antojar', LuladaAntojar);
-customElements.define('lulada-antojar-boton', LuladaAntojarBoton);
-//Fin de registrar los componentes personalizados
+// Componentes de antojar se registran automáticamente al importarse
+// NOTA: LuladaAntojar y LuladaAntojarBoton se registran automáticamente
+//Fin de componentes antojar
 
 // Inicializar el servicio cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {

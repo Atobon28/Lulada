@@ -30,7 +30,7 @@ class restaurantInfo extends HTMLElement {
                 margin: auto;                    
                 margin-left: 5.8rem;
                 margin-right: 5.8rem;
-                
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             }
 
             .etiquetados {
@@ -73,13 +73,13 @@ class restaurantInfo extends HTMLElement {
                 color: #000;
                 margin-top: 0.4rem;
                 margin-bottom: 0.5rem;
-
             }
             
             .descripcion {
                 font-size: 1rem;
                 color: #333;
                 margin-top: 0.375rem;
+                line-height: 1.4;
             }
             
             hr {
@@ -93,34 +93,73 @@ class restaurantInfo extends HTMLElement {
                 gap: 0.3rem;
                 align-items: center;
                 margin-top: 0.05rem;
-
+                flex-wrap: wrap;
             }
 
             .locationText {
                 font-size: 1rem;
+                color: #666;
             }
 
             .location-icon {
                 width: 1.5rem;
                 height: 1.5rem;
+                flex-shrink: 0;
             }
 
             .link {
                 display: flex;
                 gap: 0.3rem;
                 align-items: center;
+                margin-top: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            .MenuLink {
+                color: #AAAB54;
+                text-decoration: none;
+                font-size: 1rem;
+            }
+
+            .MenuLink:hover {
+                text-decoration: underline;
+                color: #999A4A;
             }
 
             .stars {
                 color: #FFD700;
+                font-size: 1.2rem;
+                margin-top: 0.5rem;
+            }
+
+            @media (max-width: 1024px) {
+                .userTopCompleto {
+                    margin-left: 2rem;
+                    margin-right: 2rem;
+                    max-width: 95%;
+                }
+                
+                .userTopFoto img {
+                    width: 12rem;
+                    height: 12rem;
+                }
             }
             
-            /* Responsive */
             @media (max-width: 768px) {
-
                 .userTopCompleto {
-                    
+                    margin-left: 1rem;
+                    margin-right: 1rem;
+                    max-width: 100%;
+                    padding: 1rem;
                 }
+
+                .userTop {
+                    flex-direction: column;
+                    text-align: center;
+                    min-width: auto;
+                    gap: 1rem;
+                }
+
                 .userTopFoto img {
                     width: 10rem;
                     height: 10rem;
@@ -128,47 +167,100 @@ class restaurantInfo extends HTMLElement {
             
                 .nombre {
                     font-size: 1.25rem;
-                    margin: 0.1rem;
+                    margin: 0.3rem 0;
                 }
 
                 .etiquetados {
                     font-size: 0.65rem;
                     font-weight: bold;
+                    margin-left: 1rem;
+                    text-align: center;
                 }
             
                 .nombreDeUsuario {
                     font-size: 1rem;
-                    margin: 0.1rem;
+                    margin: 0.3rem 0;
                 }
             
                 .descripcion {
-                    font-size: 0.75rem;
-                    margin: 0.1rem;
+                    font-size: 0.85rem;
+                    margin: 0.3rem 0;
+                    text-align: center;
+                }
+
+                .location {
+                    justify-content: center;
+                    margin-top: 0.5rem;
+                }
+
+                .link {
+                    justify-content: center;
                 }
 
                 .stars {
-                    font-size: 0.8rem;
-                    margin: 0.2rem;
+                    font-size: 1rem;
+                    margin: 0.5rem 0;
                 }
 
                 .locationText {
-                    font-size: 0.8rem;
+                    font-size: 0.9rem;
                     margin: 0.2rem;
                 }
+                
                 .location-icon {
-                    width: 1rem;
-                    height: 1rem;
+                    width: 1.2rem;
+                    height: 1.2rem;
                     margin: 0.2rem;
                 }
 
                 .MenuLink {
-                    font-size: 0.8rem;
+                    font-size: 0.9rem;
                     margin: 0.2rem; 
                 }
+            }
 
-                .MenuLink:hover {
-                    text-decoration: underline;
-                    color:rgb(114, 114, 56);
+            @media (max-width: 480px) {
+                .userTopCompleto {
+                    margin: 0.5rem;
+                    padding: 0.75rem;
+                }
+
+                .userTopFoto img {
+                    width: 8rem;
+                    height: 8rem;
+                }
+                
+                .nombre {
+                    font-size: 1.1rem;
+                }
+                
+                .nombreDeUsuario {
+                    font-size: 0.9rem;
+                }
+                
+                .descripcion {
+                    font-size: 0.8rem;
+                }
+
+                .etiquetados {
+                    margin-left: 0.5rem;
+                }
+
+                .stars {
+                    font-size: 0.9rem;
+                }
+
+                .locationText {
+                    font-size: 0.8rem;
+                }
+                
+                .location-icon {
+                    width: 1rem;
+                    height: 1rem;
+                }
+
+                .MenuLink {
+                    font-size: 0.8rem;
                 }
             }
             </style>            
@@ -187,14 +279,14 @@ class restaurantInfo extends HTMLElement {
                             <div class="location">
                                 <svg class="action-icon location-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle   circle cx="12" cy="10" r="3"></circle>
+                                <circle cx="12" cy="10" r="3"></circle>
                                 </svg>
                                 <p class="locationText">${User.locationText ?? "No se ha registrado una ubicacion aun"}</p>
                             </div>
         
                         <div class="link"> 
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><g fill="currentColor"><path d="M12.243 3.757a2 2 0 0 0-2.829 0L7.293 5.88L5.879 4.464L8 2.344a4 4 0 0 1 5.657 0l.707.706l-.09.09A4 4 0 0 1 13.658 8l-2.121 2.121l-1.415-1.414l2.122-2.121a2 2 0 0 0 0-2.829Zm-8.486 8.486a2 2 0 0 0 2.829 0l2.121-2.122l1.414 1.415L8 13.655a4 4 0 0 1-5.657 0l-.707-.706l.09-.09A4 4 0 0 1 2.342 8l2.121-2.121L5.88 7.293L3.757 9.414a2 2 0 0 0 0 2.829"/><path d="M10.828 6.586L9.414 5.172L5.172 9.414l1.414 1.414z"/></g></svg>
-                            <p class="MenuLink">${User.menuLink ?? ' '}</p>
+                            <a href="${User.menuLink}" class="MenuLink" target="_blank">${User.menuLink ?? 'Sin menú disponible'}</a>
                         </div>
         
                         <div class="stars">

@@ -22,6 +22,7 @@ class UserEditButton extends HTMLElement {
                 width: 5rem;
                 height: 2.5rem;
                 font-family: 'Inter', sans-serif;
+                transition: background-color 0.3s ease;
             }
 
             .userEditar button:hover {
@@ -30,10 +31,24 @@ class UserEditButton extends HTMLElement {
 
             /* Responsive */
             @media (max-width: 768px) {
+                .userEditar {
+                    text-align: center;
+                    padding: 0.5rem;
+                }
+                
                 .userEditar button {
                     width: auto;
                     min-width: 4rem;
-                    ont-size: 1rem;
+                    font-size: 0.9rem; 
+                    padding: 0.4rem 0.8rem;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .userEditar button {
+                    font-size: 0.8rem;
+                    padding: 0.3rem 0.6rem;
+                    height: 2rem;
                 }
             }
 
