@@ -1,218 +1,114 @@
 class PUser extends HTMLElement {
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+    }
 
+    connectedCallback() {
+        this.render();
+        this.setupEventListeners();
+        // Configurar el resize handler
+        window.addEventListener('resize', this.handleResize.bind(this));
+        this.handleResize(); // Ejecutar una vez al cargar
+    }
+
+    disconnectedCallback() {
+        // Limpiar el event listener
+        window.removeEventListener('resize', this.handleResize.bind(this));
+    }
+
+    render() {
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = /*html*/ `
             <style>
-            :host {
-                display: block;
-                font-family: 'Inter', sans-serif;
-            }
-            
-            .header-wrapper {
-                width: 100%;
-                background-color: white;
-                padding: 20px 0 10px 20px;
-                border-bottom: 1px solid #eaeaea;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                position: relative;
-            }
-                    
-            .logo-container {
-                width: 300px;
-            }
-
-            .main-layout {
-                display: flex;
-                margin-top: 10px;
-                min-height: calc(100vh - 100px);
-            }
-            
-            .sidebar {
-                width: 250px;
-                flex-shrink: 0;
-            }
-
-            .medium-content {
-                flex-grow: 1;
-                display: flex; 
-                flex-direction: column;
-                min-width: 0;
-            }
-
-            .user-profile {
-                width: 100%;
-            }
-
-            .content {
-                flex-grow: 1;
-                display: flex; 
-                padding: 20px;
-                gap: 20px;
-            }
-            
-            .reviews-section {
-                margin-left: 5.9rem;
-                margin-right: 5.9rem;
-                background-color: white;
-                flex-grow: 1;
-                min-width: 0;
-            }
-
-            .suggestions-section {
-                width: 250px; 
-                padding: 20px 10px;
-                flex-shrink: 0;
-            }
-            
-            .no-content {
-                padding: 40px;
-                text-align: center;
-                color: #666;
-                font-style: italic;
-                background-color: #f9f9f9;
-                border-radius: 8px;
-                margin-top: 20px;
-            }
-
-            .lulada-responsive-bar {
-                display: none;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                width: 100%;
-                height: 70px;
-                z-index: 1000;
-                background-color: white;
-                border-top: 1px solid #eaeaea;
-                box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-            }
-
-            @media (max-width: 1024px) {
-                .header-wrapper {
-                    padding: 15px 0 8px 15px;
-                }
-                
-                .logo-container {
-                    width: 250px;
-                }
-                
-                .reviews-section {
-                    margin-left: 2rem;
-                    margin-right: 2rem;
-                }
-                
-                .content {
-                    padding: 15px;
-                    gap: 15px;
-                }
-                
-                .suggestions-section {
-                    width: 200px;
-                    padding: 15px 8px;
-                }
-            }
-
-            @media (max-width: 768px) {
-                .header-wrapper {
-                    padding: 10px 0 5px 10px;
-                }
-                
-                .logo-container {
-                    width: 200px;
+                :host {
+                    display: block;
+                    font-family: Arial, sans-serif;
                 }
                 
                 .main-layout {
-                    flex-direction: column;
-                    margin-top: 5px;
-                    margin-bottom: 80px;
-                }
-                
-                .sidebar {
-                    display: none;
-                }
-                
-                .medium-content {
-                    order: 1;
-                    width: 100%;
-                }
-                
-                .content {
-                    flex-direction: column;
-                    padding: 10px;
-                    gap: 10px;
-                }
-                
-                .reviews-section {
-                    margin-left: 1rem;
-                    margin-right: 1rem;
-                }
-                
-                .suggestions-section {
-                    display: none;
-                }
-
-                .lulada-responsive-bar {
-                    display: block;
-                }
-            }
-
-            @media (max-width: 480px) {
-                .header-wrapper {
-                    padding: 8px 0 5px 8px;
-                }
-                
-                .logo-container {
-                    width: 180px;
-                }
-                
-                .content {
-                    padding: 8px;
-                }
-                
-                .reviews-section {
-                    margin-left: 0.5rem;
-                    margin-right: 0.5rem;
-                }
-                
-                .suggestions-section {
-                    padding: 10px;
-                }
-                
-                .no-content {
-                    padding: 20px;
+                    display: flex;
                     margin-top: 10px;
                 }
                 
-                .main-layout {
-                    margin-bottom: 70px;
+                .sidebar {
+                    width: 250px;
                 }
-                
-                .lulada-responsive-bar {
-                    height: 60px;
-                }
-            }
 
-            @media (max-width: 768px) and (orientation: landscape) {
-                .main-layout {
-                    margin-bottom: 60px;
+                .medium-content {
+                    flex-grow: 1;
+                    display: flex; 
+                    flex-direction: column;
+                }
+
+                .content {
+                    flex-grow: 1;
+                    display: flex; 
+                    padding: 20px;
                 }
                 
-                .lulada-responsive-bar {
-                    height: 50px;
+                .reviews-section {
+                    margin-left: 5.9rem;
+                    margin-right: 5.9rem;
+                    background-color: white;
+                    flex-grow: 1; 
                 }
-            }
+
+                .suggestions-section {
+                    width: 250px; 
+                    padding: 20px 10px;
+                }
+                
+                .no-content {
+                    padding: 40px;
+                    text-align: center;
+                    color: #666;
+                    font-style: italic;
+                    background-color: #f9f9f9;
+                    border-radius: 8px;
+                    margin-top: 20px;
+                }
+
+                .responsive-bar {
+                    display: none;
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    background-color: white;
+                    padding: 10px 0;
+                    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+                }
+
+                /* Responsive styles */
+                @media (max-width: 900px) {
+                    .sidebar {
+                        display: none;
+                    }
+                    
+                    .suggestions-section {
+                        display: none;
+                    }
+                    
+                    .responsive-bar {
+                        display: block;
+                    }
+                    
+                    .reviews-section {
+                        margin-left: 1rem;
+                        margin-right: 1rem;
+                    }
+                }
             </style>
             
-            <lulada-header-complete></lulada-header-complete>
+            <!-- Usar lulada-logo como header universal -->
+            <lulada-logo></lulada-logo>
                 
             <div class="main-layout">
-               <div class="sidebar">
-                   <lulada-sidebar></lulada-sidebar>
-               </div>
+                <div class="sidebar">
+                    <lulada-sidebar></lulada-sidebar>
+                </div>
                 <div class="medium-content">
                     <div class="user-profile">
                         <user-profile></user-profile>
@@ -227,43 +123,46 @@ class PUser extends HTMLElement {
                         </div>
                     </div>
                 </div>
-                   <div class="suggestions-section">
-                       <lulada-suggestions></lulada-suggestions>
-                   </div>
-               </div>
-
-               <div class="lulada-responsive-bar">
-                   <lulada-responsive-bar></lulada-responsive-bar>
-               </div>
+                <div class="suggestions-section">
+                    <lulada-suggestions></lulada-suggestions>
+                </div>
+            </div>
+            
+            <!-- Barra responsive para móviles -->
+            <div class="responsive-bar">
+                <lulada-responsive-bar></lulada-responsive-bar>
+            </div>
             `;
         }
-        
-        this.resizeHandler = this.resizeHandler.bind(this);
-        this.resizeHandler();
     }
 
-    connectedCallback() {
-        window.addEventListener('resize', this.resizeHandler);
+    setupEventListeners() {
+        // Escuchar eventos de navegación
+        if (this.shadowRoot) {
+            this.shadowRoot.addEventListener('navigate', (event: Event) => {
+                const customEvent = event as CustomEvent;
+                // Reenviar el evento hacia arriba para que lo maneje LoadPage
+                document.dispatchEvent(new CustomEvent('navigate', {
+                    detail: customEvent.detail
+                }));
+            });
+        }
     }
-    
-    disconnectedCallback(){
-        window.removeEventListener('resize', this.resizeHandler);
-    }
-    
-    resizeHandler() {
-        const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
-        const navBar = this.shadowRoot?.querySelector('.lulada-responsive-bar') as HTMLDivElement;
+
+    handleResize() {
         const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
-        
-        if (suggestions && navBar && sidebar) {
-            if (window.innerWidth < 768) {
+        const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
+        const responsiveBar = this.shadowRoot?.querySelector('.responsive-bar') as HTMLDivElement;
+
+        if (sidebar && suggestions && responsiveBar) {
+            if (window.innerWidth < 900) {
                 sidebar.style.display = 'none';
                 suggestions.style.display = 'none';
-                navBar.style.display = 'block';
+                responsiveBar.style.display = 'block';
             } else {
-                suggestions.style.display = 'block';
-                navBar.style.display = 'none';
                 sidebar.style.display = 'block';
+                suggestions.style.display = 'block';
+                responsiveBar.style.display = 'none';
             }
         }
     }
