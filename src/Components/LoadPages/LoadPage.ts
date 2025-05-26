@@ -27,6 +27,18 @@ class LoadPage extends HTMLElement {
             const route = (event as CustomEvent).detail; //toma la ruta del evento
             this.updateView(route); //actualiza la vista a esa ruta
         });
+
+        // Escuchar eventos de "back" desde componentes de configuración
+        document.addEventListener('back', () => {
+            console.log('Back button pressed, returning to configurations');
+            this.updateView('/configurations');
+        });
+
+        // Escuchar eventos de "save" desde componentes de configuración
+        document.addEventListener('save', () => {
+            console.log('Save button pressed, returning to configurations');
+            this.updateView('/configurations');
+        });
     }
 
     render(){
@@ -62,6 +74,16 @@ class LoadPage extends HTMLElement {
                 break;
             case "/profile":
                 newComponent = `<puser-page></puser-page>`;
+                break;
+            // NUEVAS RUTAS para páginas de configuración específicas
+            case "/cambiar-correo":
+                newComponent = `<lulada-cambiar-correo></lulada-cambiar-correo>`;
+                break;
+            case "/cambiar-nombre":
+                newComponent = `<lulada-cambiar-nombre></lulada-cambiar-nombre>`;
+                break;
+            case "/cambiar-contraseña":
+                newComponent = `<lulada-cambiar-contraseña></lulada-cambiar-contraseña>`;
                 break;
             default:
                 newComponent = `<lulada-home></lulada-home>`;

@@ -64,6 +64,12 @@ import CambiarNU from "./Components/Settings/CambiarNombre/cambiarNU";
 import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontra";
 import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF"
 import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
+import CambiarNombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
+import CajonListInteractive from "./Components/Settings/CajonListInteractive";
+import CambiarCorreoSimple from "./Components/Settings/CambiarCorreoSimple";
+import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
+import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
+
 //Cierre pagina settings
 
 //newaccount
@@ -87,7 +93,7 @@ import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
 // IMPORTANTE: Inicializar y exponer el servicio inmediatamente
 const antojarService = AntojarPopupService.getInstance();
 antojarService.initialize();
-(window as any).AntojarPopupService = AntojarPopupService;
+window.AntojarPopupService = AntojarPopupService;
 
 customElements.define('lulada-header-complete', HeaderCompleto);
 
@@ -113,7 +119,7 @@ customElements.define('lulada-suggestions', Suggestions);
 
 //inico de componente de header responsive
 // Asegurar que el archivo se ejecute para registrar lulada-responsive-bar
-luladaResponsiveHeader; // Referencia para forzar ejecución
+void luladaResponsiveHeader; // Referencia para forzar ejecución
 // NOTA: lulada-responsive-header y lulada-responsive-bar se registran automáticamente
 // final responsive header
 
@@ -157,6 +163,11 @@ customElements.define('cambiar-nombre', CambiarNU);
 customElements.define('cambiar-contraseña', CambiarContra);
 customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
 customElements.define('lulada-cambiar-correo', CambiarCorreoF);
+customElements.define('lulada-cambiar-nombre', CambiarNombreUsuraio);
+customElements.define('cajon-list-interactive', CajonListInteractive);
+customElements.define('cambiar-correo-simple', CambiarCorreoSimple);
+customElements.define('cambiar-nombre-simple', CambiarNombreSimple);
+customElements.define('cambiar-contrasena-simple', CambiarContrasenaSimple);
 //Cierre pagina settings
 
 //inicio de notifications
@@ -185,3 +196,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Exportar todo para uso en la aplicación
 export { LuladaAntojar, LuladaAntojarBoton, AntojarPopupService };
+
+// Versión limpia para index.ts (sin tanto debug)
+document.addEventListener('DOMContentLoaded', () => {
+    // Listener para eventos back
+    document.addEventListener('back', () => {
+        const navEvent = new CustomEvent('navigate', { 
+            detail: '/configurations',
+            bubbles: true,
+            composed: true
+        });
+        document.dispatchEvent(navEvent);
+    });
+    
+    // Listener para eventos save
+    document.addEventListener('save', () => {
+        // Mostrar mensaje de éxito
+        const message = document.createElement('div');
+        message.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 9999;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+        `;
+        message.textContent = '¡Cambios guardados exitosamente!';
+        document.body.appendChild(message);
+        
+        setTimeout(() => {
+            if (document.body.contains(message)) {
+                document.body.removeChild(message);
+            }
+        }, 2000);
+        
+        // Navegar de vuelta después de un momento
+        setTimeout(() => {
+            const navEvent = new CustomEvent('navigate', { 
+                detail: '/configurations'
+            });
+            document.dispatchEvent(navEvent);
+        }, 1000);
+    });
+});
