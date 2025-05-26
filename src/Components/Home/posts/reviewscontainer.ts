@@ -2,7 +2,7 @@ import './publications';
 import './reviews';
 
 export class ReviewsContainer extends HTMLElement {
-    reviews = [
+    defaultReviews = [
         {
             username: "CrisTiJauregui",
             text: "El coctel de hierva buena en @BarBurguer esta super delicioso para los amantes como yo de los sabores frescos, costo 20.000 y lo recomiendo 100%",
@@ -33,6 +33,11 @@ export class ReviewsContainer extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this.render();
+        
+        // Escuchar eventos de nueva publicación
+        document.addEventListener('resena-publicada', () => {
+            this.render();
+        });
     }
 
     static get observedAttributes() {
@@ -46,14 +51,23 @@ export class ReviewsContainer extends HTMLElement {
         }
     }
 
+    getAllReviews() {
+        // Obtener publicaciones guardadas de sessionStorage
+        const savedReviews = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
+        
+        // Combinar con las reseñas por defecto
+        return [...savedReviews, ...this.defaultReviews];
+    }
+
     render() {
         if (!this.shadowRoot) return;
 
         let reviewsHTML = '';
         
+        const allReviews = this.getAllReviews();
         const filteredReviews = this.locationFilter 
-            ? this.reviews.filter(review => review.location === this.locationFilter)
-            : this.reviews;
+            ? allReviews.filter(review => review.location === this.locationFilter)
+            : allReviews;
             
         filteredReviews.forEach(review => {
             reviewsHTML += `
@@ -91,6 +105,23 @@ export class ReviewsContainer extends HTMLElement {
                     border-radius: 20px;
                     box-shadow: 0 30px 30px rgba(0, 0, 0, 0.1);
                     font-size: 16px;
+                }
+                
+                .new-post-indicator {
+                    background: linear-gradient(45deg, #AAAB54, #d4d553);
+                    color: white;
+                    padding: 2px 8px;
+                    border-radius: 12px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin-left: 8px;
+                    animation: pulse 2s infinite;
+                }
+                
+                @keyframes pulse {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.7; }
+                    100% { opacity: 1; }
                 }
             </style>
             

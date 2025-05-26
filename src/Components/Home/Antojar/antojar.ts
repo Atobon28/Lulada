@@ -2,6 +2,7 @@ export class LuladaAntojar extends HTMLElement {
     shadow: ShadowRoot;
     selectedStars: number = 0;
     locationSelected: boolean = false;
+    selectedZone: string = "";
 
     constructor() {
         super();
@@ -80,6 +81,30 @@ export class LuladaAntojar extends HTMLElement {
                     color: #333;
                     box-sizing: border-box;
                 }
+                .zone-selector {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 16px;
+                    gap: 10px;
+                }
+                .zone-label {
+                    font-size: 16px;
+                    color: #666;
+                    min-width: 120px;
+                }
+                .zone-select {
+                    padding: 8px 12px;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    color: #333;
+                    background-color: white;
+                    min-width: 120px;
+                }
+                .zone-select:focus {
+                    outline: none;
+                    border-color: #AAAB54;
+                }
                 .bottom-actions {
                     display: flex;
                     justify-content: space-between;
@@ -148,6 +173,11 @@ export class LuladaAntojar extends HTMLElement {
                     transform: scale(1.05);
                     background-color: rgb(132, 134, 58);
                 }
+                .publish-button:disabled {
+                    background-color: #ccc;
+                    cursor: not-allowed;
+                    transform: none;
+                }
                 .icon-container {
                     display: flex;
                     align-items: center;
@@ -171,9 +201,21 @@ export class LuladaAntojar extends HTMLElement {
                         alt="Profile" 
                         class="profile-pic"
                     >
-                    <div class="header-text">Que probaste?</div>
+                    <div class="header-text">¿Qué probaste?</div>
                 </div>
-                <textarea placeholder=""></textarea>
+                <textarea placeholder="Cuéntanos tu experiencia..."></textarea>
+                
+                <div class="zone-selector">
+                    <label class="zone-label" for="zone-select">Zona de Cali:</label>
+                    <select id="zone-select" class="zone-select">
+                        <option value="">Seleccionar zona</option>
+                        <option value="centro">Centro</option>
+                        <option value="norte">Norte</option>
+                        <option value="sur">Sur</option>
+                        <option value="oeste">Oeste</option>
+                    </select>
+                </div>
+                
                 <div class="bottom-actions">
                     <div class="icon-container">
                         <div class="icon-wrapper">
@@ -207,124 +249,173 @@ export class LuladaAntojar extends HTMLElement {
     }
 
     setupEvents() {
-        console.log("Configurando eventos del componente LuladaAntojar"); // Muestra un mensaje en la consola indicando que se están configurando los eventos
-        const cerrar = this.shadow.querySelector('#cerrar'); // Busca el elemento con id 'cerrar' en el shadow DOM
-        const publicar = this.shadow.querySelector('#publicar'); // Busca el elemento con id 'publicar' en el shadow DOM
-        const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement; // Busca el elemento textarea y lo convierte al tipo HTMLTextAreaElement
-        const estrellas = this.shadow.querySelectorAll('.star-outline'); // Busca todos los elementos con clase 'star-outline'
-        const locationIcon = this.shadow.querySelector('#location-icon'); // Busca el elemento con id 'location-icon'
+        console.log("Configurando eventos del componente LuladaAntojar");
+        const cerrar = this.shadow.querySelector('#cerrar');
+        const publicar = this.shadow.querySelector('#publicar');
+        const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
+        const estrellas = this.shadow.querySelectorAll('.star-outline');
+        const locationIcon = this.shadow.querySelector('#location-icon');
+        const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
 
         if (cerrar) {
-            cerrar.addEventListener('click', () => { // Agrega un evento click al botón cerrar
-                console.log("Botón cerrar clickeado"); // Muestra mensaje en consola cuando se hace clic
-                // Reiniciar el estado del componente al cerrar
-                this.resetComponentState(); // Llama al método para reiniciar el estado del componente
-                this.dispatchEvent(new CustomEvent('antojar-cerrado', { bubbles: true, composed: true })); // Dispara un evento personalizado 'antojar-cerrado' que puede ser escuchado por componentes padre
+            cerrar.addEventListener('click', () => {
+                console.log("Botón cerrar clickeado");
+                this.resetComponentState();
+                this.dispatchEvent(new CustomEvent('antojar-cerrado', { bubbles: true, composed: true }));
             });
-        } else {
-            console.error("Botón cerrar no encontrado"); // Muestra un error si no se encuentra el botón
         }
 
         if (publicar) {
-            publicar.addEventListener('click', () => { // Agrega un evento click al botón publicar
-                console.log("Botón publicar clickeado"); // Muestra mensaje en consola
-                const texto = textarea.value.trim(); // Obtiene el texto del textarea y elimina espacios en blanco
-                if (texto) { // Verifica que el texto no esté vacío
-                    this.dispatchEvent(new CustomEvent('resena-publicada', { // Dispara evento personalizado con los datos de la reseña
-                        detail: { // Incluye detalles de la reseña
-                            texto: texto, // El texto escrito en el textarea
-                            estrellas: this.selectedStars, // Cantidad de estrellas seleccionadas
-                            ubicacion: this.locationSelected // Si se seleccionó compartir ubicación
-                        },
-                        bubbles: true, // Permite que el evento se propague hacia arriba en el DOM
-                        composed: true // Permite que el evento cruce los límites del Shadow DOM
+            publicar.addEventListener('click', () => {
+                console.log("Botón publicar clickeado");
+                const texto = textarea.value.trim();
+                if (texto && this.selectedStars > 0 && this.selectedZone) {
+                    // Crear objeto de publicación
+                    const nuevaPublicacion = {
+                        username: "Usuario" + Math.floor(Math.random() * 1000),
+                        text: texto,
+                        stars: this.selectedStars,
+                        location: this.selectedZone,
+                        hasImage: false,
+                        timestamp: Date.now()
+                    };
+
+                    // Guardar en sessionStorage
+                    let publicaciones = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
+                    publicaciones.unshift(nuevaPublicacion); // Agregar al inicio
+                    sessionStorage.setItem('publicaciones', JSON.stringify(publicaciones));
+
+                    this.dispatchEvent(new CustomEvent('resena-publicada', {
+                        detail: nuevaPublicacion,
+                        bubbles: true,
+                        composed: true
                     }));
-                    // Reiniciar el estado del componente después de publicar
-                    this.resetComponentState(); // Limpia el formulario después de publicar
+
+                    this.resetComponentState();
+                    
+                    // Mostrar mensaje de éxito
+                    alert('¡Publicación creada exitosamente!');
+                } else {
+                    alert('Por favor completa todos los campos: texto, calificación y zona.');
                 }
             });
-        } else {
-            console.error("Botón publicar no encontrado"); // Muestra error si no encuentra el botón
         }
 
-        // Funcionalidad para las estrellas (ahora con ☆)
-        estrellas.forEach((estrella) => { // Itera sobre cada elemento de estrella
-            estrella.addEventListener('click', (e) => { // Agrega evento click a cada estrella
-                const target = e.target as HTMLElement; // Convierte el objetivo del evento a HTMLElement
-                const value = parseInt(target.getAttribute('data-value') || '0'); // Obtiene el valor numérico de la estrella desde el atributo data-value
-                this.selectedStars = value; // Guarda el valor seleccionado
+        // Selector de zona
+        if (zoneSelect) {
+            zoneSelect.addEventListener('change', () => {
+                this.selectedZone = zoneSelect.value;
+                this.updatePublishButton();
+            });
+        }
 
-                // Actualizar visualmente las estrellas con clase active para mantener el color
-                estrellas.forEach((e) => { // Recorre todas las estrellas para actualizar su aspecto
-                    const starValue = parseInt(e.getAttribute('data-value') || '0'); // Obtiene el valor de cada estrella
-                    if (starValue <= value) { // Si la estrella debe estar activa (menor o igual al valor seleccionado)
-                        e.textContent = '★'; // Cambia a estrella rellena
-                        e.classList.add('active'); // Agrega clase para estilo visual
+        // Funcionalidad para las estrellas
+        estrellas.forEach((estrella) => {
+            estrella.addEventListener('click', (e) => {
+                const target = e.target as HTMLElement;
+                const value = parseInt(target.getAttribute('data-value') || '0');
+                this.selectedStars = value;
+
+                estrellas.forEach((e) => {
+                    const starValue = parseInt(e.getAttribute('data-value') || '0');
+                    if (starValue <= value) {
+                        e.textContent = '★';
+                        e.classList.add('active');
                     } else {
-                        e.textContent = '☆'; // Cambia a estrella vacía
-                        e.classList.remove('active'); // Quita clase de estilo
+                        e.textContent = '☆';
+                        e.classList.remove('active');
                     }
                 });
+
+                this.updatePublishButton();
             });
         });
 
         // Funcionalidad para el icono de ubicación
         if (locationIcon) {
-            locationIcon.addEventListener('click', () => { // Agrega evento click al icono de ubicación
-                this.locationSelected = !this.locationSelected; // Invierte el estado de selección de ubicación
+            locationIcon.addEventListener('click', () => {
+                this.locationSelected = !this.locationSelected;
                 if (this.locationSelected) {
-                    locationIcon.classList.add('active'); // Agrega clase si está activo
+                    locationIcon.classList.add('active');
                 } else {
-                    locationIcon.classList.remove('active'); // Quita clase si está inactivo
+                    locationIcon.classList.remove('active');
                 }
+            });
+        }
+
+        // Actualizar botón cuando se escribe
+        if (textarea) {
+            textarea.addEventListener('input', () => {
+                this.updatePublishButton();
             });
         }
     }
 
-    // Método para actualizar la imagen de perfil con una aleatoria
-    updateProfilePicture() {
-        const profilePic = this.shadow.querySelector('#profile-pic') as HTMLImageElement; // Busca la imagen de perfil
-        if (profilePic) {
-            const gender = Math.random() > 0.5 ? 'men' : 'women'; // Selecciona género aleatorio (hombre o mujer)
-            const randomId = Math.floor(Math.random() * 100); // Genera un ID aleatorio entre 0 y 99
-            profilePic.src = `https://randomuser.me/api/portraits/thumb/${gender}/${randomId}.jpg`; // Asigna una URL de imagen aleatoria
+    updatePublishButton() {
+        const publicar = this.shadow.querySelector('#publicar') as HTMLButtonElement;
+        const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
+        
+        if (publicar && textarea) {
+            const hasText = textarea.value.trim().length > 0;
+            const hasStars = this.selectedStars > 0;
+            const hasZone = this.selectedZone !== "";
+            
+            publicar.disabled = !(hasText && hasStars && hasZone);
         }
     }
 
-    // Método para reiniciar el estado del componente
+    updateProfilePicture() {
+        const profilePic = this.shadow.querySelector('#profile-pic') as HTMLImageElement;
+        if (profilePic) {
+            const gender = Math.random() > 0.5 ? 'men' : 'women';
+            const randomId = Math.floor(Math.random() * 100);
+            profilePic.src = `https://randomuser.me/api/portraits/thumb/${gender}/${randomId}.jpg`;
+        }
+    }
+
     resetComponentState() {
-        console.log("Reiniciando estado del componente"); // Mensaje de depuración
-        const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement; // Obtiene el textarea
-        const estrellas = this.shadow.querySelectorAll('.star-outline'); // Obtiene todas las estrellas
-        const locationIcon = this.shadow.querySelector('#location-icon'); // Obtiene el icono de ubicación
+        console.log("Reiniciando estado del componente");
+        const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
+        const estrellas = this.shadow.querySelectorAll('.star-outline');
+        const locationIcon = this.shadow.querySelector('#location-icon');
+        const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
 
         // Limpiar texto
         if (textarea) {
-            textarea.value = ''; // Vacía el contenido del textarea
+            textarea.value = '';
         }
 
         // Resetear estrellas
-        this.selectedStars = 0; // Reinicia la variable de estrellas seleccionadas
+        this.selectedStars = 0;
         estrellas.forEach((estrella) => {
-            estrella.textContent = '☆'; // Cambia todas las estrellas a vacías
-            estrella.classList.remove('active'); // Elimina la clase active de todas las estrellas
+            estrella.textContent = '☆';
+            estrella.classList.remove('active');
         });
 
         // Resetear ubicación
-        this.locationSelected = false; // Desactiva la selección de ubicación
+        this.locationSelected = false;
         if (locationIcon) {
-            locationIcon.classList.remove('active'); // Quita la clase active del icono
+            locationIcon.classList.remove('active');
         }
 
-        // Generar una nueva imagen de perfil aleatoria
-        this.updateProfilePicture(); // Llama al método para actualizar la imagen de perfil
+        // Resetear zona
+        this.selectedZone = "";
+        if (zoneSelect) {
+            zoneSelect.value = "";
+        }
+
+        // Generar nueva imagen de perfil
+        this.updateProfilePicture();
+        
+        // Actualizar botón
+        this.updatePublishButton();
     }
 }
 
 // Asegúrate de que el componente esté registrado una sola vez
-if (!customElements.get('lulada-antojar')) { // Verifica si el componente ya está registrado
-    console.log("Registrando componente LuladaAntojar"); // Mensaje de registro
-    customElements.define('lulada-antojar', LuladaAntojar); // Registra el componente web personalizado
+if (!customElements.get('lulada-antojar')) {
+    console.log("Registrando componente LuladaAntojar");
+    customElements.define('lulada-antojar', LuladaAntojar);
 } else {
-    console.log("Componente LuladaAntojar ya está registrado"); // Informa que ya estaba registrado
+    console.log("Componente LuladaAntojar ya está registrado");
 }
