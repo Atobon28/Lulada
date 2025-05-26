@@ -28,10 +28,10 @@ export class PublicationsService {
             ...publication,
             timestamp: Date.now()
         };
-        
+
         publications.unshift(newPublication); // Agregar al inicio
         this.savePublications(publications);
-        
+
         // Disparar evento personalizado
         document.dispatchEvent(new CustomEvent('nueva-publicacion', {
             detail: newPublication
@@ -81,16 +81,16 @@ export class PublicationsService {
         };
 
         publications.forEach(pub => {
-            if (locationStats.hasOwnProperty(pub.location)) {
-                locationStats[pub.location as keyof typeof locationStats]++;
+            if (Object.hasOwn(locationStats, pub.location)) {
+                locationStats[pub.location]++;
             }
         });
 
         return {
             total: publications.length,
             byLocation: locationStats,
-            averageRating: publications.length > 0 
-                ? publications.reduce((sum, pub) => sum + pub.stars, 0) / publications.length 
+            averageRating: publications.length > 0
+                ? publications.reduce((sum, pub) => sum + pub.stars, 0) / publications.length
                 : 0
         };
     }
