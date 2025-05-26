@@ -1,3 +1,4 @@
+// REEMPLAZAR TODO EL CONTENIDO CON:
 class LoginForm extends HTMLElement {
     constructor() {
         super();
@@ -6,12 +7,15 @@ class LoginForm extends HTMLElement {
             this.shadowRoot.innerHTML = /*html*/ `
                 <style>
                 .login-container {
-                    width: 350px;
+                    width: 100%;
+                    max-width: 350px;
                     padding: 25px;
                     background: white;
                     border-radius: 15px;
                     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
                     text-align: center;
+                    margin: 0 auto;
+                    box-sizing: border-box;
                 }
 
                 .linea {
@@ -40,16 +44,32 @@ class LoginForm extends HTMLElement {
                     text-align: center;
                     font-weight: bold;
                     margin-top: 5px; 
+                    box-sizing: border-box;
                 }
 
                 .register-button:hover {
                     background-color: #E09E00;
                 }
                 
-                
                 caja-de-texto {
                     display: block;
                     margin-bottom: 15px;
+                    width: 100%;
+                }
+
+                @media (max-width: 768px) {
+                    .login-container {
+                        max-width: 100%;
+                        padding: 20px;
+                        margin: 0;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .login-container {
+                        padding: 15px;
+                        border-radius: 10px;
+                    }
                 }
                 </style>
                 <div class="login-container">
@@ -60,11 +80,8 @@ class LoginForm extends HTMLElement {
                     <button class="register-button">Registrate</button>
                 </div>
             `;
-        } else {
-            console.error('shadowRoot is null');
         }
     }
 }
 
 export default LoginForm;
-
