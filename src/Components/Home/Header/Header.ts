@@ -1,3 +1,7 @@
+interface LocationSelectEvent extends CustomEvent {
+  detail: string;
+}
+
 class HeaderHome extends HTMLElement {
   shadowRoot: ShadowRoot;
   currentSelected: string = 'cali';
@@ -19,34 +23,30 @@ class HeaderHome extends HTMLElement {
 
             .header-container {
                 display: flex;
-                align-items: center;
-                padding: 20px 0;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 15px 20px 0px 20px;
+                border-bottom: 1px solid #e0e0e0;
                 width: 100%;
                 position: relative;
-                min-height: 80px;
+                box-sizing: border-box;
             }
 
             .logo-container {
-                position: absolute;
-                left: 0;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 300px;
-                padding-left: 20px;
+                align-self: flex-start;
+                margin-bottom: 15px;
             }
 
-            .center-zone {
+            .navigation-container {
                 width: 100%;
                 display: flex;
                 justify-content: center;
-                align-items: center;
+                padding-bottom: 10px;
             }
 
             .location-tags {
                 display: flex;
-                gap: 25px;
-                align-items: center;
+                gap: 40px;
             }
 
             .location-tags a {
@@ -54,56 +54,58 @@ class HeaderHome extends HTMLElement {
               text-decoration: none;
               color: #666;
               font-weight: bold;
-              padding: 10px 20px;
+              padding: 5px 0;
               transition: all 0.2s ease;
-              border-radius: 25px;
-              cursor: pointer;
-              font-size: 16px;
-              border: 2px solid transparent;
+            }
+
+            .location-tags a::after {
+              content: '';
+              position: absolute;
+              left: 0;
+              bottom: 0;
+              height: 2px;
+              width: 100%;
+              background-color: #AAAB54;
+              transform: scaleX(0);
+              transform-origin: left;
+              transition: transform 0.3s ease;
             }
 
             .location-tags a:hover {
               color: #333;
-              background-color: rgba(170, 171, 84, 0.1);
-              border-color: rgba(170, 171, 84, 0.3);
+              transform: translateY(-2px);
+            }
+
+            .location-tags a:hover::after {
+              transform: scaleX(1);
             }
 
             .location-tags a.active {
-              color: white;
-              background-color: #AAAB54;
-              border-color: #AAAB54;
+              color: #333;
+            }
+
+            .location-tags a.active::after {
+              transform: scaleX(1);
             }
 
             /* Responsive */
             @media (max-width: 900px) {
                 .header-container {
-                    flex-direction: column;
-                    padding: 15px 20px;
-                    min-height: auto;
+                    align-items: center;
                 }
                 
                 .logo-container {
-                    position: static;
-                    transform: none;
-                    width: auto;
-                    padding-left: 0;
-                    margin-bottom: 15px;
-                    text-align: center;
+                    align-self: center;
                 }
                 
-                .center-zone {
-                    width: 100%;
-                }
-                
-                .location-tags {
-                    flex-wrap: wrap;
-                    gap: 10px;
+                .navigation-container {
                     justify-content: center;
                 }
                 
-                .location-tags a {
-                    padding: 8px 16px;
-                    font-size: 14px;
+                .location-tags {
+                    gap: 20px;
+                    flex-wrap: wrap;
+                    justify-content: center;
                 }
             }
         </style>
@@ -112,8 +114,7 @@ class HeaderHome extends HTMLElement {
             <div class="logo-container">
                 <lulada-logo></lulada-logo>
             </div>
-            
-            <div class="center-zone">
+            <div class="navigation-container">
                 <div class="location-tags">
                     <a href="#" data-section="cali" class="active">Cali</a>
                     <a href="#" data-section="norte">Norte</a>
@@ -139,32 +140,27 @@ class HeaderHome extends HTMLElement {
         const section: string | null = target.getAttribute('data-section');
         
         if (section) {
-          // Remover active de todos los enlaces
-          locationLinks.forEach(l => l.classList.remove('active'));
+          // Remover active del anterior
+          const prevSelected = this.shadowRoot.querySelector(`.location-tags a[data-section="${this.currentSelected}"]`);
+          if (prevSelected) {
+            prevSelected.classList.remove('active');
+          }
           
-          // Agregar active al enlace clickeado
+          // Agregar active al nuevo
+          this.currentSelected = section;
           target.classList.add('active');
           
-          // Actualizar el estado actual
-          this.currentSelected = section;
-          
-          // Disparar múltiples eventos para asegurar compatibilidad
-          document.dispatchEvent(new CustomEvent('location-changed', {
-            detail: section
-          }));
-          
+          // Disparar eventos para filtrado
+          this.dispatchEvent(new CustomEvent<string>('location-select', { 
+            detail: section,
+            bubbles: true,
+            composed: true
+          }) as LocationSelectEvent);
+
+          // También disparar el evento que esperan los otros componentes
           document.dispatchEvent(new CustomEvent('location-filter-changed', {
             detail: section
           }));
-          
-          // Evento específico para el componente de reviews
-          const reviewsContainer = document.querySelector('lulada-reviews-container');
-          if (reviewsContainer) {
-            reviewsContainer.dispatchEvent(new CustomEvent('location-select', {
-              detail: section,
-              bubbles: true
-            }));
-          }
           
           console.log('✅ Filtro de ubicación activado:', section);
         }

@@ -3,7 +3,7 @@ import './reviews';
 import PublicationsService, { Publication } from '../../../Services/PublicationsService';
 
 export class ReviewsContainer extends HTMLElement {
-    // Reviews estáticas (las originales)
+    // Reviews estáticas
     staticReviews: Publication[] = [
         {
             username: "CrisTiJauregui",
@@ -11,7 +11,7 @@ export class ReviewsContainer extends HTMLElement {
             stars: 5,
             restaurant: "BarBurguer",
             location: "centro",
-            timestamp: Date.now() - 86400000 // 1 día atrás
+            timestamp: Date.now() - 86400000
         },
         {
             username: "DanaBanana",
@@ -20,7 +20,7 @@ export class ReviewsContainer extends HTMLElement {
             hasImage: true,
             restaurant: "AsianRooftop",
             location: "norte",
-            timestamp: Date.now() - 172800000 // 2 días atrás
+            timestamp: Date.now() - 172800000
         },
         {
             username: "FoodLover",
@@ -28,7 +28,7 @@ export class ReviewsContainer extends HTMLElement {
             stars: 4,
             restaurant: "Frenchrico",
             location: "sur",
-            timestamp: Date.now() - 259200000 // 3 días atrás
+            timestamp: Date.now() - 259200000
         },
         {
             username: "GourmetCali",
@@ -36,7 +36,15 @@ export class ReviewsContainer extends HTMLElement {
             stars: 5,
             restaurant: "SushiLab",
             location: "oeste",
-            timestamp: Date.now() - 345600000 // 4 días atrás
+            timestamp: Date.now() - 345600000
+        },
+        {
+            username: "CafeAddict",
+            text: "El brunch en @MoraCafé me pareció muy completo. Café refill, huevos al gusto y pan artesanal por 35.000. Súper plan de domingo.",
+            stars: 4,
+            restaurant: "MoraCafé",
+            location: "centro",
+            timestamp: Date.now() - 432000000
         }
     ];
 
@@ -47,29 +55,18 @@ export class ReviewsContainer extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this.publicationsService = PublicationsService.getInstance();
-        this.render();
         this.setupEventListeners();
-    }
-
-    static get observedAttributes() {
-        return ['location-filter'];
-    }
-
-    attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
-        if (name === 'location-filter' && oldValue !== newValue) {
-            this.locationFilter = newValue;
-            this.render();
-        }
+        this.render();
     }
 
     setupEventListeners() {
-        // Escuchar eventos de cambio de ubicación del header
+        // Escuchar cambios de filtro de ubicación
         document.addEventListener('location-filter-changed', (e: Event) => {
             const event = e as CustomEvent;
             this.updateLocationFilter(event.detail);
         });
 
-        // Escuchar eventos de cambio de ubicación (compatibilidad)
+        // También desde el document para compatibilidad
         document.addEventListener('location-changed', (e: Event) => {
             const event = e as CustomEvent;
             this.updateLocationFilter(event.detail);
@@ -77,19 +74,13 @@ export class ReviewsContainer extends HTMLElement {
 
         // Escuchar nuevas publicaciones
         document.addEventListener('nueva-publicacion', () => {
-            console.log('Nueva publicación detectada, actualizando reviews...');
+            console.log('📝 Nueva publicación detectada, actualizando reviews...');
             this.render();
-        });
-
-        // También escuchar el evento del header
-        this.addEventListener('location-select', (e: Event) => {
-            const event = e as CustomEvent;
-            this.updateLocationFilter(event.detail);
         });
     }
 
     updateLocationFilter(location: string) {
-        console.log('📍 Actualizando filtro de ubicación a:', location);
+        console.log('📍 ReviewsContainer: Actualizando filtro de ubicación a:', location);
         
         // Si es 'cali', mostrar todos
         this.locationFilter = location === 'cali' ? null : location;
@@ -99,7 +90,7 @@ export class ReviewsContainer extends HTMLElement {
     }
 
     getAllReviews(): Publication[] {
-        // Obtener publicaciones del servicio
+        // Obtener publicaciones dinámicas del servicio
         const dynamicPublications = this.publicationsService.getPublications();
         
         // Combinar publicaciones dinámicas con las estáticas
@@ -121,11 +112,14 @@ export class ReviewsContainer extends HTMLElement {
         
         // Si no hay filtro o es 'cali', mostrar todos
         if (!this.locationFilter || this.locationFilter === 'cali') {
+            console.log('📊 Mostrando todas las reseñas:', allReviews.length);
             return allReviews;
         }
         
         // Filtrar por ubicación específica
-        return allReviews.filter(review => review.location === this.locationFilter);
+        const filtered = allReviews.filter(review => review.location === this.locationFilter);
+        console.log(`📊 Reseñas filtradas para ${this.locationFilter}:`, filtered.length);
+        return filtered;
     }
 
     render() {
@@ -135,7 +129,7 @@ export class ReviewsContainer extends HTMLElement {
         let reviewsHTML = '';
             
         filteredReviews.forEach(review => {
-            const isNew = review.timestamp && (Date.now() - review.timestamp) < 5000; // Marcar como nuevo si es de los últimos 5 segundos
+            const isNew = review.timestamp && (Date.now() - review.timestamp) < 10000; // Marcar como nuevo si es de los últimos 10 segundos
             
             reviewsHTML += `
                 <lulada-publication 
@@ -164,15 +158,26 @@ export class ReviewsContainer extends HTMLElement {
                     margin-bottom: 20px;
                 }
 
+                .filter-info {
+                    text-align: center;
+                    padding: 10px;
+                    margin-bottom: 20px;
+                    background-color: rgba(170, 171, 84, 0.1);
+                    border-radius: 10px;
+                    color: #666;
+                    font-size: 14px;
+                }
+
                 .no-reviews {
                     text-align: center;
-                    padding: 24px;
-                    color: black;
+                    padding: 40px 24px;
+                    color: #666;
                     font-style: italic;
                     background-color: white;
                     border-radius: 20px;
-                    box-shadow: 0 30px 30px rgba(0, 0, 0, 0.1);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                     font-size: 16px;
+                    line-height: 1.5;
                 }
 
                 @keyframes fadeIn {
@@ -184,17 +189,61 @@ export class ReviewsContainer extends HTMLElement {
                     border: 2px solid #4CAF50 !important;
                     animation: fadeIn 0.5s ease-in;
                 }
+
+                @media (max-width: 768px) {
+                    :host {
+                        padding: 12px;
+                    }
+                    
+                    .filter-info {
+                        font-size: 13px;
+                        padding: 8px;
+                    }
+                    
+                    .no-reviews {
+                        padding: 30px 20px;
+                        font-size: 15px;
+                    }
+                }
             </style>
             
-
+            ${this.locationFilter ? `
+                <div class="filter-info">
+                    Mostrando reseñas de: <strong>${this.locationFilter.charAt(0).toUpperCase() + this.locationFilter.slice(1)}</strong>
+                </div>
+            ` : ''}
             
             ${filteredReviews.length > 0 ? 
                 reviewsHTML : 
-                '<div class="no-reviews">No hay reseñas para esta ubicación. ¡Sé el primero en compartir tu experiencia!</div>'
+                `<div class="no-reviews">
+                    ${this.locationFilter ? 
+                        `No hay reseñas para <strong>${this.locationFilter}</strong>.<br>¡Sé el primero en compartir tu experiencia en esta zona!` :
+                        'No hay reseñas disponibles.<br>¡Sé el primero en compartir tu experiencia!'
+                    }
+                </div>`
             }
         `;
 
-        console.log(`Renderizadas ${filteredReviews.length} reseñas para ubicación: ${this.locationFilter || 'todas'}`);
+        console.log(`✅ Renderizadas ${filteredReviews.length} reseñas para ubicación: ${this.locationFilter || 'todas'}`);
+    }
+
+    // Método público para obtener estadísticas
+    getLocationStats() {
+        const allReviews = this.getAllReviews();
+        const stats: { [key: string]: number } = {
+            centro: 0,
+            norte: 0,
+            sur: 0,
+            oeste: 0
+        };
+
+        allReviews.forEach(review => {
+            if (Object.prototype.hasOwnProperty.call(stats, review.location)) {
+                stats[review.location]++;
+            }
+        });
+
+        return stats;
     }
 }
 

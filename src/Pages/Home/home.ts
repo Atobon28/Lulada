@@ -10,76 +10,33 @@ export class Home extends HTMLElement {
                         display: block;
                         font-family: Arial, sans-serif;
                         width: 100%;
-                        overflow-x: hidden; /* Eliminar scroll horizontal */
+                        overflow-x: hidden;
                     }
                     
-                    /* Header siempre visible */
+                    /* Header sticky sin márgenes extra */
                     .header-wrapper {
                         width: 100%;
                         background-color: white;
                         position: sticky;
                         top: 0;
                         z-index: 100;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                        padding: 20px;
-                        box-sizing: border-box;
-                    }
-                    
-                    .header-content {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: flex-start; /* Desktop: alinear a la izquierda */
-                        max-width: 1200px;
-                        margin: 0 auto;
-                        box-sizing: border-box;
-                    }
-                    
-                    .logo-container {
-                        margin-bottom: 20px;
-                        max-width: 100%;
-                    }
-                    
-                    .location-tags {
-                        display: flex;
-                        justify-content: flex-start; /* Desktop: alinear a la izquierda */
-                        gap: 15px;
-                        flex-wrap: wrap;
-                        max-width: 100%;
-                        overflow: hidden;
-                        width: 100%;
-                    }
-                    
-                    .location-tags a {
-                        position: relative;
-                        text-decoration: none;
-                        color: #666;
-                        font-weight: bold;
-                        padding: 8px 15px;
-                        border-radius: 20px;
-                        transition: all 0.2s ease;
-                        white-space: nowrap;
-                    }
-                    
-                    .location-tags a:hover {
-                        color: #333;
-                        background-color: rgba(170, 171, 84, 0.1);
-                    }
-                    
-                    .location-tags a.active {
-                        color: #AAAB54;
-                        background-color: rgba(170, 171, 84, 0.15);
+                        margin: 0;
+                        padding: 0;
                     }
                     
                     .main-layout {
                         display: flex;
-                        margin-top: 10px;
                         width: 100%;
                         box-sizing: border-box;
+                        margin: 0;
                     }
                     
+                    /* DESKTOP: Sidebar visible */
                     .sidebar {
                         width: 250px;
                         flex-shrink: 0;
+                        background-color: white;
+                        border-right: 1px solid #e0e0e0;
                     }
                     
                     .content {
@@ -96,24 +53,17 @@ export class Home extends HTMLElement {
                         box-sizing: border-box;
                     }
                     
+                    /* DESKTOP: Suggestions visible */
                     .suggestions-section {
                         width: 250px;
                         padding: 20px 10px;
                         flex-shrink: 0;
                         box-sizing: border-box;
+                        background-color: white;
+                        border-left: 1px solid #e0e0e0;
                     }
                     
-                    .no-content {
-                        padding: 40px;
-                        text-align: center;
-                        color: #666;
-                        font-style: italic;
-                        background-color: #f9f9f9;
-                        border-radius: 8px;
-                        margin-top: 20px;
-                    }
-                    
-                    /* Barra de navegación responsiva - oculta por defecto */
+                    /* Barra de navegación responsiva - oculta en desktop */
                     .responsive-nav-bar {
                         display: none;
                         position: fixed;
@@ -122,41 +72,25 @@ export class Home extends HTMLElement {
                         right: 0;
                         background-color: white;
                         z-index: 1000;
+                        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
                     }
 
-                    /* Responsive styles */
+                    /* RESPONSIVE: Móvil */
                     @media (max-width: 900px) {
-                        .header-wrapper {
-                            padding: 15px 10px;
-                        }
-                        
-                        .header-content {
-                            align-items: center; /* Móvil: centrar todo */
-                        }
-                        
-                        .logo-container {
-                            text-align: center; /* Centrar el logo en móvil */
-                        }
-                        
-                        .location-tags {
-                            gap: 10px;
-                            justify-content: center; /* Móvil: centrar navegación */
-                        }
-                        
-                        .location-tags a {
-                            padding: 6px 12px;
-                            font-size: 14px;
-                        }
-                        
+                        /* Ocultar sidebar y suggestions en móvil */
                         .sidebar {
                             display: none !important;
                         }
                         .suggestions-section {
                             display: none !important;
                         }
+                        
+                        /* Mostrar barra de navegación inferior */
                         .responsive-nav-bar {
                             display: block !important;
                         }
+                        
+                        /* Ajustar contenido para la barra inferior */
                         .content {
                             padding-bottom: 80px;
                             width: 100%;
@@ -165,87 +99,88 @@ export class Home extends HTMLElement {
                         .reviews-section {
                             padding: 15px;
                         }
+                    }
+
+                    @media (max-width: 600px) {
+                        .reviews-section {
+                            padding: 10px;
+                        }
                         
-                        .header-wrapper {
-                            display: block !important;
+                        .content {
+                            padding-bottom: 85px;
                         }
                     }
                 </style>
                 
-                <!-- Header siempre visible -->
+                <!-- Header con layout responsive -->
                 <div class="header-wrapper">
-                    <div class="header-content">
-                        <div class="logo-container">
-                            <lulada-logo></lulada-logo>
-                        </div>
-                        <div class="location-tags">
-                            <a href="#" data-section="cali" class="active">Cali</a>
-                            <a href="#" data-section="norte">Norte</a>
-                            <a href="#" data-section="sur">Sur</a>
-                            <a href="#" data-section="oeste">Oeste</a>
-                            <a href="#" data-section="centro">Centro</a>
-                        </div>
-                    </div>
+                    <lulada-header></lulada-header>
                 </div>
                 
                 <div class="main-layout">
+                    <!-- Sidebar (solo desktop) -->
                     <div class="sidebar">
                         <lulada-sidebar></lulada-sidebar>
                     </div>
                     
+                    <!-- Contenido principal -->
                     <div class="content">
                         <div class="reviews-section">
                             <lulada-reviews-container></lulada-reviews-container>
                         </div>
+                        
+                        <!-- Suggestions (solo desktop) -->
                         <div class="suggestions-section">
                             <lulada-suggestions></lulada-suggestions>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Barra de navegación responsiva (solo visible en móvil) -->
+                <!-- Barra de navegación responsiva (solo móvil) -->
                 <div class="responsive-nav-bar">
                     <lulada-responsive-bar></lulada-responsive-bar>
                 </div>
             `;
 
-            this.shadowRoot.addEventListener('location-select', (e: Event) => {
-                const event = e as CustomEvent;
-                console.log("Se seleccionó ubicación: " + event.detail);
-            });
-
-            this.shadowRoot.addEventListener('menuselect', (e: Event) => {
-                const event = e as CustomEvent;
-                console.log("Se seleccionó menú: " + event.detail.menuItem);
-            });
-            
-            // Configurar navegación del header
-            this.setupHeaderNavigation();
+            // Configurar eventos de filtrado
+            this.setupLocationFiltering();
         }
     }
     
-    setupHeaderNavigation() {
-        if (!this.shadowRoot) return;
-        
-        const locationLinks = this.shadowRoot.querySelectorAll('.location-tags a');
-        
-        locationLinks.forEach((link) => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                // Remover active de todos
-                locationLinks.forEach(l => l.classList.remove('active'));
-                
-                // Agregar active al clickeado
-                link.classList.add('active');
-                
-                const section = link.getAttribute('data-section');
-                if (section) {
-                    console.log('Filtrando por ubicación:', section);
-                    // Aquí puedes agregar la lógica para filtrar contenido por ubicación
-                }
-            });
+    setupLocationFiltering() {
+        // Escuchar eventos de cambio de ubicación
+        document.addEventListener('location-filter-changed', (e: Event) => {
+            const event = e as CustomEvent;
+            console.log('🏠 Home: Filtro de ubicación recibido:', event.detail);
         });
+
+        // También escuchar desde el shadow root
+        this.shadowRoot?.addEventListener('location-filter-changed', (e: Event) => {
+            const event = e as CustomEvent;
+            console.log('🏠 Home (Shadow): Filtro de ubicación recibido:', event.detail);
+        });
+    }
+
+    connectedCallback() {
+        console.log('🏠 Componente Home conectado');
+        
+        // Configurar resize handler para debug
+        this.setupResizeHandler();
+    }
+
+    disconnectedCallback() {
+        console.log('🏠 Componente Home desconectado');
+    }
+
+    // Debug helper para verificar responsive
+    setupResizeHandler() {
+        const checkLayout = () => {
+            const isMobile = window.innerWidth <= 900;
+            console.log(`📱 Layout actual: ${isMobile ? 'Móvil' : 'Desktop'} (${window.innerWidth}px)`);
+        };
+
+        window.addEventListener('resize', checkLayout);
+        checkLayout(); // Verificar inmediatamente
     }
 }
 

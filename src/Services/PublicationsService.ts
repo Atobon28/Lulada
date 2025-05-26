@@ -70,10 +70,10 @@ export class PublicationsService {
         document.dispatchEvent(new CustomEvent('publicaciones-limpiadas'));
     }
 
-    // Obtener estadísticas
+    // Obtener estadísticas - CORREGIDO
     public getStats() {
         const publications = this.getPublications();
-        const locationStats = {
+        const locationStats: { [key: string]: number } = { // Tipo explícito
             centro: 0,
             norte: 0,
             sur: 0,
@@ -81,7 +81,7 @@ export class PublicationsService {
         };
 
         publications.forEach(pub => {
-            if (Object.hasOwn(locationStats, pub.location)) {
+            if (Object.prototype.hasOwnProperty.call(locationStats, pub.location)) {
                 locationStats[pub.location]++;
             }
         });
