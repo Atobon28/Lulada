@@ -11,24 +11,54 @@ class Lulada extends HTMLElement {
               :host {
                   display: block;
                   text-align: left;
+                  margin: 0;
+                  padding: 0;
+              }
+              
+              .logo-wrapper {
+                  margin: 0;
+                  padding: 0;
+                  text-align: left;
               }
               
               img {
                   max-width: 300px;
                   height: auto;
+                  margin: 0;
+                  padding: 0;
+                  display: block;
               }
               
               .error {
                   color: red;
                   background-color: #ffeeee;
                   padding: 10px;
+                  margin: 0;
+              }
+
+              /* Media query para responsive - centrar en pantallas pequeñas */
+              @media (max-width: 900px) {
+                  :host {
+                      text-align: center;
+                  }
+                  
+                  .logo-wrapper {
+                      text-align: center;
+                  }
+                  
+                  img {
+                      max-width: 200px;
+                      margin: 0 auto;
+                  }
               }
           </style>
           
-          <img 
-              src="https://i.postimg.cc/xdhdVv5d/Recurso-5-ASCAAS.jpg" 
-              alt="Lulada Logo"
-          >
+          <div class="logo-wrapper">
+              <img 
+                  src="https://i.postimg.cc/xdhdVv5d/Recurso-5-ASCAAS.jpg" 
+                  alt="Lulada Logo"
+              >
+          </div>
       `;
 
       const img = this.shadowRoot.querySelector('img');

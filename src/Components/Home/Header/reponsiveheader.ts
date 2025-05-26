@@ -1,214 +1,305 @@
-interface LocationSelectEvent extends CustomEvent {
-  detail: string;
-}
+class LuladaResponsiveBar extends HTMLElement {
+    private currentActive: string = 'home';
 
-class reponsiveheader extends HTMLElement {
-  shadowRoot: ShadowRoot;
-  currentSelected: string = 'cali';
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.render();
+    }
 
-  constructor() {
-    super();
-    
-    this.shadowRoot = this.attachShadow({ mode: 'open' });
+    render() {
+        if (this.shadowRoot) {
+            this.shadowRoot.innerHTML = /*html*/ `
+                <style>
+                    :host {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        background-color: #fff;
+                        border-top: 1px solid #e0e0e0;
+                        padding: 12px 0;
+                        width: 100%;
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        z-index: 1000;
+                        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+                    }
+                    
+                    .container-navbar {
+                        display: flex;
+                        justify-content: space-around;
+                        align-items: center;
+                        width: 100%;
+                        max-width: 500px;
+                        padding: 0 40px;
+                    }
+                    
+                    .nav-item {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        cursor: pointer;
+                        padding: 8px;
+                        transition: all 0.2s ease;
+                        color: #AAAB54;
+                        opacity: 0.6;
+                        border-radius: 12px;
+                    }
 
-    this.shadowRoot.innerHTML = `
-        <style>
-         :host {
-                display: block;
-                font-family: Arial, sans-serif;
-                width: 100%;
-            }
+                    .nav-item.active {
+                        opacity: 1;
+                        transform: scale(1.05);
+                        background-color: rgba(170, 171, 84, 0.1);
+                    }
 
-            .header-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                padding: 20px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                width: 100%;
-                position: relative;
-            }
-            
-            .nav-item {
-                margin: 0 15px;
-                font-size: 14px;
-                cursor: pointer;
-                color: #333;
-                text-decoration: none;
-                font-weight: 500;
-            }
-            
-            .header-top {
-                display: flex;
-                justify-content: space-between;
-                width: 100%;
-                align-items: center;
-                margin-bottom: 20px;
-            }
-            
-            .logo-container {
-                width: 300px;
-            }
+                    .nav-item:hover {
+                        opacity: 0.8;
+                        transform: translateY(-2px);
+                        background-color: rgba(170, 171, 84, 0.05);
+                    }
 
-            .icons-section {
-                display: flex;
-                align-items: center;
-            }
-           
-            .icon {
-                margin-left: 15px;
-                cursor: pointer;
-                color: #555;
-                font-size: 20px;
-            }
-           
-            .settings-icon, .notification-icon {
-                color: #888;
-            }
+                    .nav-icon {
+                        width: 28px;
+                        height: 28px;
+                        stroke-width: 1.5;
+                        transition: all 0.2s ease;
+                    }
 
-            .location-tags {
-                display: flex;
-                justify-content: center;
-                width: 100%;
-            }
+                    .nav-item.active .nav-icon {
+                        stroke-width: 2;
+                    }
 
-            .location-tags a {
-              position: relative;
-              text-decoration: none;
-              color: #666;
-              font-weight: bold;
-              padding: 5px 10px;
-              margin: 0 15px;
-              transition: all 0.2s ease;
-            }
+                    @media (max-width: 480px) {
+                        .container-navbar {
+                            padding: 0 20px;
+                        }
+                        
+                        .nav-icon {
+                            width: 26px;
+                            height: 26px;
+                        }
+                    }
 
-            .location-tags a::after {
-              content: '';
-              position: absolute;
-              left: 0;
-              bottom: 0;
-              height: 2px;
-              width: 100%;
-              background-color: #AAAB54;
-              transform: scaleX(0);
-              transform-origin: left;
-              transition: transform 0.3s ease;
-            }
+                    @media (max-width: 320px) {
+                        .container-navbar {
+                            padding: 0 15px;
+                        }
+                        
+                        .nav-icon {
+                            width: 24px;
+                            height: 24px;
+                        }
+                    }
+                </style>
 
-            .location-tags a:hover {
-              color: #333;
-              transform: translateY(-2px);
-            }
-
-            .location-tags a:hover::after {
-              transform: scaleX(1);
-            }
-
-            .location-tags a.active {
-              color: #333;
-            }
-
-            .location-tags a.active::after {
-              transform: scaleX(1);
-            }
-        </style>
-        
-        <div class="header-container">
-            <div class="header-top">
-                <div class="logo-container">
-                    <lulada-logo></lulada-logo>
-                </div>
-                <div class="icons-section">
-                    <div class="icon settings-icon" data-route="/configurations">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjQUFBQjU0IiBkPSJNMTkuNDMgMTIuOThjLjA0LS4zMi4wNy0uNjQuMDctLjk4cy0uMDMtLjY2LS4wNy0uOThsMi4xMS0xLjY1Yy4xOS0uMTUuMjQtLjQyLjEyLS42NGwtMi0zLjQ2YS41LjUgMCAwIDAtLjYxLS4yMmwtMi40OSAxYy0uNTItLjQtMS4wOC0uNzMtMS42OS0uOThsLS4zOC0yLjY1QS40OS40OSAwIDAgMCAxNCAyaC00Yy0uMjUgMC0uNDYuMTgtLjQ5LjQybC0uMzggMi42NWMtLjYxLjI1LTEuMTcuNTktMS42OS45OGwtMi40OS0xYS42LjYgMCAwIDAtLjE4LS4wM2MtLjE3IDAtLjM0LjA5LS40My4yNWwtMiAzLjQ2Yy0uMTMuMjItLjA3LjQ5LjEyLjY0bDIuMTEgMS42NWMtLjA0LjMyLS4wNy42NS0uMDcuOThzLjAzLjY2LjA3Ljk4bC0yLjExIDEuNjVjLS4xOS4xNS0uMjQuNDItLjEyLjY0bDIgMy40NmEuNS41IDAgMCAwIC42MS4yMmwyLjQ5LTFjLjUyLjQgMS4wOC43MyAxLjY5Ljk4bC4zOCAyLjY1Yy4wMy4yNC4yNC40Mi40OS40Mmg0Yy4yNSAwIC40Ni0uMTguNDktLjQybC4zOC0yLjY1Yy42MS0uMjUgMS4xNy0uNTkgMS42OS0uOThsMi40OSAxcS4wOS4wMy4xOC4wM2MuMTcgMCAuMzQtLjA5LjQzLS4yNWwyLTMuNDZjLjEyLS4yMi4wNy0uNDktLjEyLS42NHptLTEuOTgtMS43MWMuMDQuMzEuMDUuNTIuMDUuNzNzLS4wMi40My0uMDUuNzNsLS4xNCAxLjEzbC44OS43bDEuMDguODRsLS43IDEuMjFsLTEuMjctLjUxbC0xLjA0LS40MmwtLjkuNjhjLS40My4zMi0uODQuNTYtMS4yNS43M2wtMS4wNi40M2wtLjE2IDEuMTNsLS4yIDEuMzVoLTEuNGwtLjE5LTEuMzVsLS4xNi0xLjEzbC0xLjA2LS40M2MtLjQzLS4xOC0uODMtLjQxLTEuMjMtLjcxbC0uOTEtLjdsLTEuMDYuNDNsLTEuMjcuNTFsLS43LTEuMjFsMS4wOC0uODRsLjg5LS43bC0uMTQtMS4xM2MtLjAzLS4zMS0uMDUtLjU0LS4wNS0uNzRzLjAyLS40My4wNS0uNzNsLjE0LTEuMTNsLS44OS0uN2wtMS4wOC0uODRsLjctMS4yMWwxLjI3LjUxbDEuMDQuNDJsLjktLjY4Yy40My0uMzIuODQtLjU2IDEuMjUtLjczbDEuMDYtLjQzbC4xNi0xLjEzbC4yLTEuMzVoMS4zOWwuMTkgMS4zNWwuMTYgMS4xM2wxLjA2LjQzYy40My4xOC44My40MSAxLjIzLjcxbC45MS43bDEuMDYtLjQzbDEuMjctLjUxbC43IDEuMjFsLTEuMDcuODVsLS44OS43ek0xMiA4Yy0yLjIxIDAtNCAxLjc5LTQgNHMxLjc5IDQgNCA0czQtMS43OSA0LTRzLTEuNzktNC00LTRtMCA2Yy0xLjEgMC0yLS45LTItMnMuOS0yIDItMnMyIC45IDIgMnMtLjkgMi0yIDIiLz48L3N2Zz4=" class="menu-icon" alt="Configuración">
+                <div class="container-navbar">
+                    <div class="nav-item ${this.currentActive === 'home' ? 'active' : ''}" data-nav="home" data-route="/home">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"/>
+                            <polyline points="9,22 9,12 15,12 15,22"/>
+                        </svg>
                     </div>
-                    <div class="icon notification-icon" data-route="/notifications">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjQUFBQjU0IiBkPSJNNSAxOXEtLjQyNSAwLS43MTItLjI4OFQ0IDE4dC4yODgtLjcxMlQ1IDE3aDF2LTdxMC0yLjA3NSAxLjI1LTMuNjg3VDEwLjUgNC4ydi0uN3EwLS42MjUuNDM4LTEuMDYyVDEyIDJ0MS4wNjMuNDM4VDEzLjUgMy41di43cTIgLjUgMy4yNSAyLjExM1QxOCAxMHY3aDFxLjQyNSAwIC43MTMuMjg4VDIwIDE4dC0uMjg4LjcxM1QxOSAxOXptNyAzcS0uODI1IDAtMS40MTItLjU4N1QxMCAyMGg0cTAgLjgyNS0uNTg3IDEuNDEzVDEyIDIybS00LTVoOHYtN3EwLTEuNjUtMS4xNzUtMi44MjVUMTIgNlQ5LjE3NSA3LjE3NVQ4IDEweiIvPjwvc3ZnPg==" class="menu-icon" alt="Notificaciones">
+
+                    <div class="nav-item ${this.currentActive === 'explore' ? 'active' : ''}" data-nav="explore" data-route="/explore">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                    </div>
+
+                    <div class="nav-item ${this.currentActive === 'antojar' ? 'active' : ''}" data-nav="antojar" data-route="/antojar">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M14.828 14.828a4 4 0 0 1-5.656 0M9 10h.01M15 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                    </div>
+
+                    <div class="nav-item ${this.currentActive === 'save' ? 'active' : ''}" data-nav="save" data-route="/save">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M19 21L12 16L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z"/>
+                        </svg>
+                    </div>
+
+                    <div class="nav-item ${this.currentActive === 'profile' ? 'active' : ''}" data-nav="profile" data-route="/profile">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
                     </div>
                 </div>
-            </div>
-            <div class="location-tags">
-                <a href="#" data-section="cali" class="active">Cali</a>
-                <a href="#" data-section="norte">Norte</a>
-                <a href="#" data-section="sur">Sur</a>
-                <a href="#" data-section="oeste">Oeste</a>
-                <a href="#" data-section="centro">Centro</a>
-            </div>
-        </div>
-    `;
-            
-//se está llamando desde el constructor u otro método dentro de una clase
-    this.addEventListeners();
-  }
-
-  addEventListeners(): void {
-    //ancla nodelistof es unacnla para obtener todos los elementos que tengan la clase location-tags y sean un elemento a
-    const locationLinks: NodeListOf<HTMLAnchorElement> = this.shadowRoot.querySelectorAll('.location-tags a');
-    //repetir los link que esta cogiendo
-    locationLinks.forEach((link: HTMLAnchorElement) => {
-      link.addEventListener('click', (e: Event) => {
-        e.preventDefault();
-        //Previene el comportamiento por defecto y En este caso, el clic no cambiará de página, solo ejecutará tu lógica personalizada.
-        const target = e.currentTarget as HTMLAnchorElement;
-        const section: string | null = target.getAttribute('data-section');
-        
-        if (section) {
-          const prevSelected = this.shadowRoot.querySelector(`.location-tags a[data-section="${this.currentSelected}"]`);
-          if (prevSelected) {
-            prevSelected.classList.remove('active');
-          }
-          
-          this.currentSelected = section;
-          target.classList.add('active');
-          
-          this.dispatchEvent(new CustomEvent<string>('location-select', { 
-            detail: section,
-            bubbles: true,
-            composed: true
-          }) as LocationSelectEvent);
+            `;
         }
-      });
-    });
-  }
-  connectedCallback(): void {
-    console.log('LuladaSidebar añadido al DOM');
-    this.setupNavigation();
-}
+        
+        this.setupEventListeners();
+        this.detectCurrentPage();
+    }
 
-disconnectedCallback(): void {
-    console.log('LuladaSidebar eliminado del DOM');
-}
+    setupEventListeners() {
+        const navItems = this.shadowRoot!.querySelectorAll('.nav-item');
+        
+        navItems.forEach((item) => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                const route = item.getAttribute('data-route');
+                const nav = item.getAttribute('data-nav');
+                
+                if (route && nav) {
+                    console.log(`🚀 Navegando: ${nav} -> ${route}`);
+                    
+                    this.setActiveItem(nav);
+                    
+                    this.navigate(route);
+                }
+            });
+        });
 
-attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
-    console.log(`Atributo ${name} cambió de ${oldValue} a ${newValue}`);
-}
+        document.addEventListener('navigate', this.handleNavigateEvent);
+    }
 
-static get observedAttributes(): string[] {
-    return [];
-}
-
-setupNavigation() {
-    //optiene los divs dentro del shadow dom
-    const divs = this.shadowRoot!.querySelectorAll("div");
-
-    divs.forEach((dv) => {
-        dv.addEventListener("click", () => {
-            //obtiene el atributo data-route del div al que se le dio click
-            const route = dv.getAttribute("data-route");
-            if (route) {
-                //llama el metodo navigate con la ruta como argumento
-                this.navigate(route); 
+    setActiveItem(activeNav: string) {
+        this.currentActive = activeNav;
+        
+        const navItems = this.shadowRoot!.querySelectorAll('.nav-item');
+        navItems.forEach((item) => {
+            const nav = item.getAttribute('data-nav');
+            if (nav === activeNav) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
             }
         });
-    });
+        
+        console.log(`🎯 Item activo: ${activeNav}`);
+    }
+
+    detectCurrentPage() {
+        const currentPath = window.location.pathname;
+        
+        if (currentPath.includes('/home') || currentPath === '/') {
+            this.setActiveItem('home');
+        } else if (currentPath.includes('/explore')) {
+            this.setActiveItem('explore');
+        } else if (currentPath.includes('/save')) {
+            this.setActiveItem('save');
+        } else if (currentPath.includes('/profile')) {
+            this.setActiveItem('profile');
+        } else if (currentPath.includes('/antojar')) {
+            this.setActiveItem('antojar');
+        }
+    }
+
+    updateActiveFromRoute(route: string) {
+        if (route.includes('/home')) {
+            this.setActiveItem('home');
+        } else if (route.includes('/explore')) {
+            this.setActiveItem('explore');
+        } else if (route.includes('/save')) {
+            this.setActiveItem('save');
+        } else if (route.includes('/profile')) {
+            this.setActiveItem('profile');
+        } else if (route.includes('/antojar')) {
+            this.setActiveItem('antojar');
+        }
+    }
+
+    navigate(route: string) {
+        const event = new CustomEvent("navigate", { 
+            detail: route,
+            bubbles: true,
+            composed: true 
+        });
+        
+        this.dispatchEvent(event);
+        document.dispatchEvent(event);
+        
+        if (window.history && window.history.pushState) {
+            window.history.pushState(null, '', route);
+        }
+        
+        console.log(`✅ Navegado a: ${route}`);
+    }
+
+    connectedCallback(): void {
+        console.log('🔗 LuladaResponsiveBar conectado');
+        setTimeout(() => this.detectCurrentPage(), 100);
+    }
+
+    disconnectedCallback(): void {
+        console.log('🔌 LuladaResponsiveBar desconectado');
+        document.removeEventListener('navigate', this.handleNavigateEvent);
+    }
+
+    private handleNavigateEvent = (e: Event) => {
+        const customEvent = e as CustomEvent;
+        if (customEvent.detail) {
+            this.updateActiveFromRoute(customEvent.detail);
+        }
+    }
 }
 
-navigate(route: string) {
-    //crea un evento personalizado 
-    const event = new CustomEvent("navigate", { detail: route });
-    //manda el evento global para que otro componente pueda escucharlo
-    document.dispatchEvent(event); //disparar el evento de navegación
-}
+class LuladaResponsiveHeader extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.render();
+    }
+
+    render() {
+        if (this.shadowRoot) {
+            this.shadowRoot.innerHTML = /*html*/ `
+                <style>
+                    :host {
+                        display: block;
+                        background-color: white;
+                        border-bottom: 1px solid #eaeaea;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    }
+                    
+                    .header-content {
+                        padding: 15px 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                    }
+                    
+                    .logo {
+                        font-size: 1.5rem;
+                        font-weight: bold;
+                        color: #AAAB54;
+                    }
+                    
+                    @media (max-width: 768px) {
+                        .header-content {
+                            padding: 10px 15px;
+                        }
+                        
+                        .logo {
+                            font-size: 1.25rem;
+                        }
+                    }
+                </style>
+                
+                <div class="header-content">
+                    <div class="logo">Lulada</div>
+                </div>
+            `;
+        }
+    }
+
+    connectedCallback() {
+        console.log('🔗 LuladaResponsiveHeader conectado');
+    }
 }
 
-export default reponsiveheader;
+if (!customElements.get('lulada-responsive-bar')) {
+    customElements.define('lulada-responsive-bar', LuladaResponsiveBar);
+    console.log('✅ lulada-responsive-bar registrado');
+}
+
+if (!customElements.get('lulada-responsive-header')) {
+    customElements.define('lulada-responsive-header', LuladaResponsiveHeader);
+    console.log('✅ lulada-responsive-header registrado');
+}
+
+export default LuladaResponsiveHeader;

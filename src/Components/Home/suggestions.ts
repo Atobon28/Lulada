@@ -4,46 +4,151 @@ class LuladaSuggestions extends HTMLElement {
         this.attachShadow({ mode: 'open' })
 
         if (this.shadowRoot) {
-            this.shadowRoot.innerHTML = `
+            this.shadowRoot.innerHTML = /*html*/ `
                 <style>
                     :host {
-                        width: 300px;
+                        width: 100%;
+                        max-width: 300px;
                         background-color: white;
                         border-left: 1px solid #e0e0e0;
                         padding: 20px;
+                        box-sizing: border-box;
                     }
+                    
                     .suggestions-title {
                         font-size: 20px;
                         font-weight: bold;
                         margin-bottom: 20px;
                         text-align: center;
+                        color: #333;
                     }
+                    
+                    .suggestions-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 15px;
+                    }
+                    
                     .suggestion-item {
                         display: flex;
                         align-items: center;
-                        margin-bottom: 15px;
                         cursor: pointer;
+                        padding: 10px;
+                        border-radius: 8px;
+                        transition: background-color 0.2s ease;
                     }
+                    
+                    .suggestion-item:hover {
+                        background-color: #f5f5f5;
+                    }
+                    
                     .suggestion-image {
                         width: 50px;
                         height: 50px;
                         border-radius: 8px;
                         margin-right: 15px;
                         object-fit: cover;
+                        flex-shrink: 0;
                     }
+                    
                     .suggestion-details {
                         flex-grow: 1;
+                        min-width: 0;
                     }
+                    
                     .suggestion-name {
                         font-weight: bold;
+                        color: #333;
+                        margin-bottom: 4px;
+                        word-wrap: break-word;
                     }
+                    
                     .suggestion-view {
                         color: #AAAB54;
                         font-weight: bold;
+                        font-size: 14px;
+                        flex-shrink: 0;
                     }
+                    
                     .suggestion-view:hover {
                         text-decoration: underline;
-                        color:rgb(114, 114, 56);
+                        color: rgb(114, 114, 56);
+                    }
+
+                    @media (max-width: 1024px) {
+                        :host {
+                            max-width: 250px;
+                            padding: 15px;
+                        }
+                        
+                        .suggestions-title {
+                            font-size: 18px;
+                            margin-bottom: 15px;
+                        }
+                        
+                        .suggestion-image {
+                            width: 45px;
+                            height: 45px;
+                            margin-right: 12px;
+                        }
+                        
+                        .suggestion-name {
+                            font-size: 14px;
+                        }
+                        
+                        .suggestion-view {
+                            font-size: 13px;
+                        }
+                    }
+
+                    @media (max-width: 768px) {
+                        :host {
+                            width: 100%;
+                            max-width: 100%;
+                            border-left: none;
+                            border-top: 1px solid #e0e0e0;
+                            padding: 15px;
+                        }
+                        
+                        .suggestions-list {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                            gap: 12px;
+                        }
+                        
+                        .suggestion-item {
+                            padding: 8px;
+                        }
+                    }
+
+                    @media (max-width: 480px) {
+                        :host {
+                            padding: 12px;
+                        }
+                        
+                        .suggestions-title {
+                            font-size: 16px;
+                            margin-bottom: 12px;
+                        }
+                        
+                        .suggestions-list {
+                            grid-template-columns: 1fr;
+                            gap: 10px;
+                        }
+                        
+                        .suggestion-image {
+                            width: 40px;
+                            height: 40px;
+                            margin-right: 10px;
+                        }
+                        
+                        .suggestion-name {
+                            font-size: 13px;
+                        }
+                        
+                        .suggestion-view {
+                            font-size: 12px;
+                        }
                     }
                 </style>
                 
@@ -89,7 +194,8 @@ class LuladaSuggestions extends HTMLElement {
         const viewButtons = this.shadowRoot.querySelectorAll('.suggestion-view')
         
         viewButtons.forEach(button => {
-            button.addEventListener('click', () => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); 
                 const item = button.closest('.suggestion-item')
                 if (item) {
                     const nameElement = item.querySelector('.suggestion-name')
@@ -100,6 +206,5 @@ class LuladaSuggestions extends HTMLElement {
         })
     }
 }
-
 
 export default LuladaSuggestions

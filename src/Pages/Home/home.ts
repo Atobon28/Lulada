@@ -1,4 +1,3 @@
-
 export class Home extends HTMLElement {
     constructor() {
         super();
@@ -10,117 +9,179 @@ export class Home extends HTMLElement {
                     :host {
                         display: block;
                         font-family: Arial, sans-serif;
+                        width: 100%;
+                        overflow-x: hidden;
                     }
+                    
+                    /* Header sticky sin márgenes extra */
+                    .header-wrapper {
+                        width: 100%;
+                        background-color: white;
+                        position: sticky;
+                        top: 0;
+                        z-index: 100;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    
                     .main-layout {
                         display: flex;
-                        margin-top: 10px;
+                        width: 100%;
+                        box-sizing: border-box;
+                        margin: 0;
                     }
+                    
+                    /* DESKTOP: Sidebar visible */
                     .sidebar {
                         width: 250px;
+                        flex-shrink: 0;
+                        background-color: white;
+                        border-right: 1px solid #e0e0e0;
                     }
+                    
                     .content {
                         flex-grow: 1;
-                        display: flex; 
+                        display: flex;
+                        min-width: 0;
                     }
+                    
                     .reviews-section {
                         padding: 20px;
                         background-color: white;
-                        flex-grow: 1; 
+                        flex-grow: 1;
+                        min-width: 0;
+                        box-sizing: border-box;
                     }
+                    
+                    /* DESKTOP: Suggestions visible */
                     .suggestions-section {
-                        width: 250px; 
+                        width: 250px;
                         padding: 20px 10px;
+                        flex-shrink: 0;
+                        box-sizing: border-box;
+                        background-color: white;
+                        border-left: 1px solid #e0e0e0;
                     }
-                    .no-content {
-                        padding: 40px;
-                        text-align: center;
-                        color: #666;
-                        font-style: italic;
-                        background-color: #f9f9f9;
-                        border-radius: 8px;
-                        margin-top: 20px;
-                    }
-                    .nav-bar-abajo {
+                    
+                    /* Barra de navegación responsiva - oculta en desktop */
+                    .responsive-nav-bar {
                         display: none;
                         position: fixed;
                         bottom: 0;
                         left: 0;
                         right: 0;
                         background-color: white;
-                        padding: 10px 0;
+                        z-index: 1000;
                         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
                     }
 
-                    .lulada-responsive-bar {
-                        display: none;
-                        position: fixed;
-                        bottom: 0;
+                    /* RESPONSIVE: Móvil */
+                    @media (max-width: 900px) {
+                        /* Ocultar sidebar y suggestions en móvil */
+                        .sidebar {
+                            display: none !important;
+                        }
+                        .suggestions-section {
+                            display: none !important;
+                        }
+                        
+                        /* Mostrar barra de navegación inferior */
+                        .responsive-nav-bar {
+                            display: block !important;
+                        }
+                        
+                        /* Ajustar contenido para la barra inferior */
+                        .content {
+                            padding-bottom: 80px;
+                            width: 100%;
+                        }
+                        
+                        .reviews-section {
+                            padding: 15px;
+                        }
                     }
 
+                    @media (max-width: 600px) {
+                        .reviews-section {
+                            padding: 10px;
+                        }
+                        
+                        .content {
+                            padding-bottom: 85px;
+                        }
+                    }
                 </style>
                 
-                <lulada-header-complete></lulada-header-complete>
+                <!-- Header con layout responsive -->
+                <div class="header-wrapper">
+                    <lulada-header></lulada-header>
+                </div>
                 
                 <div class="main-layout">
+                    <!-- Sidebar (solo desktop) -->
                     <div class="sidebar">
                         <lulada-sidebar></lulada-sidebar>
                     </div>
                     
+                    <!-- Contenido principal -->
                     <div class="content">
                         <div class="reviews-section">
                             <lulada-reviews-container></lulada-reviews-container>
                         </div>
+                        
+                        <!-- Suggestions (solo desktop) -->
                         <div class="suggestions-section">
                             <lulada-suggestions></lulada-suggestions>
                         </div>
                     </div>
-                    
-                    <div class="lulada-responsive-bar">
-                        <lulada-responsive-bar></lulada-responsive-bar>
-                    </div>
+                </div>
+                
+                <!-- Barra de navegación responsiva (solo móvil) -->
+                <div class="responsive-nav-bar">
+                    <lulada-responsive-bar></lulada-responsive-bar>
+                </div>
             `;
 
-            this.shadowRoot.addEventListener('location-select', (e: Event) => {
-                const event = e as CustomEvent;
-                console.log("Se seleccionó ubicación: " + event.detail);
-            });
-
-            this.shadowRoot.addEventListener('menuselect', (e: Event) => {
-                const event = e as CustomEvent;
-                console.log("Se seleccionó menú: " + event.detail.menuItem);
-            });
+            // Configurar eventos de filtrado
+            this.setupLocationFiltering();
         }
-        //estamos vinculando el bind al resizeHandler este asegura que el componente se mantenga en su forma original  
-        this.resizeHandler = this.resizeHandler.bind(this);
-        this.resizeHandler(); //llamamos al metodo resizeHandler para que se ejecute una vez al cargar el componente
+    }
+    
+    setupLocationFiltering() {
+        // Escuchar eventos de cambio de ubicación
+        document.addEventListener('location-filter-changed', (e: Event) => {
+            const event = e as CustomEvent;
+            console.log('🏠 Home: Filtro de ubicación recibido:', event.detail);
+        });
 
-    }//metodo de ciclo de vida que se ejecuta cuando se conecta el dom
+        // También escuchar desde el shadow root
+        this.shadowRoot?.addEventListener('location-filter-changed', (e: Event) => {
+            const event = e as CustomEvent;
+            console.log('🏠 Home (Shadow): Filtro de ubicación recibido:', event.detail);
+        });
+    }
+
     connectedCallback() {
-        //llamamos un evento rize que llama el metodo rizehandler que cada vez que se cambie el tamaño de la pantalla
-        window.addEventListener('resize', this.resizeHandler);
-    }//es lo contratri que se desconecta de dom de componente
-    disconnectedCallback(){
-        //estoy eliminando el evento para que no hayan fugas
-        window.removeEventListener('resize', this.resizeHandler);
-    }//es un metodo que se relizara cada vez que que se redimensione la ventana
-    resizeHandler() {
-        const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
-        const mainLayout = this.shadowRoot?.querySelector ('.main-layout') as HTMLDivElement;
-        const navBar = this.shadowRoot?.querySelector('.lulada-responsive-bar') as HTMLDivElement;
-        const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
-        if (suggestions && mainLayout && navBar && sidebar) {
-            if (window.innerWidth < 900){ // Cuando la pantalla es pequeña
-                sidebar.style.display = 'none'; // Ocultamos la barra lateral
-                suggestions.style.display = 'none'; // Ocultamos las sugerencias
-                navBar.style.display = 'block'; // Mostramos la barra de navegación
+        console.log('🏠 Componente Home conectado');
+        
+        // Configurar resize handler para debug
+        this.setupResizeHandler();
+    }
 
-            }else{
-                suggestions.style.display = 'block';
-                navBar.style.display = 'none';
-                sidebar.style.display = 'block';
-            }
-        }
+    disconnectedCallback() {
+        console.log('🏠 Componente Home desconectado');
+    }
 
+    // Debug helper para verificar responsive
+    setupResizeHandler() {
+        const checkLayout = () => {
+            const isMobile = window.innerWidth <= 900;
+            console.log(`📱 Layout actual: ${isMobile ? 'Móvil' : 'Desktop'} (${window.innerWidth}px)`);
+        };
+
+        window.addEventListener('resize', checkLayout);
+        checkLayout(); // Verificar inmediatamente
     }
 }
+
 export default Home;
