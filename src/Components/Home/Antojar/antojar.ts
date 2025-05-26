@@ -281,7 +281,7 @@ export class LuladaAntojar extends HTMLElement {
                     };
 
                     // Guardar en sessionStorage
-                    let publicaciones = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
+                    const publicaciones = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
                     publicaciones.unshift(nuevaPublicacion); // Agregar al inicio
                     sessionStorage.setItem('publicaciones', JSON.stringify(publicaciones));
 
