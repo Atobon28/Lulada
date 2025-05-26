@@ -81,7 +81,7 @@ export class PublicationsService {
         };
 
         publications.forEach(pub => {
-            if (locationStats.hasOwnProperty(pub.location)) {
+            if (Object.prototype.hasOwnProperty.call(locationStats, pub.location)) {
                 locationStats[pub.location as keyof typeof locationStats]++;
             }
         });
