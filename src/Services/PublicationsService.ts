@@ -28,10 +28,10 @@ export class PublicationsService {
             ...publication,
             timestamp: Date.now()
         };
-        
+
         publications.unshift(newPublication); // Agregar al inicio
         this.savePublications(publications);
-        
+
         // Disparar evento personalizado
         document.dispatchEvent(new CustomEvent('nueva-publicacion', {
             detail: newPublication
@@ -70,10 +70,10 @@ export class PublicationsService {
         document.dispatchEvent(new CustomEvent('publicaciones-limpiadas'));
     }
 
-    // Obtener estadísticas
+    // Obtener estadísticas - CORREGIDO
     public getStats() {
         const publications = this.getPublications();
-        const locationStats = {
+        const locationStats: { [key: string]: number } = { // Tipo explícito
             centro: 0,
             norte: 0,
             sur: 0,
@@ -82,15 +82,15 @@ export class PublicationsService {
 
         publications.forEach(pub => {
             if (Object.prototype.hasOwnProperty.call(locationStats, pub.location)) {
-                locationStats[pub.location as keyof typeof locationStats]++;
+                locationStats[pub.location]++;
             }
         });
 
         return {
             total: publications.length,
             byLocation: locationStats,
-            averageRating: publications.length > 0 
-                ? publications.reduce((sum, pub) => sum + pub.stars, 0) / publications.length 
+            averageRating: publications.length > 0
+                ? publications.reduce((sum, pub) => sum + pub.stars, 0) / publications.length
                 : 0
         };
     }

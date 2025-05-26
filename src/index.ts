@@ -1,4 +1,6 @@
 import LuladaNotifications from './Pages/Notifications/Notifications';
+import NavigationBar from './Components/Home/Navbars/responsivebar';
+
 //Root Component
 import RootComponent from "./Components/Root/RootComponent";
 //Root component
@@ -64,24 +66,18 @@ import CambiarNU from "./Components/Settings/CambiarNombre/cambiarNU";
 import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontra";
 import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF"
 import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
-import CambiarNombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
-import CajonListInteractive from "./Components/Settings/CajonListInteractive";
-import CambiarCorreoSimple from "./Components/Settings/CambiarCorreoSimple";
-import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
-import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
-
+import NombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
 //Cierre pagina settings
 
 //newaccount
 import BoxText from "./Components/Newaccount/boxtext";
 import NewAccount from "./Pages/NewAccount/containernewaccount";
-//ciere de newaccount
+//cierre de newaccount
 
 //inicio de confirmRole
 import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
 //fin de confirmRole
 
-import luladaResponsiveHeader from "./Components/Home/Header/reponsiveheader";
 import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
 
 //inicio de antojar
@@ -95,6 +91,7 @@ const antojarService = AntojarPopupService.getInstance();
 antojarService.initialize();
 window.AntojarPopupService = AntojarPopupService;
 
+// Header completo (debe ir antes de otros headers)
 customElements.define('lulada-header-complete', HeaderCompleto);
 
 //Root
@@ -117,11 +114,10 @@ customElements.define('lulada-navigation', Navigation);
 customElements.define('lulada-suggestions', Suggestions);
 //fin home
 
-//inico de componente de header responsive
-// Asegurar que el archivo se ejecute para registrar lulada-responsive-bar
-void luladaResponsiveHeader; // Referencia para forzar ejecución
-// NOTA: lulada-responsive-header y lulada-responsive-bar se registran automáticamente
-// final responsive header
+
+//inicio de barra de navegación responsiva
+customElements.define('lulada-responsive-bar', NavigationBar);
+//fin de barra de navegación responsiva
 
 //Inicio Explorer
 customElements.define('header-explorer', HeaderExplorer);
@@ -163,17 +159,13 @@ customElements.define('cambiar-nombre', CambiarNU);
 customElements.define('cambiar-contraseña', CambiarContra);
 customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
 customElements.define('lulada-cambiar-correo', CambiarCorreoF);
-customElements.define('lulada-cambiar-nombre', CambiarNombreUsuraio);
-customElements.define('cajon-list-interactive', CajonListInteractive);
-customElements.define('cambiar-correo-simple', CambiarCorreoSimple);
-customElements.define('cambiar-nombre-simple', CambiarNombreSimple);
-customElements.define('cambiar-contrasena-simple', CambiarContrasenaSimple);
+customElements.define('lulada-cambiar-nombre', NombreUsuraio);
 //Cierre pagina settings
 
 //inicio de notifications
 customElements.define('lulada-card-notifications', CardNotifications);
-customElements.define('lulada-boxtext',BoxText)
-customElements.define('lulada-notifications',LuladaNotifications);
+customElements.define('lulada-boxtext', BoxText)
+customElements.define('lulada-notifications', LuladaNotifications);
 //fin de notifications
 
 //inicio de newaccount
@@ -184,9 +176,6 @@ customElements.define('register-new-account', NewAccount);
 customElements.define('confirm-role', ConfirmRole);
 //fin de confirmRole
 
-// Componentes de antojar se registran automáticamente al importarse
-// NOTA: LuladaAntojar y LuladaAntojarBoton se registran automáticamente
-//Fin de componentes antojar
 
 // Inicializar el servicio cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
@@ -194,53 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
   AntojarPopupService.getInstance().initialize();
 });
 
+// Debug temporal - eliminar después de verificar
+console.log('NavigationBar registrado:', customElements.get('lulada-responsive-bar'));
+console.log('HeaderCompleto registrado:', customElements.get('lulada-header-complete'));
+console.log('Home registrado:', customElements.get('lulada-home'));
+
 // Exportar todo para uso en la aplicación
 export { LuladaAntojar, LuladaAntojarBoton, AntojarPopupService };
-
-// Versión limpia para index.ts (sin tanto debug)
-document.addEventListener('DOMContentLoaded', () => {
-    // Listener para eventos back
-    document.addEventListener('back', () => {
-        const navEvent = new CustomEvent('navigate', { 
-            detail: '/configurations',
-            bubbles: true,
-            composed: true
-        });
-        document.dispatchEvent(navEvent);
-    });
-    
-    // Listener para eventos save
-    document.addEventListener('save', () => {
-        // Mostrar mensaje de éxito
-        const message = document.createElement('div');
-        message.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 9999;
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-        `;
-        message.textContent = '¡Cambios guardados exitosamente!';
-        document.body.appendChild(message);
-        
-        setTimeout(() => {
-            if (document.body.contains(message)) {
-                document.body.removeChild(message);
-            }
-        }, 2000);
-        
-        // Navegar de vuelta después de un momento
-        setTimeout(() => {
-            const navEvent = new CustomEvent('navigate', { 
-                detail: '/configurations'
-            });
-            document.dispatchEvent(navEvent);
-        }, 1000);
-    });
-});

@@ -17,7 +17,6 @@ class LoadPage extends HTMLElement {
 
             if (link && link.href) {
                 e.preventDefault(); //evitar el comportamiento por defecto
-
             }
         });
 

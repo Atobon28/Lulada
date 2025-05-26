@@ -24,23 +24,29 @@ class HeaderHome extends HTMLElement {
             .header-container {
                 display: flex;
                 flex-direction: column;
-                align-items: center;
-                padding: 20px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                align-items: flex-start;
+                padding: 15px 20px 0px 20px;
+                border-bottom: 1px solid #e0e0e0;
                 width: 100%;
                 position: relative;
+                box-sizing: border-box;
             }
 
             .logo-container {
                 align-self: flex-start;
-                width: 300px;
-                margin-bottom: 20px;
+                margin-bottom: 15px;
+            }
+
+            .navigation-container {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                padding-bottom: 10px;
             }
 
             .location-tags {
                 display: flex;
-                justify-content: center;
-                width: 100%;
+                gap: 40px;
             }
 
             .location-tags a {
@@ -48,8 +54,7 @@ class HeaderHome extends HTMLElement {
               text-decoration: none;
               color: #666;
               font-weight: bold;
-              padding: 5px 10px;
-              margin: 0 15px;
+              padding: 5px 0;
               transition: all 0.2s ease;
             }
 
@@ -82,18 +87,41 @@ class HeaderHome extends HTMLElement {
             .location-tags a.active::after {
               transform: scaleX(1);
             }
+
+            /* Responsive */
+            @media (max-width: 900px) {
+                .header-container {
+                    align-items: center;
+                }
+                
+                .logo-container {
+                    align-self: center;
+                }
+                
+                .navigation-container {
+                    justify-content: center;
+                }
+                
+                .location-tags {
+                    gap: 20px;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                }
+            }
         </style>
         
         <div class="header-container">
             <div class="logo-container">
                 <lulada-logo></lulada-logo>
             </div>
-            <div class="location-tags">
-                <a href="#" data-section="cali" class="active">Cali</a>
-                <a href="#" data-section="norte">Norte</a>
-                <a href="#" data-section="sur">Sur</a>
-                <a href="#" data-section="oeste">Oeste</a>
-                <a href="#" data-section="centro">Centro</a>
+            <div class="navigation-container">
+                <div class="location-tags">
+                    <a href="#" data-section="cali" class="active">Cali</a>
+                    <a href="#" data-section="norte">Norte</a>
+                    <a href="#" data-section="sur">Sur</a>
+                    <a href="#" data-section="oeste">Oeste</a>
+                    <a href="#" data-section="centro">Centro</a>
+                </div>
             </div>
         </div>
     `;
@@ -112,19 +140,29 @@ class HeaderHome extends HTMLElement {
         const section: string | null = target.getAttribute('data-section');
         
         if (section) {
+          // Remover active del anterior
           const prevSelected = this.shadowRoot.querySelector(`.location-tags a[data-section="${this.currentSelected}"]`);
           if (prevSelected) {
             prevSelected.classList.remove('active');
           }
           
+          // Agregar active al nuevo
           this.currentSelected = section;
           target.classList.add('active');
           
+          // Disparar eventos para filtrado
           this.dispatchEvent(new CustomEvent<string>('location-select', { 
             detail: section,
             bubbles: true,
             composed: true
           }) as LocationSelectEvent);
+
+          // También disparar el evento que esperan los otros componentes
+          document.dispatchEvent(new CustomEvent('location-filter-changed', {
+            detail: section
+          }));
+          
+          console.log('✅ Filtro de ubicación activado:', section);
         }
       });
     });

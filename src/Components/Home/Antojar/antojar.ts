@@ -1,3 +1,6 @@
+// Importamos el servicio de publicaciones
+import PublicationsService from '../../../Services/PublicationsService';
+
 export class LuladaAntojar extends HTMLElement {
     shadow: ShadowRoot;
     selectedStars: number = 0;
@@ -80,6 +83,12 @@ export class LuladaAntojar extends HTMLElement {
                     line-height: 1.5;
                     color: #333;
                     box-sizing: border-box;
+                    padding: 10px;
+                    border: 1px solid #eee;
+                    border-radius: 8px;
+                }
+                textarea:focus {
+                    border-color: #AAAB54;
                 }
                 .zone-selector {
                     display: flex;
@@ -132,12 +141,11 @@ export class LuladaAntojar extends HTMLElement {
                     transform: scale(1.1);
                 }
                 
-                /* Modificado para que sea azul al hover y amarillo cuando activo */
                 .location-icon:hover {
-                    color: #4285F4 !important; /* Azul de Google */
+                    color: #4285F4 !important;
                 }
                 .location-icon.active {
-                    color: rgb(244, 238, 66) !important; /* Amarillo */
+                    color: rgb(244, 238, 66) !important;
                 }
                 .stars {
                     display: flex;
@@ -150,11 +158,13 @@ export class LuladaAntojar extends HTMLElement {
                     transition: all 0.2s ease;
                 }
                 .star-outline {
-                    color: #FFD700;
+                    color: #ddd;
                     display: inline-block;
                     font-size: 24px;
                     cursor: pointer;
+                    transition: all 0.2s ease;
                 }
+                .star-outline:hover,
                 .star-outline.active {
                     color: #FFD700 !important;
                 }
@@ -244,7 +254,6 @@ export class LuladaAntojar extends HTMLElement {
             </div>
         `;
 
-        // Generar una imagen de perfil aleatoria al cargar inicialmente
         this.updateProfilePicture();
     }
 
@@ -280,21 +289,35 @@ export class LuladaAntojar extends HTMLElement {
                         timestamp: Date.now()
                     };
 
-                    // Guardar en sessionStorage
-                    const publicaciones = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
-                    publicaciones.unshift(nuevaPublicacion); // Agregar al inicio
-                    sessionStorage.setItem('publicaciones', JSON.stringify(publicaciones));
+                    try {
+                        // Usar el PublicationsService
+                        const publicationsService = PublicationsService.getInstance();
+                        publicationsService.addPublication(nuevaPublicacion);
+                        
+                        console.log("Publicación creada:", nuevaPublicacion);
+                        
+                        this.resetComponentState();
+                        this.dispatchEvent(new CustomEvent('antojar-cerrado', { bubbles: true, composed: true }));
+                        
+                        // Mensaje de éxito más elegante
+                        this.showSuccessMessage();
+                        
+                    } catch (error) {
+                        console.error("Error al publicar:", error);
+                        // Fallback al método original
+                        const publicaciones = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
+                        publicaciones.unshift(nuevaPublicacion);
+                        sessionStorage.setItem('publicaciones', JSON.stringify(publicaciones));
+                        
+                        this.dispatchEvent(new CustomEvent('resena-publicada', {
+                            detail: nuevaPublicacion,
+                            bubbles: true,
+                            composed: true
+                        }));
 
-                    this.dispatchEvent(new CustomEvent('resena-publicada', {
-                        detail: nuevaPublicacion,
-                        bubbles: true,
-                        composed: true
-                    }));
-
-                    this.resetComponentState();
-                    
-                    // Mostrar mensaje de éxito
-                    alert('¡Publicación creada exitosamente!');
+                        this.resetComponentState();
+                        alert('¡Publicación creada exitosamente!');
+                    }
                 } else {
                     alert('Por favor completa todos los campos: texto, calificación y zona.');
                 }
@@ -331,7 +354,7 @@ export class LuladaAntojar extends HTMLElement {
             });
         });
 
-        // Funcionalidad para el icono de ubicación
+        // Funcionalidad para el icono de ubicación (opcional)
         if (locationIcon) {
             locationIcon.addEventListener('click', () => {
                 this.locationSelected = !this.locationSelected;
@@ -349,6 +372,42 @@ export class LuladaAntojar extends HTMLElement {
                 this.updatePublishButton();
             });
         }
+    }
+
+    showSuccessMessage() {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+        toast.textContent = '¡Reseña publicada con éxito!';
+        
+        document.body.appendChild(toast);
+        
+        // Animación de entrada
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Animación de salida y eliminación
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 2500);
     }
 
     updatePublishButton() {
@@ -380,39 +439,31 @@ export class LuladaAntojar extends HTMLElement {
         const locationIcon = this.shadow.querySelector('#location-icon');
         const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
 
-        // Limpiar texto
         if (textarea) {
             textarea.value = '';
         }
 
-        // Resetear estrellas
         this.selectedStars = 0;
         estrellas.forEach((estrella) => {
             estrella.textContent = '☆';
             estrella.classList.remove('active');
         });
 
-        // Resetear ubicación
         this.locationSelected = false;
         if (locationIcon) {
             locationIcon.classList.remove('active');
         }
 
-        // Resetear zona
         this.selectedZone = "";
         if (zoneSelect) {
             zoneSelect.value = "";
         }
 
-        // Generar nueva imagen de perfil
         this.updateProfilePicture();
-        
-        // Actualizar botón
         this.updatePublishButton();
     }
 }
 
-// Asegúrate de que el componente esté registrado una sola vez
 if (!customElements.get('lulada-antojar')) {
     console.log("Registrando componente LuladaAntojar");
     customElements.define('lulada-antojar', LuladaAntojar);
