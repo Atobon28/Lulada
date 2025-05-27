@@ -10,7 +10,7 @@ class RootComponent extends HTMLElement {
             `;
         }
     }
-
+       
     // Cuando se presione una de las opciones dentro de sideBar, se cambia la sección actual
     changePage(section: string) { // perfil, confguracion, antojar, ...
         this.seccionActual = section;

@@ -66,7 +66,12 @@ import CambiarNU from "./Components/Settings/CambiarNombre/cambiarNU";
 import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontra";
 import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF"
 import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
-import NombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
+import CambiarNombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
+import CajonListInteractive from "./Components/Settings/CajonListInteractive";
+import CambiarCorreoSimple from "./Components/Settings/CambiarCorreoSimple";
+import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
+import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
+
 //Cierre pagina settings
 
 //newaccount
@@ -159,7 +164,11 @@ customElements.define('cambiar-nombre', CambiarNU);
 customElements.define('cambiar-contraseña', CambiarContra);
 customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
 customElements.define('lulada-cambiar-correo', CambiarCorreoF);
-customElements.define('lulada-cambiar-nombre', NombreUsuraio);
+customElements.define('lulada-cambiar-nombre', CambiarNombreUsuraio);
+customElements.define('cajon-list-interactive', CajonListInteractive);
+customElements.define('cambiar-correo-simple', CambiarCorreoSimple);
+customElements.define('cambiar-nombre-simple', CambiarNombreSimple);
+customElements.define('cambiar-contrasena-simple', CambiarContrasenaSimple);
 //Cierre pagina settings
 
 //inicio de notifications
