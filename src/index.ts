@@ -1,3 +1,5 @@
+// src/index.ts
+
 import LuladaNotifications from './Pages/Notifications/Notifications';
 import NavigationBar from './Components/Home/Navbars/responsivebar';
 
@@ -31,7 +33,7 @@ import HeaderExplorer from "./Components/Explore/exploreHeader";
 import ExploreContainer from "./Components/Explore/explorecontainer";
 import ImagesExplore from "./Components/Explore/imagesExplore";
 import TextCard from "./Components/Explore/textCard";
-import Explore from "./Pages/Explore/explore";
+import LuladaExplore from "./Pages/Explore/explore"; // CAMBIADO: de Explore a LuladaExplore
 //Final explorer
 
 //puser
@@ -129,7 +131,7 @@ customElements.define('header-explorer', HeaderExplorer);
 customElements.define('explore-container', ExploreContainer);
 customElements.define('images-explore', ImagesExplore);
 customElements.define('text-card', TextCard);
-customElements.define('lulada-explore', Explore);
+customElements.define('lulada-explore', LuladaExplore); // CAMBIADO: ahora usa LuladaExplore
 //Final explorer
 
 //puser
@@ -196,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 console.log('NavigationBar registrado:', customElements.get('lulada-responsive-bar'));
 console.log('HeaderCompleto registrado:', customElements.get('lulada-header-complete'));
 console.log('Home registrado:', customElements.get('lulada-home'));
+console.log('LuladaExplore registrado:', customElements.get('lulada-explore')); // NUEVO DEBUG
 
 // Exportar todo para uso en la aplicación
 export { LuladaAntojar, LuladaAntojarBoton, AntojarPopupService };

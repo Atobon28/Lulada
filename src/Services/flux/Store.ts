@@ -1,3 +1,5 @@
+// src/Services/flux/Store.ts - ARCHIVO CORREGIDO
+
 import { AppDispatcher, Action } from './Dispacher';
 
 export type State = object;
@@ -13,8 +15,8 @@ class Store {
         AppDispatcher.register(this._handleActions.bind(this));
     }
 
-    getState() {
-        return {};
+    getState(): State {  // ✅ Agregado tipo de retorno específico
+        return this._myState;  // ✅ Retorna el estado real en lugar de {}
     }
 
     _handleActions(action: Action): void {
@@ -31,7 +33,8 @@ class Store {
     }
 
     unsubscribe(listener: Listener): void {
-        this._listeners = this._listeners.filter(l => l !== listener);
+        // ✅ Tipo explícito para evitar 'any'
+        this._listeners = this._listeners.filter((l: Listener) => l !== listener);
     }
 }
 

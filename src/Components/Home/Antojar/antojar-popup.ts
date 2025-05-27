@@ -1,3 +1,5 @@
+// src/Components/Home/Antojar/antojar-popup.ts
+
 import { LuladaAntojar } from './antojar'; // Importamos el componente que se mostrará en el popup
 
 export class AntojarPopupService {
@@ -26,15 +28,18 @@ export class AntojarPopupService {
                 position: fixed;
                 top: 0;
                 left: 0;
-                width: 100%;
-                height: 100%;
+                width: 100vw;
+                height: 100vh;
                 background-color: rgba(0, 0, 0, 0.5);
                 display: none;
                 justify-content: center;
                 align-items: center;
-                z-index: 1000;
+                z-index: 10000;
                 opacity: 0;
                 transition: opacity 0.3s ease;
+                padding: 20px;
+                box-sizing: border-box;
+                overflow-y: auto;
             `; // Estilos para cubrir toda la pantalla como fondo modal
 
             document.body.appendChild(this.popupContainer); // Lo añadimos al body
@@ -78,10 +83,14 @@ export class AntojarPopupService {
 
             // Le damos algunos estilos básicos para posicionarlo
             this.antojarComponent.style.cssText = `
-                width: 95%;
-                max-width: 500px;
-                transform: translateY(20px); /* animación de entrada */
+                width: 100%;
+                max-width: 550px;
+                max-height: 90vh;
+                overflow-y: auto;
+                transform: translateY(20px);
                 transition: transform 0.3s ease;
+                margin: auto;
+                box-sizing: border-box;
             `;
 
             // Escuchamos cuando el usuario cierra el componente

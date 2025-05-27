@@ -1,3 +1,5 @@
+// src/Components/Home/Navbars/responsivebar.ts
+
 export class NavigationBar extends HTMLElement {
     constructor() {
         super();
