@@ -1,3 +1,5 @@
+// src/Components/Home/posts/reviewscontainer.ts
+
 import './publications';
 import './reviews';
 import PublicationsService, { Publication } from '../../../Services/PublicationsService';

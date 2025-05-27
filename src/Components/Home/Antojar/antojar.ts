@@ -1,3 +1,5 @@
+// src/Components/Home/Antojar/antojar.ts
+
 // Importamos el servicio de publicaciones
 import PublicationsService from '../../../Services/PublicationsService';
 
@@ -32,7 +34,19 @@ export class LuladaAntojar extends HTMLElement {
                     width: 100%;
                     font-family: Arial, sans-serif;
                     position: relative;
+                    box-sizing: border-box;
                 }
+                
+                /* RESPONSIVE MOBILE */
+                @media (max-width: 600px) {
+                    .popup {
+                        padding: 15px;
+                        border-radius: 15px;
+                        max-width: 95vw;
+                        margin: 10px auto;
+                    }
+                }
+                
                 .close-button {
                     position: absolute;
                     top: 10px;
@@ -87,6 +101,16 @@ export class LuladaAntojar extends HTMLElement {
                     border: 1px solid #eee;
                     border-radius: 8px;
                 }
+                
+                /* MOBILE TEXTAREA */
+                @media (max-width: 600px) {
+                    textarea {
+                        min-height: 100px;
+                        font-size: 14px;
+                        padding: 8px;
+                    }
+                }
+                
                 textarea:focus {
                     border-color: #AAAB54;
                 }
@@ -96,11 +120,29 @@ export class LuladaAntojar extends HTMLElement {
                     margin-bottom: 16px;
                     gap: 10px;
                 }
+                
+                /* MOBILE ZONE SELECTOR */
+                @media (max-width: 600px) {
+                    .zone-selector {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 8px;
+                    }
+                }
+                
                 .zone-label {
                     font-size: 16px;
                     color: #666;
                     min-width: 120px;
                 }
+                
+                @media (max-width: 600px) {
+                    .zone-label {
+                        min-width: auto;
+                        font-size: 14px;
+                    }
+                }
+                
                 .zone-select {
                     padding: 8px 12px;
                     border: 1px solid #ddd;
@@ -110,6 +152,15 @@ export class LuladaAntojar extends HTMLElement {
                     background-color: white;
                     min-width: 120px;
                 }
+                
+                @media (max-width: 600px) {
+                    .zone-select {
+                        width: 100%;
+                        max-width: none;
+                        min-width: auto;
+                    }
+                }
+                
                 .zone-select:focus {
                     outline: none;
                     border-color: #AAAB54;
@@ -121,6 +172,16 @@ export class LuladaAntojar extends HTMLElement {
                     padding-top: 16px;
                     border-top: 1px solid #f0f0f0;
                 }
+                
+                /* MOBILE BOTTOM ACTIONS */
+                @media (max-width: 600px) {
+                    .bottom-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 15px;
+                    }
+                }
+                
                 .icon-buttons {
                     display: flex;
                     gap: 15px;
@@ -179,6 +240,17 @@ export class LuladaAntojar extends HTMLElement {
                     font-weight: bold;
                     transition: all 0.2s ease;
                 }
+                
+                /* MOBILE PUBLISH BUTTON */
+                @media (max-width: 600px) {
+                    .publish-button {
+                        width: 100%;
+                        padding: 12px;
+                        font-size: 16px;
+                        order: 3;
+                    }
+                }
+                
                 .publish-button:hover {
                     transform: scale(1.05);
                     background-color: rgb(132, 134, 58);
@@ -192,6 +264,13 @@ export class LuladaAntojar extends HTMLElement {
                     display: flex;
                     align-items: center;
                 }
+                
+                @media (max-width: 600px) {
+                    .icon-container {
+                        justify-content: flex-start;
+                    }
+                }
+                
                 .icon-wrapper {
                     width: 30px;
                     height: 30px;
@@ -200,6 +279,12 @@ export class LuladaAntojar extends HTMLElement {
                 .rating-stars {
                     display: flex;
                     align-items: center;
+                }
+                
+                @media (max-width: 600px) {
+                    .rating-stars {
+                        justify-content: center;
+                    }
                 }
             </style>
             <div class="popup">

@@ -1,3 +1,5 @@
+// src/Components/Home/Navbars/sidebar.ts
+
 class LuladaSidebar extends HTMLElement {
     constructor() {
         super();
@@ -84,52 +86,51 @@ class LuladaSidebar extends HTMLElement {
         }
     }
     connectedCallback(): void {
-        console.log('LuladaSidebar añadido al DOM'); // Muestra un mensaje cuando el componente se añade al DOM
-        this.setupNavigation(); // Llama al método que configura la navegación
+        console.log('LuladaSidebar añadido al DOM');
+        this.setupNavigation();
     }
     disconnectedCallback(): void {
-        console.log('LuladaSidebar eliminado del DOM'); // Muestra un mensaje cuando el componente es eliminado del DOM
+        console.log('LuladaSidebar eliminado del DOM');
     }
     attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
-        console.log(`Atributo ${name} cambió de ${oldValue} a ${newValue}`); // Registra en consola los cambios de atributos
+        console.log(`Atributo ${name} cambió de ${oldValue} a ${newValue}`);
     }
     static get observedAttributes(): string[] {
-        return []; // Retorna un array vacío de atributos observados
+        return [];
     }
     setupNavigation() {
-        const divs = this.shadowRoot!.querySelectorAll(".dv"); // Selecciona todos los elementos con clase "dv" en el shadowRoot
+        const divs = this.shadowRoot!.querySelectorAll(".dv");
         divs.forEach((dv) => {
-            dv.addEventListener("click", () => { // Añade un evento click a cada div
-                const route = dv.getAttribute("data-route"); // Obtiene el valor del atributo data-route
-                if (route) { // Si existe una ruta
-                    // Caso especial para "antojar"*
-                    if (route === "/antojar") { // Si la ruta es "/antojar"
+            dv.addEventListener("click", () => {
+                const route = dv.getAttribute("data-route");
+                if (route) {
+                    // Caso especial para "antojar"
+                    if (route === "/antojar") {
                         try {
-                            // Usar ÚNICAMENTE el servicio global directamente*
-                            if (window.AntojarPopupService) { // Comprueba si existe el servicio en el objeto window
-                                window.AntojarPopupService.getInstance().showPopup(); // Muestra el popup usando el servicio
-                            } else { // Si no existe el servicio
-                                console.error("AntojarPopupService no está disponible en window"); // Muestra error en consola
-                                // Notificar al usuario que hay un problema*
-                                alert("Lo sentimos, esta función no está disponible en este momento"); // Muestra alerta al usuario
+                            // Usar ÚNICAMENTE el servicio global directamente
+                            if (window.AntojarPopupService) {
+                                window.AntojarPopupService.getInstance().showPopup();
+                            } else {
+                                console.error("AntojarPopupService no está disponible en window");
+                                // Notificar al usuario que hay un problema
+                                alert("Lo sentimos, esta función no está disponible en este momento");
                             }
-                        } catch (error) { // Captura cualquier error
-                            console.error("Error al mostrar el popup de antojar:", error); // Muestra el error en consola
+                        } catch (error) {
+                            console.error("Error al mostrar el popup de antojar:", error);
                         }
-                    } else { // Si la ruta no es "/antojar"
-                        // Para otras rutas, navegar normalmente*
-                        this.navigate(route); // Llama al método navigate con la ruta
+                    } else {
+                        // Para otras rutas, navegar normalmente
+                        this.navigate(route);
                     }
                 }
             });
         });
     }
     navigate(route: string) {
-        //crea un evento personalizado*
-        const event = new CustomEvent("navigate", { detail: route }); // Crea un evento personalizado con la ruta como detalle
-        //manda el evento global para que otro componente pueda escucharlo*
-        document.dispatchEvent(event); //disparar el evento de navegación* // Dispara el evento a nivel del documento
+        //crea un evento personalizado
+        const event = new CustomEvent("navigate", { detail: route });
+        //manda el evento global para que otro componente pueda escucharlo
+        document.dispatchEvent(event);
     }
 }
-export default LuladaSidebar; // Exporta la clase LuladaSidebar como exportación por defecto
-
+export default LuladaSidebar;

@@ -1,3 +1,5 @@
+// src/Components/LoadPages/LoadPage.ts
+
 class LoadPage extends HTMLElement {
     constructor(){
         super();
@@ -61,6 +63,15 @@ class LoadPage extends HTMLElement {
                 break;
             case "/profile":
                 newComponent = `<puser-page></puser-page>`;
+                break;
+            case "/cambiar-correo":
+                newComponent = `<lulada-cambiar-correo></lulada-cambiar-correo>`;
+                break;
+            case "/cambiar-nombre":
+                newComponent = `<lulada-cambiar-nombre></lulada-cambiar-nombre>`;
+                break;
+            case "/cambiar-contraseña":
+                newComponent = `<lulada-cambiar-contraseña></lulada-cambiar-contraseña>`;
                 break;
             default:
                 newComponent = `<lulada-home></lulada-home>`;
