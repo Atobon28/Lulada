@@ -1,214 +1,498 @@
-import getUsers from "../../../Services/UserServices";
+// Importamos las herramientas de Flux para conectarnos con los datos del usuario
+import { userStore, UserState } from "../../../Services/flux/UserStore";
+import { UserData } from "../../../Services/flux/UserActions";
 
-type User = {
-    foto: string;
-    nombreDeUsuario: string;
-    nombre: string;
-    descripcion: string;
-    locationText: string;
-    MenuLink: string;
-    rol: string;
+// Definimos una interfaz que describe los métodos públicos que este componente tendrá
+// Esto ayuda a TypeScript a saber qué funciones están disponibles desde fuera del componente
+interface UserInfoElement extends HTMLElement {
+    forceUpdate(): void;  // Función para forzar una actualización manual del componente
+    debugInfo(): void;    // Función para mostrar información de debug en la consola
 }
 
-class UserInfo extends HTMLElement {
-    protected users: User[] = [];
+// URL de la foto fija que usaremos para todos los usuarios
+// En lugar de usar fotos aleatorias, usamos siempre la misma foto profesional
+const FIXED_PROFILE_PHOTO = "https://randomuser.me/api/portraits/women/44.jpg";
+
+// Definimos un nuevo componente personalizado llamado <user-info>
+class UserInfo extends HTMLElement implements UserInfoElement {
+    
+    // === PROPIEDADES DEL COMPONENTE ===
+    // Estas variables almacenan el estado interno del componente
+    private currentUser: UserData | null = null;           // Los datos completos del usuario actual
+    private storeListener = this.handleStoreChange.bind(this);  // Función que escucha cambios en Flux
+    private _isConnected = false;                          // Indica si el componente está conectado al DOM
 
     constructor() {
-        super();
+        super(); // Llamamos al constructor de HTMLElement
+        // Creamos el shadow DOM en modo 'open' para aislar los estilos de este componente
         this.attachShadow({ mode: 'open' });
+        console.log('UserInfo: Componente de perfil creado');
     }
 
-    async connectedCallback() {
-        this.users = await getUsers();
-        this.render();
+    // Este método se ejecuta cuando el componente se añade al DOM de la página
+    // Aquí es donde conectamos el componente con el sistema Flux
+    connectedCallback() {
+        console.log('UserInfo: El componente se conectó al DOM');
+        this._isConnected = true; // Marcamos que el componente está activo
+        
+        // PASO 1: Nos "suscribimos" al UserStore para recibir notificaciones automáticas
+        // Cada vez que cambien los datos del usuario (ej: desde configuraciones),
+        // este componente se actualizará automáticamente
+        userStore.subscribe(this.storeListener);
+        console.log('📡 Nos suscribimos al UserStore para recibir actualizaciones del perfil');
+        
+        // PASO 2: Obtenemos los datos actuales del usuario
+        // Usamos setTimeout para asegurar que el sistema Flux esté completamente inicializado
+        setTimeout(() => {
+            const initialState = userStore.getState();
+            console.log('Datos iniciales del usuario encontrados:', initialState.currentUser?.nombreDeUsuario);
+            this.handleStoreChange(initialState);
+        }, 100);
     }
 
-    protected FiltroUser() {
-        return this.users.filter(user => user.rol === "persona");
-    }
-
-    protected render() {
-        if (this.shadowRoot) {
-            const FiltradosUsers = this.FiltroUser()
-            this.shadowRoot.innerHTML = /*html*/ `
-
-            <style>
-            .userTopCompleto {
-                background-color: #ffffff;
-                padding: 1.25rem;
-                border-radius: 0.9375rem;
-                font-family: 'Inter', sans-serif;
-                max-width: 90%;
-                margin: auto;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-
-            .etiquetados {
-                font-family: 'Inter', sans-serif;
-                font-size: 0.80rem;
-                font-weight: bold;
-                margin-left: 3rem;
-            }
-            
-            .userTop {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                min-width: 18.75rem;
-                min-height: 6.25rem;
-            }
-            
-            .userTopFoto img {
-                border-radius: 50%;
-                width: 13.4375rem;
-                height: 13.4375rem;
-                object-fit: cover;
-            }
-            
-            .userTopInfo {
-                flex: 1;
-            }
-            
-            .nombreDeUsuario {
-                font-size: 1.25rem;
-                color: #4D4D4D;
-                font-weight: bold;
-                margin-top: 0.8rem;
-                margin-bottom: 0.8rem;
-            }
-            
-            .nombre {
-                font-size: 1.625rem;
-                font-weight: bold;
-                color: #000;
-                margin-top: 0.4rem;
-                margin-bottom: 0.5rem;
-            }
-            
-            .descripcion {
-                font-size: 1rem;
-                color: #333;
-                margin-top: 0.375rem;
-                line-height: 1.4;
-            }
-            
-            hr {
-                width: 100%;
-                border: 1px solid #D9D9D9;
-                margin: 0.5rem 0;
-            }
-
-            .location {
-                display: flex;
-                gap: 0.3rem;
-                align-items: center;
-                margin-top: 0.05rem;
-            }
-
-            @media (max-width: 1024px) {
-                .userTopCompleto {
-                    max-width: 95%;
-                    padding: 1rem;
-                }
-                
-                .userTopFoto img {
-                    width: 12rem;
-                    height: 12rem;
-                }
-            }
-            
-            @media (max-width: 768px) {
-                .userTopCompleto {
-                    max-width: 100%;
-                    margin: 0.5rem;
-                    padding: 1rem;
-                }
-
-                .userTop {
-                    flex-direction: column;
-                    text-align: center;
-                    min-width: auto;
-                    gap: 1rem;
-                }
-
-                .userTopFoto img {
-                    width: 10rem;
-                    height: 10rem;
-                }
-            
-                .nombre {
-                    font-size: 1.25rem;
-                    margin: 0.3rem 0;
-                }
-
-                .etiquetados {
-                    font-size: 0.65rem;
-                    font-weight: bold;
-                    margin-left: 1rem;
-                }
-            
-                .nombreDeUsuario {
-                    font-size: 1rem;
-                    margin: 0.3rem 0;
-                }
-            
-                .descripcion {
-                    font-size: 0.85rem;
-                    margin: 0.3rem 0;
-                    text-align: center;
-                }
-            }
-
-            @media (max-width: 480px) {
-                .userTopCompleto {
-                    margin: 0.25rem;
-                    padding: 0.75rem;
-                }
-
-                .userTopFoto img {
-                    width: 8rem;
-                    height: 8rem;
-                }
-                
-                .nombre {
-                    font-size: 1.1rem;
-                }
-                
-                .nombreDeUsuario {
-                    font-size: 0.9rem;
-                }
-                
-                .descripcion {
-                    font-size: 0.8rem;
-                }
-
-                .etiquetados {
-                    margin-left: 0.5rem;
-                }
-            }
-            </style>            
-            <div class="userTopCompleto">
-                ${FiltradosUsers.map(user => this.renderUsuario(user)). join('')}
-            </div>`;
+    // Este método se ejecuta cuando el componente se quita del DOM
+    // Es importante hacer "limpieza" para evitar problemas de memoria
+    disconnectedCallback() {
+        console.log(' UserInfo: El componente se desconectó del DOM');
+        this._isConnected = false; // Marcamos que el componente ya no está activo
+        
+        // Nos "desuscribimos" del UserStore para dejar de recibir notificaciones
+        if (userStore) {
+            userStore.unsubscribe(this.storeListener);
+            console.log(' Nos desuscribimos del UserStore');
         }
     }
 
-    protected renderUsuario(User: User) {
+    // Esta función se ejecuta cada vez que cambian los datos del usuario en Flux
+    // Es como un "detector de cambios" que actualiza automáticamente la interfaz del perfil
+    private handleStoreChange(state: UserState): void {
+        // Si el componente ya no está conectado al DOM, ignoramos los cambios
+        if (!this._isConnected) {
+            console.log('UserInfo: Componente desconectado, ignorando cambio de datos');
+            return;
+        }
+
+        const newUser = state.currentUser; // Obtenemos los nuevos datos del usuario
+        console.log('UserInfo: Detectamos cambio en los datos del usuario:', newUser?.nombreDeUsuario);
+        
+        // Comparamos si realmente hubo cambios importantes (para evitar actualizaciones innecesarias)
+        // Convertimos los objetos a JSON para compararlos fácilmente
+        const userChanged = !this.currentUser || 
+                          !newUser || 
+                          JSON.stringify(this.currentUser) !== JSON.stringify(newUser);
+        
+        if (userChanged) {
+            console.log('UserInfo: Los datos del usuario han cambiado, actualizando el perfil...');
+            console.log(' Usuario anterior:', this.currentUser?.nombreDeUsuario || 'ninguno');
+            console.log(' Usuario nuevo:', newUser?.nombreDeUsuario || 'ninguno');
+            
+            // Actualizamos nuestros datos locales haciendo una copia de los nuevos datos
+            // Esto evita problemas de mutación de datos
+            this.currentUser = newUser ? { ...newUser } : null;
+            
+            // Volvemos a dibujar todo el componente con los nuevos datos
+            this.render();
+            
+            // También actualizamos específicamente los elementos que cambiaron
+            // Esto es una actualización adicional más rápida
+            setTimeout(() => {
+                if (newUser) {
+                    this.updateDOMDirectly(newUser);
+                }
+            }, 50);
+            
+        } else {
+            console.log('UserInfo: Los datos no cambiaron, no es necesario actualizar');
+        }
+    }
+
+    // Esta función actualiza directamente elementos específicos del DOM sin volver a dibujar todo
+    // Es más eficiente que hacer un render completo
+    private updateDOMDirectly(user: UserData): void {
+        // Si no hay shadow DOM o el componente no está conectado, no podemos actualizar nada
+        if (!this.shadowRoot || !this._isConnected) return;
+        
+        console.log('UserInfo: Actualizando elementos específicos del DOM con:', user.nombreDeUsuario);
+        
+        // Buscamos los elementos específicos que muestran información del usuario
+        const elements = {
+            username: this.shadowRoot.querySelector('.nombreDeUsuario') as HTMLElement | null,     // El username (@NombreUsuario)
+            name: this.shadowRoot.querySelector('.nombre') as HTMLElement | null,                   // El nombre real
+            description: this.shadowRoot.querySelector('.descripcion') as HTMLElement | null,      // La biografía
+            photo: this.shadowRoot.querySelector('.foto') as HTMLImageElement | null               // La foto de perfil
+        };
+        
+        console.log('Elementos encontrados en el DOM:', {
+            username: !!elements.username,
+            name: !!elements.name,
+            description: !!elements.description,
+            photo: !!elements.photo
+        });
+        
+        // Actualizamos el username (sin animaciones para mantener la interfaz limpia)
+        if (elements.username && user.nombreDeUsuario) {
+            console.log('Actualizando username en el DOM:', user.nombreDeUsuario);
+            elements.username.textContent = user.nombreDeUsuario;
+        }
+        
+        // Actualizamos el nombre real
+        if (elements.name && user.nombre) {
+            console.log('Actualizando nombre real en el DOM:', user.nombre);
+            elements.name.textContent = user.nombre;
+        }
+        
+        // Actualizamos la descripción/biografía
+        if (elements.description && user.descripcion) {
+            console.log('Actualizando descripción en el DOM:', user.descripcion);
+            elements.description.textContent = user.descripcion;
+        }
+        
+        // Mantenemos siempre la misma foto fija (no cambia con los datos del usuario)
+        if (elements.photo) {
+            console.log('Manteniendo la foto fija del perfil');
+            elements.photo.src = FIXED_PROFILE_PHOTO;
+        }
+    }
+
+    // Esta función dibuja todo el HTML y CSS del componente en la pantalla
+    // Es como el "pincel" que pinta la interfaz del perfil
+    private render(): void {
+        // Si no hay shadow DOM o el componente no está conectado, no podemos dibujar nada
+        if (!this.shadowRoot || !this._isConnected) return;
+        console.log('UserInfo: Comenzando a dibujar el componente del perfil...');
+
+        // Si no tenemos datos del usuario, mostramos una pantalla de carga
+        if (!this.currentUser) {
+            console.log('UserInfo: No hay datos del usuario, mostrando pantalla de carga...');
+            this.shadowRoot.innerHTML = `
+                <style>
+                    .loading {
+                        text-align: center;           /* Centrar el contenido */
+                        padding: 2rem;                /* Espacio interno */
+                        color: #666;                  /* Color gris */
+                        font-family: 'Inter', sans-serif;
+                        background-color: #f9f9f9;    /* Fondo gris claro */
+                        border-radius: 10px;          /* Bordes redondeados */
+                        margin: 1rem;                 /* Margen externo */
+                    }
+                    .loading-spinner {
+                        border: 2px solid #f3f3f3;   /* Borde base gris claro */
+                        border-top: 2px solid #AAAB54; /* Borde superior verde (el que rota) */
+                        border-radius: 50%;           /* Forma circular */
+                        width: 20px;
+                        height: 20px;
+                        animation: spin 1s linear infinite; /* Animación de rotación infinita */
+                        margin: 0 auto 10px;         /* Centrado con margen inferior */
+                    }
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }   /* Empieza sin rotación */
+                        100% { transform: rotate(360deg); } /* Termina con rotación completa */
+                    }
+                </style>
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    Cargando información del usuario...
+                </div>
+            `;
+            return;
+        }
+
+        console.log('UserInfo: Dibujando perfil completo para el usuario:', this.currentUser.nombreDeUsuario);
+
+        // Dibujamos todo el HTML y CSS del perfil usando el estilo original pero con datos de Flux
+        this.shadowRoot.innerHTML = /*html*/ `
+            <style>
+                /* === ESTILOS CSS PARA EL PERFIL === */
+                
+                .userTopCompleto {
+                    background-color: #ffffff;        /* Fondo blanco */
+                    padding: 1.25rem;                 /* Espacio interno */
+                    border-radius: 0.9375rem;         /* Bordes redondeados */
+                    font-family: 'Inter', sans-serif; /* Fuente moderna */
+                    max-width: 90%;                   /* Ancho máximo del 90% */
+                    margin: auto;                     /* Centrado horizontalmente */
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+                    transition: all 0.3s ease;       /* Animación suave para cambios */
+                }
+
+                /* Efecto hover: cuando pasas el mouse por encima */
+                .userTopCompleto:hover {
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
+                    transform: translateY(-2px);     /* Se eleva ligeramente */
+                }
+
+                .etiquetados {
+                    font-family: 'Inter', sans-serif;
+                    font-size: 0.80rem;
+                    font-weight: bold;
+                    margin-left: 3rem;
+                }
+                
+                .userTop {
+                    display: flex;                    /* Elementos en fila */
+                    align-items: center;              /* Centrados verticalmente */
+                    gap: 1rem;                       /* Espacio entre elementos */
+                    min-width: 18.75rem;             /* Ancho mínimo */
+                    min-height: 6.25rem;             /* Altura mínima */
+                }
+                
+                .userTopFoto img {
+                    border-radius: 50%;               /* Forma circular */
+                    width: 13.4375rem;               /* Ancho fijo */
+                    height: 13.4375rem;              /* Altura fija (igual al ancho para círculo perfecto) */
+                    object-fit: cover;               /* La imagen se ajusta sin deformarse */
+                    transition: transform 0.3s ease; /* Animación suave para transformaciones */
+                    border: 3px solid #AAAB54;       /* Borde verde */
+                }
+                
+                /* Efecto hover en la foto: se agranda ligeramente */
+                .userTopFoto img:hover {
+                    transform: scale(1.05);          /* Aumenta 5% el tamaño */
+                }
+                
+                .userTopInfo {
+                    flex: 1;                         /* Ocupa todo el espacio restante */
+                }
+                
+                .nombreDeUsuario {
+                    font-size: 1.25rem;             /* Tamaño de fuente mediano */
+                    color: #AAAB54;                  /* Color verde característico */
+                    font-weight: bold;               /* Texto en negrita */
+                    margin-top: 0.8rem;
+                    margin-bottom: 0.8rem;
+                    transition: all 0.3s ease;      /* Animación suave para cambios */
+                }
+                
+                .nombre {
+                    font-size: 1.625rem;            /* Tamaño de fuente grande */
+                    font-weight: bold;               /* Texto en negrita */
+                    color: #000;                     /* Color negro */
+                    margin-top: 0.4rem;
+                    margin-bottom: 0.5rem;
+                    transition: color 0.3s ease;    /* Animación suave para cambios de color */
+                }
+                
+                .descripcion {
+                    font-size: 1rem;                /* Tamaño de fuente normal */
+                    color: #333;                     /* Color gris oscuro */
+                    margin-top: 0.375rem;
+                    line-height: 1.4;               /* Altura de línea para mejor lectura */
+                    transition: color 0.3s ease;    /* Animación suave para cambios de color */
+                }
+                
+                hr {
+                    width: 100%;                     /* Ocupa todo el ancho */
+                    border: 1px solid #D9D9D9;       /* Línea gris clara */
+                    margin: 0.5rem 0;               /* Margen vertical */
+                    transition: border-color 0.3s ease; /* Animación suave para cambios */
+                }
+
+                .location {
+                    display: flex;                   /* Elementos en fila */
+                    gap: 0.3rem;                    /* Espacio pequeño entre elementos */
+                    align-items: center;             /* Centrados verticalmente */
+                    margin-top: 0.05rem;
+                }
+
+                /* === RESPONSIVE DESIGN === */
+                /* Adaptaciones para tablets */
+                @media (max-width: 1024px) {
+                    .userTopCompleto {
+                        max-width: 95%;              /* Más ancho en tablets */
+                        padding: 1rem;               /* Menos padding */
+                    }
+                    
+                    .userTopFoto img {
+                        width: 12rem;                /* Foto más pequeña */
+                        height: 12rem;
+                    }
+                }
+                
+                /* Adaptaciones para móviles */
+                @media (max-width: 768px) {
+                    .userTopCompleto {
+                        max-width: 100%;             /* Ancho completo en móviles */
+                        margin: 0.5rem;
+                        padding: 1rem;
+                        position: relative;
+                    }
+
+                    .userTop {
+                        flex-direction: column;       /* Elementos en columna */
+                        text-align: center;          /* Texto centrado */
+                        min-width: auto;             /* Sin ancho mínimo */
+                        gap: 1rem;
+                    }
+
+                    .userTopFoto img {
+                        width: 10rem;                /* Foto aún más pequeña */
+                        height: 10rem;
+                    }
+                
+                    .nombre {
+                        font-size: 1.25rem;         /* Texto más pequeño */
+                        margin: 0.3rem 0;
+                    }
+
+                    .etiquetados {
+                        font-size: 0.65rem;
+                        font-weight: bold;
+                        margin-left: 1rem;
+                    }
+                
+                    .nombreDeUsuario {
+                        font-size: 1rem;            /* Username más pequeño */
+                        margin: 0.3rem 0;
+                    }
+                
+                    .descripcion {
+                        font-size: 0.85rem;         /* Descripción más pequeña */
+                        margin: 0.3rem 0;
+                        text-align: center;          /* Centrado en móviles */
+                    }
+                }
+
+                /* Adaptaciones para móviles muy pequeños */
+                @media (max-width: 480px) {
+                    .userTopCompleto {
+                        margin: 0.25rem;
+                        padding: 0.75rem;
+                    }
+
+                    .userTopFoto img {
+                        width: 8rem;                 /* Foto muy pequeña */
+                        height: 8rem;
+                    }
+                    
+                    .nombre {
+                        font-size: 1.1rem;
+                    }
+                    
+                    .nombreDeUsuario {
+                        font-size: 0.9rem;
+                    }
+                    
+                    .descripcion {
+                        font-size: 0.8rem;
+                    }
+
+                    .etiquetados {
+                        margin-left: 0.5rem;
+                    }
+                }
+            </style>            
+            
+            <!-- Contenedor principal del perfil -->
+            <div class="userTopCompleto">
+                ${this.renderUsuario(this.currentUser)}
+            </div>
+        `;
+
+        console.log('UserInfo: Perfil dibujado completamente para:', this.currentUser.nombreDeUsuario);
+    }
+
+    // Esta función genera el HTML específico para mostrar los datos del usuario
+    // Recibe los datos del usuario y devuelve el HTML formateado
+    private renderUsuario(user: UserData): string {
+        console.log('UserInfo: Generando HTML específico para el usuario:', user.nombreDeUsuario);
+        
+        // Devolvemos el HTML con los datos del usuario insertados
         return /*html*/ `
             <div class="userTop"> 
+                <!-- Sección de la foto de perfil -->
                 <div class="userTopFoto">
-                    <img class="foto" src="${User.foto ?? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcQg-lr5__zRqY3mRg6erzAD9n4BGp3G8VfA&s'}">
+                    <img class="foto" 
+                         src="${FIXED_PROFILE_PHOTO}" 
+                         alt="Foto de perfil" 
+                         onerror="this.src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcQg-lr5__zRqY3mRg6erzAD9n4BGp3G8VfA&s'">
                 </div>
+                
+                <!-- Sección de la información del usuario -->
                 <div class="userTopInfo">
-                    <p class="nombreDeUsuario">${User.nombreDeUsuario ?? 'Nombre de usuario por defecto'}</p>
-                    <p class="nombre">${User.nombre ?? "Nombre por defecto"}</p>
+                    <!-- Username (ej: @CrisTiJauregui) -->
+                    <p class="nombreDeUsuario">${user.nombreDeUsuario || '@Usuario'}</p>
+                    
+                    <!-- Nombre real (ej: Cristina Jauregui) -->
+                    <p class="nombre">${user.nombre || "Nombre del usuario"}</p>
+                    
+                    <!-- Línea separadora -->
                     <hr>
-                    <p class="descripcion">${User.descripcion ?? " "}</p>
+                    
+                    <!-- Biografía/descripción del usuario -->
+                    <p class="descripcion">${user.descripcion || "Sin descripción"}</p>
+                    
+                    <!-- Contenedor para información adicional futura -->
                     <div id="additional-info"></div>
                 </div>
             </div>
         `;
-    } 
+    }
+
+    // === MÉTODOS PÚBLICOS ===
+    // Estos métodos pueden ser llamados desde fuera del componente
+
+    // Función pública para forzar una actualización manual del componente
+    // Útil para debugging o situaciones especiales
+    public forceUpdate(): void {
+        console.log('UserInfo: Forzando actualización manual del perfil...');
+        const currentState = userStore.getState();
+        this.handleStoreChange(currentState);
+    }
+
+    // Función pública para mostrar información de debugging en la consola
+    // Muy útil para desarrolladores para entender qué está pasando
+    public debugInfo(): void {
+        console.log('UserInfo: === INFORMACIÓN DE DEBUG ===');
+        console.log('- Usuario actual guardado:', this.currentUser);
+        console.log('- Estado completo del store:', userStore.getState());
+        console.log('- Shadow DOM existe:', !!this.shadowRoot);
+        console.log('- Componente conectado:', this._isConnected);
+        
+        // Verificamos si los elementos del DOM existen y están correctamente creados
+        if (this.shadowRoot) {
+            const elements = {
+                username: this.shadowRoot.querySelector('.nombreDeUsuario'),
+                name: this.shadowRoot.querySelector('.nombre'),
+                description: this.shadowRoot.querySelector('.descripcion'),
+                photo: this.shadowRoot.querySelector('.foto')
+            };
+            console.log('- Elementos del DOM encontrados:', elements);
+        } else {
+            console.log('No hay shadow DOM disponible');
+        }
+        console.log('=== FIN DEBUG ===');
+    }
 }
-  
+
+// Estas funciones estarán disponibles en la consola del navegador para hacer pruebas
+
+// Configuramos las funciones de debugging solo si estamos en un navegador
+if (typeof window !== 'undefined') {
+    // Solo creamos las funciones si no existen ya (evita sobrescribir)
+    if (!window.debugUserInfo) {
+        // Función global para hacer debug del componente UserInfo
+        window.debugUserInfo = () => {
+            const userInfoEl = document.querySelector('user-info') as UserInfoElement | null;
+            if (userInfoEl && userInfoEl.debugInfo) {
+                userInfoEl.debugInfo();
+            } else {
+                console.log('No se encontró ningún componente user-info en la página');
+            }
+        };
+    }
+    
+    if (!window.forceUpdateUserInfo) {
+        // Función global para forzar actualización del componente UserInfo
+        window.forceUpdateUserInfo = () => {
+            const userInfoEl = document.querySelector('user-info') as UserInfoElement | null;
+            if (userInfoEl && userInfoEl.forceUpdate) {
+                userInfoEl.forceUpdate();
+                console.log('Actualización forzada completada');
+            } else {
+                console.log('No se encontró ningún componente user-info en la página');
+            }
+        };
+    }
+}
+
 export default UserInfo;
