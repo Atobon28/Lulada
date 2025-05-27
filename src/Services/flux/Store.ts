@@ -1,61 +1,38 @@
-import Dispatcher from './Dispacher';
+import { AppDispatcher, Action } from './Dispacher';
 
-// Define proper state type instead of empty object
-interface StoreState {
-  [key: string]: unknown;
-}
+export type State = object;
 
-type ListenerFunction = () => void;
-
-interface Action {
-  type: string;
-  payload?: unknown;
-}
+type Listener = (state: State) => void;
 
 class Store {
-  private state: StoreState = {};
-  private listeners: ListenerFunction[] = [];
+    private _myState: State = {}
 
-  constructor() {
-    Dispatcher.register(this.handleAction.bind(this));
-  }
+    private _listeners: Listener[] = [];
 
-  getState(): StoreState {
-    return { ...this.state };
-  }
-
-  setState(newState: Partial<StoreState>): void {
-    this.state = { ...this.state, ...newState };
-    this.emitChange();
-  }
-
-  addChangeListener(listener: ListenerFunction): void {
-    this.listeners.push(listener);
-  }
-
-  removeChangeListener(listenerToRemove: ListenerFunction): void {
-    this.listeners = this.listeners.filter(listener => listener !== listenerToRemove);
-  }
-
-  private emitChange(): void {
-    this.listeners.forEach(listener => {
-      listener();
-    });
-  }
-
-  private handleAction(action: Action): void {
-    // Handle different action types here
-    switch (action.type) {
-      case 'UPDATE_STATE':
-        if (action.payload && typeof action.payload === 'object') {
-          this.setState(action.payload as Partial<StoreState>);
-        }
-        break;
-      default:
-        // Handle unknown actions or do nothing
-        break;
+    constructor() {
+        AppDispatcher.register(this._handleActions.bind(this));
     }
-  }
+
+    getState() {
+        return {};
+    }
+
+    _handleActions(action: Action): void {
+        switch (action.type) {
+            case "UNO":
+                break;
+        }
+    }
+
+    private _emitChange(): void {
+        for (const listener of this._listeners) {
+            listener(this._myState);
+        }
+    }
+
+    unsubscribe(listener: Listener): void {
+        this._listeners = this._listeners.filter(l => l !== listener);
+    }
 }
 
-export default new Store();
+export const store = new Store();

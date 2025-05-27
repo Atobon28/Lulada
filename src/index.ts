@@ -73,6 +73,7 @@ import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
 import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
 
 //Cierre pagina settings
+
 //newaccount
 import BoxText from "./Components/Newaccount/boxtext";
 import NewAccount from "./Pages/NewAccount/containernewaccount";

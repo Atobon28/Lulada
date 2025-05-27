@@ -1,24 +1,24 @@
-// Define proper types for actions
-interface Action {
+export interface Action {
     type: string;
-    payload?: unknown;
-  }
-  
-  type CallbackFunction = (action: Action) => void;
-  
-  class Dispatcher {
-    private callbacks: CallbackFunction[] = [];
-  
-    register(callback: CallbackFunction): number {
-      this.callbacks.push(callback);
-      return this.callbacks.length - 1;
+    payload?: string;
+}
+
+export class Dispatcher {
+    private _listeners: Array<(action: Action) => void>;
+
+    constructor() {
+        this._listeners = [];
     }
-  
+
+    register(callback: (action: Action) => void): void {
+        this._listeners.push(callback);
+    }
+
     dispatch(action: Action): void {
-      this.callbacks.forEach(callback => {
-        callback(action);
-      });
+        for (const listener of this._listeners) {
+            listener(action);
+        }
     }
-  }
-  
-  export default new Dispatcher();
+}
+
+export const AppDispatcher = new Dispatcher();
