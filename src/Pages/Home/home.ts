@@ -2,6 +2,7 @@ export class Home extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        console.log('🏠 Home: Constructor ejecutado');
         
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = `
@@ -11,6 +12,8 @@ export class Home extends HTMLElement {
                         font-family: Arial, sans-serif;
                         width: 100%;
                         overflow-x: hidden;
+                        min-height: 100vh;
+                        background-color: #f8f9fa;
                     }
                     
                     /* Header sticky sin márgenes extra */
@@ -22,6 +25,7 @@ export class Home extends HTMLElement {
                         z-index: 100;
                         margin: 0;
                         padding: 0;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                     }
                     
                     .main-layout {
@@ -29,6 +33,7 @@ export class Home extends HTMLElement {
                         width: 100%;
                         box-sizing: border-box;
                         margin: 0;
+                        min-height: calc(100vh - 80px);
                     }
                     
                     /* DESKTOP: Sidebar visible */
@@ -47,7 +52,7 @@ export class Home extends HTMLElement {
                     
                     .reviews-section {
                         padding: 20px;
-                        background-color: white;
+                        background-color: #f8f9fa;
                         flex-grow: 1;
                         min-width: 0;
                         box-sizing: border-box;
@@ -110,6 +115,26 @@ export class Home extends HTMLElement {
                             padding-bottom: 85px;
                         }
                     }
+
+                    /* Fallback si los componentes no cargan */
+                    .fallback-content {
+                        padding: 40px;
+                        text-align: center;
+                        background-color: white;
+                        border-radius: 10px;
+                        margin: 20px;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .fallback-content h1 {
+                        color: #AAAB54;
+                        margin-bottom: 20px;
+                    }
+
+                    .fallback-content p {
+                        color: #666;
+                        line-height: 1.6;
+                    }
                 </style>
                 
                 <!-- Header con layout responsive -->
@@ -127,6 +152,13 @@ export class Home extends HTMLElement {
                     <div class="content">
                         <div class="reviews-section">
                             <lulada-reviews-container></lulada-reviews-container>
+                            
+                            <!-- Contenido de fallback si los componentes no cargan -->
+                            <div class="fallback-content" id="fallback" style="display: none;">
+                                <h1>🍽️ Bienvenido a Lulada</h1>
+                                <p>Descubre los mejores sabores de Cali</p>
+                                <p>Estamos cargando el contenido...</p>
+                            </div>
                         </div>
                         
                         <!-- Suggestions (solo desktop) -->
@@ -144,10 +176,16 @@ export class Home extends HTMLElement {
 
             // Configurar eventos de filtrado
             this.setupLocationFiltering();
+            
+            console.log('🏠 Home: HTML renderizado');
+        } else {
+            console.error('❌ Home: No se pudo crear shadowRoot');
         }
     }
     
     setupLocationFiltering() {
+        console.log('🏠 Home: Configurando filtrado de ubicación...');
+        
         // Escuchar eventos de cambio de ubicación
         document.addEventListener('location-filter-changed', (e: Event) => {
             const event = e as CustomEvent;
@@ -162,14 +200,53 @@ export class Home extends HTMLElement {
     }
 
     connectedCallback() {
-        console.log('🏠 Componente Home conectado');
+        console.log('🏠 Home: Componente conectado al DOM');
+        
+        // Verificar que los sub-componentes se carguen
+        setTimeout(() => {
+            this.checkSubComponents();
+        }, 1000);
         
         // Configurar resize handler para debug
         this.setupResizeHandler();
     }
 
     disconnectedCallback() {
-        console.log('🏠 Componente Home desconectado');
+        console.log('🏠 Home: Componente desconectado');
+    }
+
+    // Verificar que los sub-componentes estén cargados
+    private checkSubComponents() {
+        if (!this.shadowRoot) return;
+
+        const subComponents = [
+            'lulada-header',
+            'lulada-sidebar', 
+            'lulada-reviews-container',
+            'lulada-suggestions',
+            'lulada-responsive-bar'
+        ];
+
+        let loadedComponents = 0;
+        const fallback = this.shadowRoot.querySelector('#fallback') as HTMLElement;
+
+        subComponents.forEach(componentName => {
+            const element = this.shadowRoot!.querySelector(componentName);
+            if (element) {
+                loadedComponents++;
+                console.log(`✅ ${componentName}: Cargado correctamente`);
+            } else {
+                console.warn(`⚠️ ${componentName}: No encontrado`);
+            }
+        });
+
+        console.log(`📊 Home: ${loadedComponents}/${subComponents.length} componentes cargados`);
+
+        // Mostrar fallback si no se cargaron suficientes componentes
+        if (loadedComponents < 2 && fallback) {
+            fallback.style.display = 'block';
+            console.log('📋 Mostrando contenido de fallback');
+        }
     }
 
     // Debug helper para verificar responsive
@@ -181,6 +258,37 @@ export class Home extends HTMLElement {
 
         window.addEventListener('resize', checkLayout);
         checkLayout(); // Verificar inmediatamente
+    }
+
+    // Método público para debug
+    public debugInfo() {
+        console.log('🏠 Home Debug Info:');
+        console.log('- Shadow Root:', !!this.shadowRoot);
+        console.log('- Conectado:', this.isConnected);
+        
+        if (this.shadowRoot) {
+            const elements = this.shadowRoot.querySelectorAll('*');
+            console.log('- Elementos en shadow DOM:', elements.length);
+            
+            elements.forEach(el => {
+                console.log(`  - ${el.tagName.toLowerCase()}`);
+            });
+        }
+    }
+}
+
+// Exponer para debugging
+if (typeof window !== 'undefined') {
+    // Solo asignar si no existe ya
+    if (!window.debugHome) {
+        window.debugHome = () => {
+            const homeEl = document.querySelector('lulada-home') as Home;
+            if (homeEl && homeEl.debugInfo) {
+                homeEl.debugInfo();
+            } else {
+                console.log('No se encontró el componente lulada-home');
+            }
+        };
     }
 }
 

@@ -112,8 +112,9 @@ class LuladaSidebar extends HTMLElement {
                     // Caso especial para "antojar"
                     if (route === "/antojar") {
                         try {
-                            // Usar ÚNICAMENTE el servicio global directamente
-                            const antojarService = (window as WindowWithAntojarService).AntojarPopupService;
+                            // Usar type assertion específica sin any
+                            const windowWithService = window as WindowWithAntojarService;
+                            const antojarService = windowWithService.AntojarPopupService;
                             if (antojarService) {
                                 antojarService.getInstance().showPopup();
                             } else {

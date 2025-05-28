@@ -1,3 +1,5 @@
+// src/Services/flux/UserStore.ts
+
 import { AppDispatcher, Action } from './Dispacher';
 import { UserData } from './UserActions';
 
@@ -205,10 +207,7 @@ export class UserStore {
 
 export const userStore = new UserStore();
 
-// Exponer para debugging - SIN DECLARAR GLOBAL AQUÍ
-if (typeof window !== 'undefined') {
-    // Solo asignar si no existe ya
-    if (!window.debugUserStore) {
-        window.debugUserStore = () => userStore.debug();
-    }
+// Exponer para debugging en desarrollo
+if (typeof window !== 'undefined' && !window.debugUserStore) {
+    window.debugUserStore = () => userStore.debug();
 }

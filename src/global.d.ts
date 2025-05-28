@@ -1,7 +1,9 @@
-// types/global.d.ts
+// global.d.ts - Declaraciones de tipos globales
 
 import { UserActions } from '../src/Services/flux/UserActions';
 import { UserStore } from '../src/Services/flux/UserStore';
+import PublicationsService from '../src/Services/PublicationsService';
+import AntojarPopupService from '../src/Components/Home/Antojar/antojar-popup';
 
 declare global {
     interface Window {
@@ -14,22 +16,21 @@ declare global {
             getInstance(): {
                 initialize(): void;
                 showPopup(): void;
+                hidePopup?: () => void;
             };
         };
 
-        // Servicios Lulada
+        // Servicios Lulada - EXACTAMENTE como se asigna en index.ts
         LuladaServices?: {
-            locationService: unknown;
-            publicationsService: unknown;
-            antojarService: unknown;
+            publicationsService: PublicationsService;
+            antojarService: AntojarPopupService;
         };
 
-        // Debug utilities
+        // Debug utilities - EXACTAMENTE como se asigna en index.ts
         LuladaDebug?: {
             services: {
-                location: unknown;
-                publications: unknown;
-                antojar: unknown;
+                publications: PublicationsService;
+                antojar: AntojarPopupService;
             };
             components: {
                 registered: Array<{
@@ -37,16 +38,14 @@ declare global {
                     registered: boolean;
                 }>;
             };
-            googleMaps: {
-                available: boolean;
-                components: string[];
-            };
         };
 
-        // Debug functions
+        // Debug functions - AGREGADAS las funciones de debug
         debugUserInfo?: () => void;
         forceUpdateUserInfo?: () => void;
         debugUserStore?: () => void;
+        debugHome?: () => void;
+        debugLoadPage?: () => void;
 
         // Google Maps API
         google?: unknown;
