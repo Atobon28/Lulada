@@ -112,14 +112,11 @@ class LuladaSidebar extends HTMLElement {
                     // Caso especial para "antojar"
                     if (route === "/antojar") {
                         try {
-                            // Usar type assertion específica sin any
-                            const windowWithService = window as WindowWithAntojarService;
-                            const antojarService = windowWithService.AntojarPopupService;
-                            if (antojarService) {
-                                antojarService.getInstance().showPopup();
+                            // Acceso más directo sin type assertion complicada
+                            if (window.AntojarPopupService) {
+                                window.AntojarPopupService.getInstance().showPopup();
                             } else {
                                 console.error("AntojarPopupService no está disponible en window");
-                                // Notificar al usuario que hay un problema
                                 alert("Lo sentimos, esta función no está disponible en este momento");
                             }
                         } catch (error) {
@@ -140,15 +137,6 @@ class LuladaSidebar extends HTMLElement {
         //manda el evento global para que otro componente pueda escucharlo
         document.dispatchEvent(event);
     }
-}
-
-// Definir la interfaz para Window con AntojarPopupService
-interface WindowWithAntojarService extends Window {
-    AntojarPopupService?: {
-        getInstance(): {
-            showPopup(): void;
-        };
-    };
 }
 
 export default LuladaSidebar;
