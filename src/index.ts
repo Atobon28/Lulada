@@ -86,9 +86,9 @@ import UserEdit from "./Components/PUser/userProfile/EditButton";
 import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
 
 // ============================================================================
-// OTROS COMPONENTES
+// OTROS COMPONENTES - CORREGIDO
 // ============================================================================
-import Suggestions from "./Components/Home/suggestions";
+import LuladaSuggestions from "./Components/Home/suggestions";
 import CardNotifications from "./Components/Nofications/CardNotifications";
 
 // ============================================================================
@@ -222,8 +222,8 @@ registerComponent('user-profile', UserSelftProfile);
 registerComponent('user-edit', UserEdit);
 registerComponent('restaurant-info', restaurantInfo);
 
-// OTROS
-registerComponent('lulada-suggestions', Suggestions);
+// OTROS - CORREGIDO
+registerComponent('lulada-suggestions', LuladaSuggestions);
 registerComponent('lulada-card-notifications', CardNotifications);
 
 // LOGIN

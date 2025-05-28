@@ -1,4 +1,4 @@
-// global.d.ts - VERSIÓN LIMPIA SIN DEBUG SYSTEM
+// global.d.ts - VERSIÓN LIMPIA SIN INTERFACES NO UTILIZADAS
 
 import { UserActions } from '../src/Services/flux/UserActions';
 import { UserStore } from '../src/Services/flux/UserStore';
@@ -46,6 +46,8 @@ declare global {
         debugUserStore?: () => void;
         debugHome?: () => void;
         debugLoadPage?: () => void;
+        debugSuggestions?: () => void;
+        debugRestaurantNav?: () => void;
 
         // Google Maps API
         google?: unknown;
