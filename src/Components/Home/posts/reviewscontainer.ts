@@ -3,7 +3,7 @@ import './reviews';
 import PublicationsService, { Publication } from '../../../Services/PublicationsService';
 
 export class ReviewsContainer extends HTMLElement {
-    // Reviews estáticas
+    // Reviews estáticas (SIN CAMBIOS)
     staticReviews: Publication[] = [
         {
             username: "CrisTiJauregui",
@@ -168,12 +168,16 @@ export class ReviewsContainer extends HTMLElement {
         filteredReviews.forEach(review => {
             const isNew = review.timestamp && (Date.now() - review.timestamp) < 10000; // Marcar como nuevo si es de los últimos 10 segundos
             
+            // NUEVO: Pasar imageUrl si existe
+            const imageUrlAttr = review.imageUrl ? `image-url="${review.imageUrl}"` : '';
+            
             reviewsHTML += `
                 <lulada-publication 
                     username="${review.username}" 
                     text="${review.text}" 
                     stars="${review.stars}"
                     ${review.hasImage ? 'has-image="true"' : ''}
+                    ${imageUrlAttr}
                     ${isNew ? 'style="border: 2px solid #4CAF50; animation: fadeIn 0.5s ease-in;"' : ''}
                 ></lulada-publication>
             `;
@@ -249,6 +253,20 @@ export class ReviewsContainer extends HTMLElement {
                     opacity: 0.5;
                 }
 
+                /* Indicador de publicaciones con foto */
+                .photo-indicator {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    background: linear-gradient(135deg, #AAAB54, #999A4A);
+                    color: white;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    margin-left: 8px;
+                }
+
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(20px); }
                     to { opacity: 1; transform: translateY(0); }
@@ -257,6 +275,31 @@ export class ReviewsContainer extends HTMLElement {
                 .new-publication {
                     border: 2px solid #4CAF50 !important;
                     animation: fadeIn 0.5s ease-in;
+                }
+
+                @keyframes photoGlow {
+                    0%, 100% { box-shadow: 0 4px 12px rgba(170, 171, 84, 0.3); }
+                    50% { box-shadow: 0 8px 20px rgba(170, 171, 84, 0.5); }
+                }
+
+                .with-photo {
+                    animation: photoGlow 2s ease-in-out;
+                    border-left: 4px solid #AAAB54;
+                }
+
+                .stats-info {
+                    background: #f8f9fa;
+                    padding: 12px;
+                    border-radius: 8px;
+                    margin-bottom: 16px;
+                    text-align: center;
+                    font-size: 13px;
+                    color: #666;
+                }
+
+                .stats-photos {
+                    color: #AAAB54;
+                    font-weight: bold;
                 }
 
                 @media (max-width: 768px) {
@@ -278,6 +321,11 @@ export class ReviewsContainer extends HTMLElement {
                         font-size: 36px;
                         margin-bottom: 12px;
                     }
+
+                    .stats-info {
+                        font-size: 12px;
+                        padding: 10px;
+                    }
                 }
             </style>
             
@@ -287,7 +335,12 @@ export class ReviewsContainer extends HTMLElement {
                     <div>Mostrando reseñas de: <strong>${this.locationFilter.charAt(0).toUpperCase() + this.locationFilter.slice(1)}</strong></div>
                     <div class="filter-stats">
                         ${filteredReviews.length} de ${stats.total} reseñas
+                        ${this.getPhotosCount(filteredReviews) > 0 ? `<span class="stats-photos">📸 ${this.getPhotosCount(filteredReviews)} con fotos</span>` : ''}
                     </div>
+                </div>
+            ` : this.getPhotosCount(filteredReviews) > 0 ? `
+                <div class="stats-info">
+                    📸 <span class="stats-photos">${this.getPhotosCount(filteredReviews)}</span> de ${filteredReviews.length} reseñas incluyen fotos
                 </div>
             ` : ''}
             
@@ -304,9 +357,44 @@ export class ReviewsContainer extends HTMLElement {
         `;
 
         console.log(`✅ Renderizadas ${filteredReviews.length} reseñas para ubicación: ${this.locationFilter || 'todas'}`);
+        
+        // Agregar clases especiales para publicaciones con fotos
+        setTimeout(() => {
+            this.addPhotoIndicators();
+        }, 100);
     }
 
-    // Métodos públicos para uso externo
+    // NUEVA FUNCIÓN: Contar publicaciones con fotos
+    private getPhotosCount(reviews: Publication[]): number {
+        return reviews.filter(review => review.hasImage && review.imageUrl).length;
+    }
+
+    // NUEVA FUNCIÓN: Agregar indicadores visuales para publicaciones con fotos
+    private addPhotoIndicators(): void {
+        if (!this.shadowRoot) return;
+
+        const publications = this.shadowRoot.querySelectorAll('lulada-publication');
+        publications.forEach(pub => {
+            const hasImageUrl = pub.hasAttribute('image-url');
+            if (hasImageUrl) {
+                pub.classList.add('with-photo');
+                
+                // Agregar indicador visual en el header
+                setTimeout(() => {
+                    const publicationElement = pub.shadowRoot?.querySelector('.publication-container');
+                    const header = pub.shadowRoot?.querySelector('.header');
+                    
+                    if (header && !header.querySelector('.photo-indicator')) {
+                        const indicator = document.createElement('span');
+                        indicator.className = 'photo-indicator';
+                        header.appendChild(indicator);
+                    }
+                }, 50);
+            }
+        });
+    }
+
+    // Métodos públicos para uso externo (SIN CAMBIOS)
     public filterByLocation(location: string) {
         this.updateLocationFilter(location);
     }
@@ -338,6 +426,48 @@ export class ReviewsContainer extends HTMLElement {
             name,
             count
         }));
+    }
+
+    // NUEVOS MÉTODOS PARA GESTIÓN DE FOTOS
+    
+    // Método público para obtener estadísticas de fotos
+    public getPhotoStats(): {
+        totalReviews: number,
+        reviewsWithPhotos: number,
+        percentage: number,
+        storageInfo: ReturnType<PublicationsService['getStorageInfo']>
+    } {
+        const allReviews = this.getAllReviews();
+        const reviewsWithPhotos = this.getPhotosCount(allReviews);
+        
+        return {
+            totalReviews: allReviews.length,
+            reviewsWithPhotos,
+            percentage: allReviews.length > 0 ? (reviewsWithPhotos / allReviews.length) * 100 : 0,
+            storageInfo: this.publicationsService.getStorageInfo()
+        };
+    }
+
+    // Método público para limpiar solo las fotos (mantener texto)
+    public clearPhotosOnly(): void {
+        this.publicationsService.clearPhotosOnly();
+        this.render();
+        console.log('🗑️ Fotos eliminadas, manteniendo texto de reseñas');
+    }
+
+    // Método público para debugging de fotos
+    public debugPhotos(): void {
+        console.log('📸 ReviewsContainer: Debug de fotos');
+        const stats = this.getPhotoStats();
+        console.log('- Estadísticas:', stats);
+        
+        const filteredReviews = this.getFilteredReviews();
+        console.log('- Reseñas con fotos en vista actual:');
+        filteredReviews.forEach((review, index) => {
+            if (review.hasImage && review.imageUrl) {
+                console.log(`  ${index}: @${review.username} - ${review.imageUrl.substring(0, 50)}...`);
+            }
+        });
     }
 }
 

@@ -4,6 +4,7 @@ export class LuladaAntojar extends HTMLElement {
     shadow: ShadowRoot;
     selectedStars: number = 0;
     selectedZone: string = "";
+    selectedPhoto: string | undefined = undefined; // Para almacenar la foto seleccionada
 
     constructor() {
         super();
@@ -110,6 +111,57 @@ export class LuladaAntojar extends HTMLElement {
                 textarea:focus {
                     border-color: #AAAB54;
                 }
+
+                /* CONTENEDOR DE FOTO */
+                .photo-container {
+                    margin-bottom: 16px;
+                    display: none; /* Oculto inicialmente */
+                }
+
+                .photo-preview {
+                    width: 100%;
+                    max-height: 300px;
+                    border-radius: 8px;
+                    object-fit: cover;
+                    border: 2px solid #AAAB54;
+                    margin-bottom: 10px;
+                }
+
+                .photo-actions {
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                }
+
+                .photo-btn {
+                    padding: 6px 12px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    background: white;
+                    cursor: pointer;
+                    font-size: 14px;
+                    transition: all 0.2s ease;
+                }
+
+                .photo-btn:hover {
+                    background: #f5f5f5;
+                }
+
+                .photo-btn.remove {
+                    color: #e74c3c;
+                    border-color: #e74c3c;
+                }
+
+                .photo-btn.remove:hover {
+                    background: #e74c3c;
+                    color: white;
+                }
+
+                /* INPUT FILE OCULTO */
+                .file-input {
+                    display: none;
+                }
+
                 .zone-selector {
                     display: flex;
                     align-items: center;
@@ -195,6 +247,12 @@ export class LuladaAntojar extends HTMLElement {
                     fill: none;
                 }
                 .action-icon:hover {
+                    transform: scale(1.1);
+                    color: #AAAB54;
+                }
+
+                .action-icon.active {
+                    color: #AAAB54;
                     transform: scale(1.1);
                 }
                 
@@ -291,6 +349,17 @@ export class LuladaAntojar extends HTMLElement {
                 </div>
                 <textarea placeholder="Cuéntanos tu experiencia..."></textarea>
                 
+                <!-- Contenedor para mostrar la foto seleccionada -->
+                <div class="photo-container" id="photo-container">
+                    <img id="photo-preview" class="photo-preview" alt="Vista previa">
+                    <div class="photo-actions">
+                        <button class="photo-btn remove" id="remove-photo">Quitar foto</button>
+                    </div>
+                </div>
+
+                <!-- Input file oculto -->
+                <input type="file" id="file-input" class="file-input" accept="image/*">
+                
                 <div class="zone-selector">
                     <label class="zone-label" for="zone-select">Zona de Cali:</label>
                     <select id="zone-select" class="zone-select">
@@ -305,7 +374,7 @@ export class LuladaAntojar extends HTMLElement {
                 <div class="bottom-actions">
                     <div class="icon-container">
                         <div class="icon-wrapper">
-                            <svg class="action-icon photo-icon" viewBox="0 0 24 24">
+                            <svg class="action-icon photo-icon" id="photo-icon" viewBox="0 0 24 24">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                                 <polyline points="21 15 16 10 5 21"></polyline>
@@ -335,6 +404,13 @@ export class LuladaAntojar extends HTMLElement {
         const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
         const estrellas = this.shadow.querySelectorAll('.star-outline');
         const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
+        
+        // NUEVOS ELEMENTOS PARA FOTO
+        const photoIcon = this.shadow.querySelector('#photo-icon');
+        const fileInput = this.shadow.querySelector('#file-input') as HTMLInputElement;
+        const photoContainer = this.shadow.querySelector('#photo-container') as HTMLElement;
+        const photoPreview = this.shadow.querySelector('#photo-preview') as HTMLImageElement;
+        const removePhotoBtn = this.shadow.querySelector('#remove-photo');
 
         if (cerrar) {
             cerrar.addEventListener('click', () => {
@@ -349,14 +425,15 @@ export class LuladaAntojar extends HTMLElement {
                 console.log("Botón publicar clickeado");
                 const texto = textarea.value.trim();
                 if (texto && this.selectedStars > 0 && this.selectedZone) {
-                    // Crear objeto de publicación sin ubicación específica
+                    // Crear objeto de publicación CON FOTO
                     const nuevaPublicacion = {
                         username: "Usuario" + Math.floor(Math.random() * 1000),
                         text: texto,
                         stars: this.selectedStars,
                         location: this.selectedZone,
-                        hasImage: false,
-                        timestamp: Date.now()
+                        hasImage: !!this.selectedPhoto, // TRUE si hay foto
+                        timestamp: Date.now(),
+                        imageUrl: this.selectedPhoto // URL de la foto (base64 o blob URL)
                     };
 
                     try {
@@ -377,7 +454,7 @@ export class LuladaAntojar extends HTMLElement {
                         // Fallback al método original
                         const publicaciones = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
                         publicaciones.unshift(nuevaPublicacion);
-                        sessionStorage.setItem('publicaciones', JSON.stringify(publicaciones));
+                        sessionStorage.setItem('publicaciones', JSON.stringify(nuevaPublicacion));
                         
                         this.dispatchEvent(new CustomEvent('resena-publicada', {
                             detail: nuevaPublicacion,
@@ -399,6 +476,30 @@ export class LuladaAntojar extends HTMLElement {
             zoneSelect.addEventListener('change', () => {
                 this.selectedZone = zoneSelect.value;
                 this.updatePublishButton();
+            });
+        }
+
+        // EVENTOS PARA LA FOTO
+        if (photoIcon) {
+            photoIcon.addEventListener('click', () => {
+                console.log("Icono de foto clickeado");
+                fileInput?.click(); // Abrir el selector de archivos
+            });
+        }
+
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                const target = e.target as HTMLInputElement;
+                const file = target.files?.[0];
+                if (file) {
+                    this.handlePhotoSelection(file);
+                }
+            });
+        }
+
+        if (removePhotoBtn) {
+            removePhotoBtn.addEventListener('click', () => {
+                this.removePhoto();
             });
         }
 
@@ -432,6 +533,87 @@ export class LuladaAntojar extends HTMLElement {
         }
     }
 
+    // NUEVA FUNCIÓN: Manejar la selección de foto
+    handlePhotoSelection(file: File) {
+        console.log("Foto seleccionada:", file.name);
+
+        // Verificar que sea una imagen
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor selecciona un archivo de imagen válido.');
+            return;
+        }
+
+        // Verificar tamaño (máximo 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+            alert('La imagen es muy grande. Por favor selecciona una imagen menor a 5MB.');
+            return;
+        }
+
+        // Convertir a base64 para almacenar
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target?.result as string;
+            this.selectedPhoto = base64;
+            this.showPhotoPreview(base64);
+            this.updatePhotoIcon(true);
+            this.updatePublishButton();
+            console.log("Foto convertida a base64 y almacenada");
+        };
+
+        reader.onerror = () => {
+            console.error("Error al leer el archivo");
+            alert('Error al procesar la imagen. Por favor intenta de nuevo.');
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    // NUEVA FUNCIÓN: Mostrar vista previa de la foto
+    showPhotoPreview(base64: string) {
+        const photoContainer = this.shadow.querySelector('#photo-container') as HTMLElement;
+        const photoPreview = this.shadow.querySelector('#photo-preview') as HTMLImageElement;
+
+        if (photoContainer && photoPreview) {
+            photoPreview.src = base64;
+            photoContainer.style.display = 'block';
+            console.log("Vista previa de foto mostrada");
+        }
+    }
+
+    // NUEVA FUNCIÓN: Quitar foto
+    removePhoto() {
+        console.log("Quitando foto seleccionada");
+        
+        this.selectedPhoto = undefined;
+        
+        const photoContainer = this.shadow.querySelector('#photo-container') as HTMLElement;
+        const fileInput = this.shadow.querySelector('#file-input') as HTMLInputElement;
+        
+        if (photoContainer) {
+            photoContainer.style.display = 'none';
+        }
+        
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
+        this.updatePhotoIcon(false);
+        this.updatePublishButton();
+    }
+
+    // NUEVA FUNCIÓN: Actualizar estilo del ícono de foto
+    updatePhotoIcon(hasPhoto: boolean) {
+        const photoIcon = this.shadow.querySelector('#photo-icon');
+        if (photoIcon) {
+            if (hasPhoto) {
+                photoIcon.classList.add('active');
+            } else {
+                photoIcon.classList.remove('active');
+            }
+        }
+    }
+
     showSuccessMessage() {
         const toast = document.createElement('div');
         toast.style.cssText = `
@@ -448,7 +630,7 @@ export class LuladaAntojar extends HTMLElement {
             transform: translateX(100%);
             transition: transform 0.3s ease;
         `;
-        toast.textContent = '🎉 ¡Reseña publicada con éxito!';
+        toast.textContent = this.selectedPhoto ? '🎉📸 ¡Reseña con foto publicada!' : '🎉 ¡Reseña publicada con éxito!';
         
         document.body.appendChild(toast);
         
@@ -510,6 +692,9 @@ export class LuladaAntojar extends HTMLElement {
         if (zoneSelect) {
             zoneSelect.value = "";
         }
+
+        // LIMPIAR FOTO
+        this.removePhoto();
 
         this.updateProfilePicture();
         this.updatePublishButton();
