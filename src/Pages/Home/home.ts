@@ -16,6 +16,11 @@ export class Home extends HTMLElement {
                         background-color: #f8f9fa;
                     }
                     
+                    /* Header responsive - VISIBLE SOLO EN MOBILE */
+                    .responsive-header {
+                        display: none;
+                    }
+                    
                     /* Header sticky sin márgenes extra */
                     .header-wrapper {
                         width: 100%;
@@ -82,6 +87,16 @@ export class Home extends HTMLElement {
 
                     /* RESPONSIVE: Móvil */
                     @media (max-width: 900px) {
+                        /* MOSTRAR header responsive en móvil */
+                        .responsive-header {
+                            display: block !important;
+                        }
+                        
+                        /* OCULTAR header normal en móvil */
+                        .header-wrapper {
+                            display: none !important;
+                        }
+                        
                         /* Ocultar sidebar y suggestions en móvil */
                         .sidebar {
                             display: none !important;
@@ -137,7 +152,12 @@ export class Home extends HTMLElement {
                     }
                 </style>
                 
-                <!-- Header con layout responsive -->
+                <!-- Header responsive (SOLO móvil) -->
+                <div class="responsive-header">
+                    <lulada-responsive-header></lulada-responsive-header>
+                </div>
+                
+                <!-- Header desktop (SOLO desktop) -->
                 <div class="header-wrapper">
                     <lulada-header></lulada-header>
                 </div>
@@ -221,6 +241,7 @@ export class Home extends HTMLElement {
 
         const subComponents = [
             'lulada-header',
+            'lulada-responsive-header',
             'lulada-sidebar', 
             'lulada-reviews-container',
             'lulada-suggestions',
