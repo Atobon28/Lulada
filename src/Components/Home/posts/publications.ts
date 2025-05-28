@@ -12,6 +12,7 @@ export class Publication extends HTMLElement {
         const text = this.getAttribute('text') || '';
         const hasImage = this.hasAttribute('has-image');
         const stars = parseInt(this.getAttribute('stars') || '0');
+        const imageUrl = this.getAttribute('image-url') || ''; // NUEVO: URL de la imagen
 
         this.bookmarked = this.hasAttribute('bookmarked');
 
@@ -60,12 +61,74 @@ export class Publication extends HTMLElement {
                         line-height: 1.5;
                         color: #333;
                     }
+                    
+                    /* ESTILOS PARA IMÁGENES SUBIDAS POR USUARIO */
+                    .user-image {
+                        width: 100%;
+                        border-radius: 12px;
+                        margin-bottom: 16px;
+                        max-height: 500px;
+                        object-fit: cover;
+                        cursor: pointer;
+                        transition: transform 0.2s ease;
+                        border: 2px solid #f0f0f0;
+                    }
+
+                    .user-image:hover {
+                        transform: scale(1.02);
+                        border-color: #AAAB54;
+                    }
+
+                    /* ESTILOS PARA IMÁGENES ALEATORIAS (LEGACY) */
                     .publication-image {
                         width: 100%;
                         border-radius: 8px;
                         margin-bottom: 16px;
                         max-height: 400px;
                         object-fit: cover;
+                    }
+
+                    /* Modal para ver imagen en grande */
+                    .image-modal {
+                        display: none;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100vw;
+                        height: 100vh;
+                        background-color: rgba(0, 0, 0, 0.9);
+                        z-index: 10000;
+                        justify-content: center;
+                        align-items: center;
+                        cursor: pointer;
+                    }
+
+                    .image-modal img {
+                        max-width: 90%;
+                        max-height: 90%;
+                        object-fit: contain;
+                        border-radius: 8px;
+                    }
+
+                    .image-modal .close-btn {
+                        position: absolute;
+                        top: 20px;
+                        right: 20px;
+                        color: white;
+                        font-size: 30px;
+                        cursor: pointer;
+                        background: rgba(0, 0, 0, 0.5);
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: background-color 0.2s ease;
+                    }
+
+                    .image-modal .close-btn:hover {
+                        background: rgba(0, 0, 0, 0.8);
                     }
 
                     .footer {
@@ -145,6 +208,19 @@ export class Publication extends HTMLElement {
                         .actions {
                             gap: 12px;
                         }
+
+                        .user-image {
+                            border-radius: 10px;
+                            max-height: 300px;
+                        }
+
+                        .image-modal .close-btn {
+                            top: 15px;
+                            right: 15px;
+                            font-size: 25px;
+                            width: 35px;
+                            height: 35px;
+                        }
                     }
                 </style>
                 
@@ -162,13 +238,7 @@ export class Publication extends HTMLElement {
                         ${text}
                     </div>
                     
-                    ${hasImage ? `
-                        <img 
-                            src="https://picsum.photos/600/400?random=${Math.floor(Math.random() * 1000)}" 
-                            alt="Publication image" 
-                            class="publication-image"
-                        >
-                    ` : ''}
+                    ${this.generateImageHTML(hasImage, imageUrl)}
                     
                     <div class="footer">
                         <div class="actions">
@@ -184,48 +254,143 @@ export class Publication extends HTMLElement {
                         </div>
                     </div>
                 </div>
+
+                <!-- Modal para ver imagen en grande -->
+                <div class="image-modal" id="image-modal">
+                    <div class="close-btn" id="close-modal">×</div>
+                    <img id="modal-image" src="" alt="Imagen ampliada">
+                </div>
             `;
 
-            const likeIcon = this.shadowRoot.querySelector('.like-icon') as SVGElement;
-            const bookmarkIcon = this.shadowRoot.querySelector('.bookmark-icon') as SVGElement;
-            
-            if (likeIcon) {
-                likeIcon.addEventListener('click', () => {
-                    this.liked = !this.liked;
-                    likeIcon.style.color = this.liked ? 'red' : '#666';
-                    likeIcon.style.fill = this.liked ? 'red' : 'none';
-                    
-                    this.dispatchEvent(new CustomEvent('publication-liked', {
-                        bubbles: true,
-                        composed: true,
-                        detail: {
-                            username: username,
-                            liked: this.liked
-                        }
-                    }));
-                });
-            }
-
-            if (bookmarkIcon) {
-                bookmarkIcon.addEventListener('click', () => {
-                    this.bookmarked = !this.bookmarked;
-                    bookmarkIcon.style.color = this.bookmarked ? '#FFD700' : '#666';
-                    bookmarkIcon.style.fill = this.bookmarked ? '#FFD700' : 'none';
-                    
-                    this.dispatchEvent(new CustomEvent('publication-bookmarked', {
-                        bubbles: true,
-                        composed: true,
-                        detail: {
-                            username: username,
-                            bookmarked: this.bookmarked
-                        }
-                    }));
-                });
-            }
+            this.setupEventListeners();
         }
     }
 
-    // Métodos públicos para acceso externo
+    // NUEVA FUNCIÓN: Generar HTML de imagen según el tipo
+    private generateImageHTML(hasImage: boolean, imageUrl: string): string {
+        if (!hasImage) {
+            return '';
+        }
+
+        // Si hay imageUrl (imagen subida por usuario), usarla
+        if (imageUrl) {
+            return `
+                <img 
+                    src="${imageUrl}" 
+                    alt="Imagen de la reseña" 
+                    class="user-image"
+                    onclick="this.getRootNode().host.openImageModal('${imageUrl}')"
+                    onerror="this.style.display='none'"
+                >
+            `;
+        }
+
+        // Si no hay imageUrl, usar imagen aleatoria (para compatibilidad)
+        return `
+            <img 
+                src="https://picsum.photos/600/400?random=${Math.floor(Math.random() * 1000)}" 
+                alt="Publication image" 
+                class="publication-image"
+            >
+        `;
+    }
+
+    private setupEventListeners(): void {
+        const likeIcon = this.shadowRoot?.querySelector('.like-icon') as SVGElement;
+        const bookmarkIcon = this.shadowRoot?.querySelector('.bookmark-icon') as SVGElement;
+        const userImages = this.shadowRoot?.querySelectorAll('.user-image');
+        const imageModal = this.shadowRoot?.querySelector('#image-modal') as HTMLElement;
+        const closeModal = this.shadowRoot?.querySelector('#close-modal') as HTMLElement;
+        
+        if (likeIcon) {
+            likeIcon.addEventListener('click', () => {
+                this.liked = !this.liked;
+                likeIcon.style.color = this.liked ? 'red' : '#666';
+                likeIcon.style.fill = this.liked ? 'red' : 'none';
+                
+                this.dispatchEvent(new CustomEvent('publication-liked', {
+                    bubbles: true,
+                    composed: true,
+                    detail: {
+                        username: this.getAttribute('username'),
+                        liked: this.liked
+                    }
+                }));
+            });
+        }
+
+        if (bookmarkIcon) {
+            bookmarkIcon.addEventListener('click', () => {
+                this.bookmarked = !this.bookmarked;
+                bookmarkIcon.style.color = this.bookmarked ? '#FFD700' : '#666';
+                bookmarkIcon.style.fill = this.bookmarked ? '#FFD700' : 'none';
+                
+                this.dispatchEvent(new CustomEvent('publication-bookmarked', {
+                    bubbles: true,
+                    composed: true,
+                    detail: {
+                        username: this.getAttribute('username'),
+                        bookmarked: this.bookmarked
+                    }
+                }));
+            });
+        }
+
+        // NUEVO: Event listeners para imágenes de usuario
+        userImages?.forEach(img => {
+            img.addEventListener('click', () => {
+                const src = (img as HTMLImageElement).src;
+                this.openImageModal(src);
+            });
+        });
+
+        // NUEVO: Event listeners para modal
+        if (closeModal) {
+            closeModal.addEventListener('click', () => {
+                this.closeImageModal();
+            });
+        }
+
+        if (imageModal) {
+            imageModal.addEventListener('click', (e) => {
+                if (e.target === imageModal) {
+                    this.closeImageModal();
+                }
+            });
+        }
+    }
+
+    // NUEVA FUNCIÓN: Abrir modal de imagen
+    public openImageModal(imageUrl: string): void {
+        const modal = this.shadowRoot?.querySelector('#image-modal') as HTMLElement;
+        const modalImage = this.shadowRoot?.querySelector('#modal-image') as HTMLImageElement;
+        
+        if (modal && modalImage) {
+            modalImage.src = imageUrl;
+            modal.style.display = 'flex';
+            
+            // Prevenir scroll del body
+            document.body.style.overflow = 'hidden';
+            
+            console.log('🖼️ Modal de imagen abierto');
+        }
+    }
+
+    // NUEVA FUNCIÓN: Cerrar modal de imagen
+    public closeImageModal(): void {
+        const modal = this.shadowRoot?.querySelector('#image-modal') as HTMLElement;
+        
+        if (modal) {
+            modal.style.display = 'none';
+            
+            // Restaurar scroll del body
+            document.body.style.overflow = 'auto';
+            
+            console.log('🖼️ Modal de imagen cerrado');
+        }
+    }
+
+    // Métodos públicos para acceso externo (SIN CAMBIOS)
     public toggleLike() {
         this.liked = !this.liked;
         const likeIcon = this.shadowRoot?.querySelector('.like-icon') as SVGElement;
@@ -233,7 +398,6 @@ export class Publication extends HTMLElement {
             likeIcon.style.color = this.liked ? 'red' : '#666';
             likeIcon.style.fill = this.liked ? 'red' : 'none';
             
-            // Disparar evento personalizado
             this.dispatchEvent(new CustomEvent('publication-liked', {
                 bubbles: true,
                 composed: true,
@@ -252,7 +416,6 @@ export class Publication extends HTMLElement {
             bookmarkIcon.style.color = this.bookmarked ? '#FFD700' : '#666';
             bookmarkIcon.style.fill = this.bookmarked ? '#FFD700' : 'none';
             
-            // Disparar evento personalizado
             this.dispatchEvent(new CustomEvent('publication-bookmarked', {
                 bubbles: true,
                 composed: true,
