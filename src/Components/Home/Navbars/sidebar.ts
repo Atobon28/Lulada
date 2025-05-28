@@ -85,19 +85,24 @@ class LuladaSidebar extends HTMLElement {
             `;
         }
     }
+    
     connectedCallback(): void {
         console.log('LuladaSidebar añadido al DOM');
         this.setupNavigation();
     }
+    
     disconnectedCallback(): void {
         console.log('LuladaSidebar eliminado del DOM');
     }
+    
     attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
         console.log(`Atributo ${name} cambió de ${oldValue} a ${newValue}`);
     }
+    
     static get observedAttributes(): string[] {
         return [];
     }
+    
     setupNavigation() {
         const divs = this.shadowRoot!.querySelectorAll(".dv");
         divs.forEach((dv) => {
@@ -108,8 +113,9 @@ class LuladaSidebar extends HTMLElement {
                     if (route === "/antojar") {
                         try {
                             // Usar ÚNICAMENTE el servicio global directamente
-                            if (window.AntojarPopupService) {
-                                window.AntojarPopupService.getInstance().showPopup();
+                            const antojarService = (window as WindowWithAntojarService).AntojarPopupService;
+                            if (antojarService) {
+                                antojarService.getInstance().showPopup();
                             } else {
                                 console.error("AntojarPopupService no está disponible en window");
                                 // Notificar al usuario que hay un problema
@@ -126,6 +132,7 @@ class LuladaSidebar extends HTMLElement {
             });
         });
     }
+    
     navigate(route: string) {
         //crea un evento personalizado
         const event = new CustomEvent("navigate", { detail: route });
@@ -133,4 +140,14 @@ class LuladaSidebar extends HTMLElement {
         document.dispatchEvent(event);
     }
 }
+
+// Definir la interfaz para Window con AntojarPopupService
+interface WindowWithAntojarService extends Window {
+    AntojarPopupService?: {
+        getInstance(): {
+            showPopup(): void;
+        };
+    };
+}
+
 export default LuladaSidebar;

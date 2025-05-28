@@ -1,13 +1,14 @@
-// src/index.ts - MERGE COMPLETO SIN ERRORES ESLINT
+// src/index.ts - VERSIÓN LIMPIA SIN ERRORES ESLINT
 
 // ============================================================================
-// SERVICIOS - Importar primero para garantizar disponibilidad
+// SERVICIOS GLOBALES - Importar primero
 // ============================================================================
+import './services-global';
 import { PublicationLocationService } from './Services/PublicationLocationService';
 import PublicationsService from './Services/PublicationsService';
 
 // ============================================================================
-// COMPONENTES CORE - Root y LoadPage
+// COMPONENTES CORE
 // ============================================================================
 import RootComponent from "./Components/Root/RootComponent";
 import LoadPage from "./Components/LoadPages/LoadPage";
@@ -27,14 +28,14 @@ import NewAccount from "./Pages/NewAccount/containernewaccount";
 import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
 
 // ============================================================================
-// COMPONENTES DE NAVEGACIÓN
+// NAVEGACIÓN
 // ============================================================================
 import NavigationBar from './Components/Home/Navbars/responsivebar';
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
 import Navigation from "./Components/Home/navigation";
 
 // ============================================================================
-// COMPONENTES DE HEADER
+// HEADERS
 // ============================================================================
 import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
 import HeaderHome from "./Components/Home/Header/Header";
@@ -42,34 +43,34 @@ import Lulada from "./Components/Home/Header/logo";
 import HeaderExplorer from "./Components/Explore/exploreHeader";
 
 // ============================================================================
-// COMPONENTES DE PUBLICACIONES Y REVIEWS
+// PUBLICACIONES Y REVIEWS
 // ============================================================================
 import Publication from "./Components/Home/posts/publications";
 import Review from "./Components/Home/posts/reviews";
 import ReviewsContainer from "./Components/Home/posts/reviewscontainer";
 
 // ============================================================================
-// COMPONENTES DE GOOGLE MAPS (NUEVOS)
+// GOOGLE MAPS
 // ============================================================================
 import GoogleMapsLocationPicker from './Components/Home/Antojar/GoogleMapsLocationPicker';
 import GoogleMapsLocationViewer from './Components/Home/posts/GoogleMapsLocationViewer';
 
 // ============================================================================
-// COMPONENTES DE ANTOJAR (Crear publicaciones)
+// ANTOJAR
 // ============================================================================
 import { LuladaAntojar } from './Components/Home/Antojar/antojar';
 import { LuladaAntojarBoton } from './Components/Home/Antojar/antojar-boton';
 import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
 
 // ============================================================================
-// COMPONENTES DE EXPLORACIÓN
+// EXPLORACIÓN
 // ============================================================================
 import ExploreContainer from "./Components/Explore/explorecontainer";
 import ImagesExplore from "./Components/Explore/imagesExplore";
 import TextCard from "./Components/Explore/textCard";
 
 // ============================================================================
-// COMPONENTES DE USUARIO
+// USUARIO
 // ============================================================================
 import UserInfo from "./Components/PUser/userProfile/UserInfo";
 import UserSelftProfile from "./Components/PUser/userProfile/UserProfile";
@@ -77,44 +78,35 @@ import UserEdit from "./Components/PUser/userProfile/EditButton";
 import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
 
 // ============================================================================
-// COMPONENTES DE SUGERENCIAS Y OTROS
+// OTROS COMPONENTES
 // ============================================================================
 import Suggestions from "./Components/Home/suggestions";
 import CardNotifications from "./Components/Nofications/CardNotifications";
 
 // ============================================================================
-// COMPONENTES DE LOGIN
+// LOGIN
 // ============================================================================
 import CajaDeTexto from "./Components/Login/CajaTexto";
 import BotonLogin from "./Components/Login/Boton";
 import LoginForm from "./Components/Login/CajaLogin";
 
 // ============================================================================
-// COMPONENTES DE SETTINGS
-// ============================================================================
-import CajonTexto from "./Components/Settings/CajonTexto";
-import CajonList from "./Components/Settings/CajonList";
-import CambiarCo from "./Components/Settings/CambiarCorreo/cambiarco";
-import CambiarNU from "./Components/Settings/CambiarNombre/cambiarNU";
-import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontra";
-import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF";
-import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
-import CambiarNombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
-import CajonListInteractive from "./Components/Settings/CajonListInteractive";
-import CambiarCorreoSimple from "./Components/Settings/CambiarCorreoSimple";
-import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
-import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
-
-// ============================================================================
-// COMPONENTES DE NEW ACCOUNT
+// NEW ACCOUNT
 // ============================================================================
 import BoxText from "./Components/Newaccount/boxtext";
 
 // ============================================================================
-// INTERFACES PARA WINDOW
+// INTERFACES
 // ============================================================================
+interface AntojarService {
+    getInstance(): {
+        initialize(): void;
+        showPopup(): void;
+    };
+}
+
 interface WindowWithServices extends Window {
-    AntojarPopupService?: typeof AntojarPopupService;
+    AntojarPopupService?: AntojarService;
     LuladaServices?: {
         locationService: PublicationLocationService;
         publicationsService: PublicationsService;
@@ -145,15 +137,12 @@ interface WindowWithServices extends Window {
 // ============================================================================
 console.log('🚀 Inicializando servicios Lulada con Google Maps...');
 
-// Inicializar servicios principales
 const locationService = PublicationLocationService.getInstance();
 const publicationsService = PublicationsService.getInstance();
 const antojarService = AntojarPopupService.getInstance();
 
-// Configurar servicio de Antojar
 antojarService.initialize();
 
-// Hacer servicios disponibles globalmente
 (window as WindowWithServices).AntojarPopupService = AntojarPopupService;
 (window as WindowWithServices).LuladaServices = {
     locationService,
@@ -162,29 +151,28 @@ antojarService.initialize();
 };
 
 console.log('✅ Servicios inicializados correctamente');
-console.log('🗺️ Google Maps integrado en componentes de ubicación');
 
 // ============================================================================
-// REGISTRO DE COMPONENTES - ORDEN JERÁRQUICO
+// REGISTRO DE COMPONENTES
 // ============================================================================
 console.log('📦 Registrando componentes...');
 
-// 1. COMPONENTES BASE
+// CORE
 customElements.define('root-component', RootComponent);
 customElements.define('load-pages', LoadPage);
 
-// 2. HEADERS (Header completo debe ir primero)
+// HEADERS
 customElements.define('lulada-header-complete', HeaderCompleto);
 customElements.define('lulada-header', HeaderHome);
 customElements.define('lulada-logo', Lulada);
 customElements.define('header-explorer', HeaderExplorer);
 
-// 3. NAVEGACIÓN
+// NAVEGACIÓN
 customElements.define('lulada-responsive-bar', NavigationBar);
 customElements.define('lulada-sidebar', LuladaSidebar);
 customElements.define('lulada-navigation', Navigation);
 
-// 4. PÁGINAS PRINCIPALES
+// PÁGINAS
 customElements.define('lulada-home', Home);
 customElements.define('lulada-explore', LuladaExplore);
 customElements.define('puser-page', PUser);
@@ -196,60 +184,43 @@ customElements.define('lulada-notifications', LuladaNotifications);
 customElements.define('register-new-account', NewAccount);
 customElements.define('confirm-role', ConfirmRole);
 
-// 5. COMPONENTES DE PUBLICACIONES
+// PUBLICACIONES
 customElements.define('lulada-publication', Publication);
 customElements.define('lulada-review', Review);
 customElements.define('lulada-reviews-container', ReviewsContainer);
 
-// 6. COMPONENTES DE GOOGLE MAPS (NUEVOS)
+// GOOGLE MAPS
 customElements.define('google-maps-location-picker', GoogleMapsLocationPicker);
 customElements.define('google-maps-location-viewer', GoogleMapsLocationViewer);
 
-// 7. COMPONENTES DE ANTOJAR
+// ANTOJAR
 customElements.define('lulada-antojar', LuladaAntojar);
 customElements.define('lulada-antojar-boton', LuladaAntojarBoton);
 
-// 8. COMPONENTES DE EXPLORACIÓN
+// EXPLORACIÓN
 customElements.define('explore-container', ExploreContainer);
 customElements.define('images-explore', ImagesExplore);
 customElements.define('text-card', TextCard);
 
-// 9. COMPONENTES DE USUARIO
+// USUARIO
 customElements.define('user-info', UserInfo);
 customElements.define('user-profile', UserSelftProfile);
 customElements.define('user-edit', UserEdit);
 customElements.define('restaurant-info', restaurantInfo);
 
-// 10. OTROS COMPONENTES
+// OTROS
 customElements.define('lulada-suggestions', Suggestions);
 customElements.define('lulada-card-notifications', CardNotifications);
 
-// 11. COMPONENTES DE LOGIN
+// LOGIN
 customElements.define("caja-de-texto", CajaDeTexto);
 customElements.define("boton-login", BotonLogin);
 customElements.define("login-form", LoginForm);
 
-// 12. COMPONENTES DE SETTINGS
-customElements.define("cajon-texto", CajonTexto);
-customElements.define("cajon-list", CajonList);
-customElements.define('cambiar-correo', CambiarCo);
-customElements.define('cambiar-nombre', CambiarNU);
-customElements.define('cambiar-contraseña', CambiarContra);
-customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
-customElements.define('lulada-cambiar-correo', CambiarCorreoF);
-customElements.define('lulada-cambiar-nombre', CambiarNombreUsuraio);
-customElements.define('cajon-list-interactive', CajonListInteractive);
-customElements.define('cambiar-correo-simple', CambiarCorreoSimple);
-customElements.define('cambiar-nombre-simple', CambiarNombreSimple);
-customElements.define('cambiar-contrasena-simple', CambiarContrasenaSimple);
-
-// 13. COMPONENTES DE NEW ACCOUNT
+// NEW ACCOUNT
 customElements.define('lulada-boxtext', BoxText);
 
 console.log('✅ Todos los componentes registrados');
-console.log('🗺️ Componentes de Google Maps disponibles:');
-console.log('  - google-maps-location-picker');
-console.log('  - google-maps-location-viewer');
 
 // ============================================================================
 // INICIALIZACIÓN FINAL
@@ -257,10 +228,8 @@ console.log('  - google-maps-location-viewer');
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎯 DOM cargado - Verificando componentes...');
     
-    // Inicializar AntojarPopupService
     AntojarPopupService.getInstance().initialize();
     
-    // Verificar componentes críticos incluyendo Google Maps
     const criticalComponents = [
         'root-component',
         'lulada-home',
@@ -284,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================================
-// DEBUGGING (Desarrollo)
+// DEBUGGING
 // ============================================================================
 if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
     const criticalComponents = [
@@ -316,27 +285,19 @@ if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
     };
     
     console.log('🛠️ Debug info disponible en window.LuladaDebug');
-    console.log('🗺️ Google Maps components ready for use');
 }
 
 // ============================================================================
-// EXPORTS PARA USO EXTERNO
+// EXPORTS
 // ============================================================================
 export {
-    // Servicios
     PublicationLocationService,
     PublicationsService,
     AntojarPopupService,
-    
-    // Componentes principales de Antojar
     LuladaAntojar,
     LuladaAntojarBoton,
-    
-    // Componentes de Google Maps
     GoogleMapsLocationPicker,
     GoogleMapsLocationViewer,
-    
-    // Páginas
     Home,
     LuladaExplore,
     PUser,
@@ -345,20 +306,13 @@ export {
     LoginPage,
     LuladaSettings,
     LuladaNotifications,
-    
-    // Componentes de navegación
     NavigationBar,
     HeaderCompleto,
     LuladaSidebar,
-    
-    // Componentes de publicaciones
     Publication,
     ReviewsContainer
 };
 
-// ============================================================================
-// DEFAULT EXPORT
-// ============================================================================
 export default {
     registerAll: () => console.log('Todos los componentes ya registrados'),
     verify: () => console.log('Verificación de componentes disponible en LuladaDebug'),
@@ -370,7 +324,5 @@ export default {
     AntojarPopupService
 };
 
-// Log inicial
 console.log('📦 Lulada Components Module con Google Maps cargado');
-console.log('🛠️ Usa window.LuladaDebug para debugging');
 console.log('🗺️ Google Maps integrado exitosamente');

@@ -6,12 +6,6 @@ export interface Publication {
     hasImage?: boolean;
     timestamp?: number;
     restaurant?: string;
-    specificLocation?: {
-        latitude: number;
-        longitude: number;
-        address: string;
-        restaurantName?: string;
-    };
 }
 
 export class PublicationsService {
@@ -63,28 +57,6 @@ export class PublicationsService {
         return publications.filter(pub => pub.location === location);
     }
 
-    // Obtener publicaciones con ubicación específica
-    public getPublicationsWithSpecificLocation(): Publication[] {
-        const publications = this.getPublications();
-        return publications.filter(pub => pub.specificLocation);
-    }
-
-    // Obtener publicaciones en un radio específico (en kilómetros)
-    public getPublicationsInRadius(centerLat: number, centerLng: number, radiusKm: number): Publication[] {
-        const publications = this.getPublicationsWithSpecificLocation();
-        
-        return publications.filter(pub => {
-            if (!pub.specificLocation) return false;
-            
-            const distance = this.calculateDistance(
-                centerLat, centerLng,
-                pub.specificLocation.latitude, pub.specificLocation.longitude
-            );
-            
-            return distance <= radiusKm;
-        });
-    }
-
     // Buscar publicaciones por nombre de restaurante
     public searchByRestaurant(query: string): Publication[] {
         const publications = this.getPublications();
@@ -94,11 +66,8 @@ export class PublicationsService {
             // Buscar en el texto de la publicación
             if (pub.text.toLowerCase().includes(searchTerm)) return true;
             
-            // Buscar en el nombre del restaurante si existe ubicación específica
-            if (pub.specificLocation?.restaurantName?.toLowerCase().includes(searchTerm)) return true;
-            
-            // Buscar en la dirección
-            if (pub.specificLocation?.address?.toLowerCase().includes(searchTerm)) return true;
+            // Buscar en el nombre del restaurante
+            if (pub.restaurant?.toLowerCase().includes(searchTerm)) return true;
             
             return false;
         });
@@ -111,7 +80,6 @@ export class PublicationsService {
         
         return publications.filter(pub => {
             if (pub.restaurant?.toLowerCase() === searchTerm) return true;
-            if (pub.specificLocation?.restaurantName?.toLowerCase() === searchTerm) return true;
             return false;
         });
     }
@@ -181,10 +149,10 @@ export class PublicationsService {
         document.dispatchEvent(new CustomEvent('publicaciones-limpiadas'));
     }
 
-    // Obtener estadísticas - CORREGIDO
+    // Obtener estadísticas
     public getStats() {
         const publications = this.getPublications();
-        const locationStats: { [key: string]: number } = { // Tipo explícito
+        const locationStats: { [key: string]: number } = {
             centro: 0,
             norte: 0,
             sur: 0,
@@ -197,13 +165,11 @@ export class PublicationsService {
             }
         });
 
-        const withLocation = publications.filter(pub => pub.specificLocation).length;
         const topRestaurants = this.getTopRestaurants(5);
 
         return {
             total: publications.length,
             byLocation: locationStats,
-            withSpecificLocation: withLocation,
             averageRating: publications.length > 0
                 ? publications.reduce((sum, pub) => sum + pub.stars, 0) / publications.length
                 : 0,
@@ -220,9 +186,7 @@ export class PublicationsService {
             let restaurantName = '';
             
             // Obtener nombre del restaurante de diferentes fuentes
-            if (pub.specificLocation?.restaurantName) {
-                restaurantName = pub.specificLocation.restaurantName;
-            } else if (pub.restaurant) {
+            if (pub.restaurant) {
                 restaurantName = pub.restaurant;
             } else {
                 // Intentar extraer @NombreRestaurante del texto
@@ -250,23 +214,6 @@ export class PublicationsService {
             }))
             .sort((a, b) => b.count - a.count)
             .slice(0, limit);
-    }
-
-    // Calcular distancia entre dos puntos geográficos (fórmula de Haversine)
-    private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-        const R = 6371; // Radio de la Tierra en kilómetros
-        const dLat = this.deg2rad(lat2 - lat1);
-        const dLng = this.deg2rad(lng2 - lng1);
-        const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
-            Math.sin(dLng/2) * Math.sin(dLng/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c; // Distancia en kilómetros
-    }
-
-    private deg2rad(deg: number): number {
-        return deg * (Math.PI/180);
     }
 
     // Exportar publicaciones como JSON

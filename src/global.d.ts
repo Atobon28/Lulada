@@ -1,26 +1,56 @@
-// src/global.d.ts - VERSIÓN SIN 'any'
-import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
-import { UserStore } from './Services/flux/UserStore';
-import { UserActions } from './Services/flux/UserActions';
+// types/global.d.ts
 
+import { UserActions } from '../src/Services/flux/UserActions';
+import { UserStore } from '../src/Services/flux/UserStore';
 
 declare global {
-  interface Window {
-    AntojarPopupService: typeof AntojarPopupService;
-    userStore: UserStore;
-    UserActions: typeof UserActions;
-    debugUserStore: () => void;
-    
-    // Funciones de debug adicionales - SIN 'any'
-    FluxDebug: FluxDebugUtilsType;
-    debugFlux: () => void;
-    testUsername: (username: string) => void;
-    forceUpdateProfile: () => void;
-    resetProfile: () => void;
-    monitorFlux: () => void;
-    debugUserInfo: () => void;
-    forceUpdateUserInfo: () => void;
-  }
+    interface Window {
+        // Flux User Store y Actions
+        UserActions: typeof UserActions;
+        userStore: UserStore;
+
+        // Servicios de Antojar
+        AntojarPopupService?: {
+            getInstance(): {
+                initialize(): void;
+                showPopup(): void;
+            };
+        };
+
+        // Servicios Lulada
+        LuladaServices?: {
+            locationService: unknown;
+            publicationsService: unknown;
+            antojarService: unknown;
+        };
+
+        // Debug utilities
+        LuladaDebug?: {
+            services: {
+                location: unknown;
+                publications: unknown;
+                antojar: unknown;
+            };
+            components: {
+                registered: Array<{
+                    name: string;
+                    registered: boolean;
+                }>;
+            };
+            googleMaps: {
+                available: boolean;
+                components: string[];
+            };
+        };
+
+        // Debug functions
+        debugUserInfo?: () => void;
+        forceUpdateUserInfo?: () => void;
+        debugUserStore?: () => void;
+
+        // Google Maps API
+        google?: unknown;
+    }
 }
 
 export {};
