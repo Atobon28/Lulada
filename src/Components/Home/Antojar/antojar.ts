@@ -1,13 +1,12 @@
-// src/Components/Home/Antojar/antojar.ts
-
-// Importamos el servicio de publicaciones
 import PublicationsService from '../../../Services/PublicationsService';
+import { PublicationLocation } from '../../../Services/PublicationLocationService';
 
 export class LuladaAntojar extends HTMLElement {
     shadow: ShadowRoot;
     selectedStars: number = 0;
     locationSelected: boolean = false;
     selectedZone: string = "";
+    selectedLocation: PublicationLocation | null = null;
 
     constructor() {
         super();
@@ -203,10 +202,11 @@ export class LuladaAntojar extends HTMLElement {
                 }
                 
                 .location-icon:hover {
-                    color: #4285F4 !important;
+                    color: #16a34a !important;
                 }
                 .location-icon.active {
-                    color: rgb(244, 238, 66) !important;
+                    color: #16a34a !important;
+                    fill: #16a34a !important;
                 }
                 .stars {
                     display: flex;
@@ -286,7 +286,56 @@ export class LuladaAntojar extends HTMLElement {
                         justify-content: center;
                     }
                 }
+
+                /* Estilos para la información de ubicación seleccionada */
+                .selected-location-info {
+                    display: none;
+                    margin: 10px 0;
+                    padding: 12px;
+                    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+                    border: 1px solid #16a34a;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    box-shadow: 0 2px 4px rgba(22, 163, 74, 0.1);
+                }
+
+                .location-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 6px;
+                }
+
+                .location-title {
+                    color: #16a34a;
+                    font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .remove-location {
+                    background: none;
+                    border: none;
+                    color: #dc3545;
+                    font-size: 11px;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    transition: background 0.2s;
+                }
+
+                .remove-location:hover {
+                    background: rgba(220, 53, 69, 0.1);
+                }
+
+                .selected-location-text {
+                    color: #666;
+                    line-height: 1.4;
+                    margin-top: 4px;
+                }
             </style>
+            
             <div class="popup">
                 <button id="cerrar" class="close-button">✕</button>
                 <div class="header">
@@ -310,6 +359,17 @@ export class LuladaAntojar extends HTMLElement {
                         <option value="oeste">Oeste</option>
                     </select>
                 </div>
+
+                <!-- Información de ubicación seleccionada -->
+                <div id="selected-location-info" class="selected-location-info">
+                    <div class="location-header">
+                        <div class="location-title">
+                            📍 Ubicación seleccionada
+                        </div>
+                        <button id="remove-location" class="remove-location">✕ Quitar</button>
+                    </div>
+                    <div id="selected-location-text" class="selected-location-text"></div>
+                </div>
                 
                 <div class="bottom-actions">
                     <div class="icon-container">
@@ -327,6 +387,12 @@ export class LuladaAntojar extends HTMLElement {
                             </svg>
                         </div>
                     </div>
+                    
+                    <!-- Contenedor para el location picker -->
+                    <div id="location-picker-container" style="display: none;">
+                        <google-maps-location-picker></google-maps-location-picker>
+                    </div>
+                    
                     <div class="rating-stars">
                         <span class="star-outline" data-value="1">☆</span>
                         <span class="star-outline" data-value="2">☆</span>
@@ -371,7 +437,11 @@ export class LuladaAntojar extends HTMLElement {
                         stars: this.selectedStars,
                         location: this.selectedZone,
                         hasImage: false,
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        // Agregar información de ubicación específica si está disponible
+                        ...(this.selectedLocation && {
+                            specificLocation: this.selectedLocation
+                        })
                     };
 
                     try {
@@ -439,15 +509,34 @@ export class LuladaAntojar extends HTMLElement {
             });
         });
 
-        // Funcionalidad para el icono de ubicación (opcional)
+        // Funcionalidad para el icono de ubicación (Google Maps)
         if (locationIcon) {
             locationIcon.addEventListener('click', () => {
-                this.locationSelected = !this.locationSelected;
-                if (this.locationSelected) {
-                    locationIcon.classList.add('active');
-                } else {
-                    locationIcon.classList.remove('active');
-                }
+                this.showLocationPicker();
+            });
+        }
+
+        // Eventos del location picker (Google Maps)
+        this.shadow.addEventListener('location-selected', (e: Event) => {
+            const event = e as CustomEvent<PublicationLocation>;
+            this.selectedLocation = event.detail;
+            this.locationSelected = true;
+            const iconElement = locationIcon as HTMLElement | null;
+            iconElement?.classList.add('active');
+            this.showSelectedLocationInfo();
+            this.hideLocationPicker();
+            this.updatePublishButton();
+        });
+
+        this.shadow.addEventListener('location-picker-close', () => {
+            this.hideLocationPicker();
+        });
+
+        // Botón remover ubicación
+        const removeLocationBtn = this.shadow.querySelector('#remove-location');
+        if (removeLocationBtn) {
+            removeLocationBtn.addEventListener('click', () => {
+                this.removeLocation();
             });
         }
 
@@ -465,7 +554,7 @@ export class LuladaAntojar extends HTMLElement {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #4CAF50;
+            background: #16a34a;
             color: white;
             padding: 15px 20px;
             border-radius: 8px;
@@ -475,7 +564,7 @@ export class LuladaAntojar extends HTMLElement {
             transform: translateX(100%);
             transition: transform 0.3s ease;
         `;
-        toast.textContent = '¡Reseña publicada con éxito!';
+        toast.textContent = '🎉 ¡Reseña publicada con éxito!';
         
         document.body.appendChild(toast);
         
@@ -492,7 +581,7 @@ export class LuladaAntojar extends HTMLElement {
                     document.body.removeChild(toast);
                 }
             }, 300);
-        }, 2500);
+        }, 3000);
     }
 
     updatePublishButton() {
@@ -506,6 +595,66 @@ export class LuladaAntojar extends HTMLElement {
             
             publicar.disabled = !(hasText && hasStars && hasZone);
         }
+    }
+
+    showLocationPicker() {
+        const container = this.shadow.querySelector('#location-picker-container') as HTMLElement;
+        if (container) {
+            container.style.display = 'block';
+            const picker = container.querySelector('google-maps-location-picker') as HTMLElement & {
+                openModal?: () => void;
+            };
+            if (picker && typeof picker.openModal === 'function') {
+                picker.openModal();
+            }
+        }
+    }
+
+    hideLocationPicker() {
+        const container = this.shadow.querySelector('#location-picker-container') as HTMLElement;
+        if (container) {
+            container.style.display = 'none';
+        }
+    }
+
+    showSelectedLocationInfo() {
+        const info = this.shadow.querySelector('#selected-location-info') as HTMLElement;
+        const text = this.shadow.querySelector('#selected-location-text') as HTMLElement;
+        
+        if (info && text && this.selectedLocation) {
+            let displayText = '';
+            
+            if (this.selectedLocation.restaurantName) {
+                displayText = `🏪 ${this.selectedLocation.restaurantName}`;
+                if (this.selectedLocation.address) {
+                    displayText += `\n📍 ${this.selectedLocation.address}`;
+                }
+            } else {
+                displayText = `📍 ${this.selectedLocation.address || `${this.selectedLocation.latitude.toFixed(4)}, ${this.selectedLocation.longitude.toFixed(4)}`}`;
+            }
+            
+            text.style.whiteSpace = 'pre-line';
+            text.textContent = displayText;
+            info.style.display = 'block';
+        }
+    }
+
+    removeLocation() {
+        this.selectedLocation = null;
+        this.locationSelected = false;
+        
+        const locationIcon = this.shadow.querySelector('#location-icon') as HTMLElement;
+        const info = this.shadow.querySelector('#selected-location-info') as HTMLElement;
+        
+        if (locationIcon) {
+            locationIcon.classList.remove('active');
+        }
+        
+        if (info) {
+            info.style.display = 'none';
+        }
+        
+        this.updatePublishButton();
     }
 
     updateProfilePicture() {
@@ -534,14 +683,21 @@ export class LuladaAntojar extends HTMLElement {
             estrella.classList.remove('active');
         });
 
-        this.locationSelected = false;
-        if (locationIcon) {
-            locationIcon.classList.remove('active');
-        }
-
         this.selectedZone = "";
         if (zoneSelect) {
             zoneSelect.value = "";
+        }
+
+        // Resetear ubicación específica
+        this.selectedLocation = null;
+        this.locationSelected = false;
+        const selectedLocationInfo = this.shadow.querySelector('#selected-location-info') as HTMLElement;
+        if (selectedLocationInfo) {
+            selectedLocationInfo.style.display = 'none';
+        }
+
+        if (locationIcon) {
+            locationIcon.classList.remove('active');
         }
 
         this.updateProfilePicture();
