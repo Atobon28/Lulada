@@ -1,4 +1,4 @@
-// src/index.ts - VERSIÓN LIMPIA SIN DEBUG SYSTEM
+// src/index.ts - VERSIÓN CORREGIDA SIN REFERENCIAS ROTAS
 
 // ============================================================================
 // INTERFACES SIMPLES
@@ -365,4 +365,4 @@ export default {
     AntojarPopupService
 };
 
-console.log('📦 Lulada Components Module cargado - VERSIÓN LIMPIA');
+console.log('📦 Lulada Components Module cargado - VERSIÓN CORREGIDA');

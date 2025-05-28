@@ -1,3 +1,5 @@
+// src/Pages/Settings/CambiarNombre/CambiarNombreF.ts - CORREGIDO
+
 class NombreUsuraio extends HTMLElement {
   private username: string;
   
@@ -198,7 +200,7 @@ class NombreUsuraio extends HTMLElement {
         <!-- Header responsive (solo visible en mobile) -->
         <lulada-responsive-header style="display: none;"></lulada-responsive-header>
         
-        <!-- Header normal (solo visible en desktop) -->
+        <!-- Header normal (solo visible en desktop) - USANDO LULADA-LOGO -->
         <div class="header-wrapper">
           <div class="logo-container">
             <lulada-logo></lulada-logo>
@@ -331,12 +333,82 @@ class NombreUsuraio extends HTMLElement {
   
   private handleSaveClick() {
     const inputField = this.shadowRoot?.querySelector('#username-input') as HTMLInputElement;
-    if (inputField && inputField.value) {
-      const newUsername = inputField.value;
+    
+    if (!inputField || !inputField.value.trim()) {
+      alert('Por favor ingresa un nuevo nombre de usuario');
+      return;
+    }
+
+    const newUsername = inputField.value.trim();
+    console.log('🔄 Intentando cambiar username a:', newUsername);
+    
+    // Verificar que Flux esté disponible
+    if (!window.UserActions) {
+      console.error('❌ UserActions no disponible');
+      alert('Error: Sistema de usuario no disponible');
+      return;
+    }
+
+    try {
+      // Usar Flux para actualizar el username
+      window.UserActions.updateUsername(newUsername);
+      console.log('✅ Username actualizado via Flux');
+      
+      // Limpiar el campo
+      inputField.value = '';
+      
+      // Mostrar mensaje de éxito con el mismo estilo que las publicaciones
+      this.showSuccessMessage();
+      
+      // Emitir evento de guardado
       this.dispatchEvent(new CustomEvent('save', { 
         detail: { newUsername } 
       }));
+      
+    } catch (error) {
+      console.error('❌ Error:', error);
+      alert('Error al actualizar el nombre de usuario');
     }
+  }
+
+  // Función para mostrar mensaje de éxito - MISMO ESTILO QUE PUBLICACIONES
+  private showSuccessMessage(): void {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        z-index: 10001;
+        font-family: Arial, sans-serif;
+        font-weight: 600;
+        box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+        transform: translateX(100%);
+        transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    `;
+    toast.textContent = '🎉 Tu nombre de usuario cambió con éxito';
+    
+    document.body.appendChild(toast);
+    
+    // Animación de entrada
+    setTimeout(() => {
+        toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Animación de salida y eliminación
+    setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 400);
+    }, 3000);
   }
 }
 

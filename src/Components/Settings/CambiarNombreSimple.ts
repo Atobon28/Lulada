@@ -1,3 +1,5 @@
+// src/Components/Settings/CambiarNombreSimple.ts - CORREGIDO PARA QUE FUNCIONE EL BOTÓN GUARDAR
+
 // Importamos las herramientas de Flux que necesitamos para manejar los datos del usuario
 import { userStore, UserState } from "../../Services/flux/UserStore";
 import { UserData } from "../../Services/flux/UserActions";
@@ -13,7 +15,7 @@ class CambiarNombreSimple extends HTMLElement {
         super(); // Llamamos al constructor de HTMLElement
         // Creamos el shadow DOM en modo 'open' para aislar los estilos de este componente
         this.attachShadow({ mode: 'open' });
-        console.log(' CambiarNombreSimple: Componente creado');
+        console.log('🔧 CambiarNombreSimple: Componente creado');
     }
     
     // Define qué atributos HTML del componente deben ser "observados"
@@ -34,19 +36,19 @@ class CambiarNombreSimple extends HTMLElement {
     // Este método se ejecuta cuando el componente se añade al DOM de la página
     // Aquí es donde conectamos el componente con el sistema Flux
     connectedCallback() {
-        console.log('CambiarNombreSimple: El componente se conectó al DOM');
+        console.log('🔧 CambiarNombreSimple: El componente se conectó al DOM');
         
         // PASO 1: Nos "suscribimos" al UserStore para recibir notificaciones
         // Esto significa que cada vez que cambien los datos del usuario en Flux,
         // nuestro componente se enterará automáticamente
         userStore.subscribe(this.storeListener);
-        console.log('Nos suscribimos al UserStore para recibir actualizaciones');
+        console.log('📡 Nos suscribimos al UserStore para recibir actualizaciones');
         
         // PASO 2: Obtenemos los datos actuales del usuario desde Flux
         // Al conectarse, el componente necesita saber cuál es el username actual
         const currentUser = userStore.getCurrentUser();
         if (currentUser) {
-            console.log('Datos del usuario encontrados:', currentUser.nombreDeUsuario);
+            console.log('👤 Datos del usuario encontrados:', currentUser.nombreDeUsuario);
             this.username = currentUser.nombreDeUsuario; // Guardamos el username actual
             this.currentUser = currentUser; // Guardamos todos los datos del usuario
         }
@@ -61,12 +63,12 @@ class CambiarNombreSimple extends HTMLElement {
     // Este método se ejecuta cuando el componente se quita del DOM
     // Es importante hacer "limpieza" para evitar problemas de memoria
     disconnectedCallback() {
-        console.log(' CambiarNombreSimple: El componente se desconectó del DOM');
+        console.log('🔌 CambiarNombreSimple: El componente se desconectó del DOM');
         
         // Nos "desuscribimos" del UserStore para dejar de recibir notificaciones
         // Si no hacemos esto, el componente seguiría recibiendo notificaciones aunque ya no exista
         userStore.unsubscribe(this.storeListener);
-        console.log(' Nos desuscribimos del UserStore');
+        console.log('🔌 Nos desuscribimos del UserStore');
     }
 
     // Esta función se ejecuta cada vez que cambian los datos del usuario en Flux
@@ -76,7 +78,7 @@ class CambiarNombreSimple extends HTMLElement {
         
         // Comparamos si realmente hubo cambios (para evitar actualizaciones innecesarias)
         if (JSON.stringify(this.currentUser) !== JSON.stringify(newUser)) {
-            console.log('Los datos del usuario cambiaron en Flux:', newUser?.nombreDeUsuario);
+            console.log('🔄 Los datos del usuario cambiaron en Flux:', newUser?.nombreDeUsuario);
             
             // Actualizamos nuestros datos locales con los nuevos datos
             this.currentUser = newUser ? { ...newUser } : null; // Hacemos una copia de los datos
@@ -106,7 +108,7 @@ class CambiarNombreSimple extends HTMLElement {
             currentUsernameEl.textContent = this.username;
         }
         
-        console.log(' Username actualizado en la interfaz:', this.username);
+        console.log('✅ Username actualizado en la interfaz:', this.username);
     }
     
     // Esta función dibuja todo el HTML y CSS del componente
@@ -114,7 +116,7 @@ class CambiarNombreSimple extends HTMLElement {
     private render() {
         if (!this.shadowRoot) return; // Si no hay shadow DOM, no podemos dibujar nada
         
-        console.log(' Dibujando el componente con username:', this.username);
+        console.log('🎨 Dibujando el componente con username:', this.username);
         
         // Definimos todo el HTML y CSS del formulario dentro del shadow DOM
         this.shadowRoot.innerHTML = `
@@ -231,6 +233,11 @@ class CambiarNombreSimple extends HTMLElement {
                     box-shadow: none; /* Sin sombra */
                 }
 
+                .save-button.loading {
+                    background-color: #999;
+                    cursor: wait;
+                }
+
                 @keyframes slideIn {
                     from { opacity: 0; transform: translateY(-10px); } /* Empieza invisible y arriba */
                     to { opacity: 1; transform: translateY(0); } /* Termina visible y en posición */
@@ -247,7 +254,7 @@ class CambiarNombreSimple extends HTMLElement {
                 <h2 class="title">Cambiar nombre de usuario</h2>
                 <p class="subtitle">Nombre de usuario actual</p>
                 <div class="current-username">
-                    <span class="current-username-display">${this.username || 'CrisTiJauregui'}</span>
+                    <span class="current-username-display">${this.username || '@CrisTiJauregui'}</span>
                 </div>
                 
                 <!-- Campo de texto donde el usuario escribe el nuevo username -->
@@ -312,7 +319,7 @@ class CambiarNombreSimple extends HTMLElement {
     // Esta función se ejecuta cuando el usuario hace click en el botón "Guardar"
     // Aquí es donde se conecta con Flux para actualizar los datos
     private handleSaveClick(): void {
-        console.log('El usuario hizo click en el botón Guardar');
+        console.log('💾 El usuario hizo click en el botón Guardar');
         
         // Obtenemos referencias a todos los elementos que necesitamos
         const inputField = this.shadowRoot?.querySelector('#username-input') as HTMLInputElement;
@@ -320,41 +327,47 @@ class CambiarNombreSimple extends HTMLElement {
         
         // Validamos que el campo no esté vacío
         if (!inputField || !inputField.value.trim()) {
-            console.log('El campo de texto está vacío');
+            console.log('⚠️ El campo de texto está vacío');
             return; // Salimos de la función sin guardar
         }
 
         const newUsername = inputField.value.trim(); // Obtenemos el nuevo username
-        console.log('Intentando cambiar el username a:', newUsername);
+        console.log('🔄 Intentando cambiar el username a:', newUsername);
         
         // Verificamos que el sistema Flux esté disponible
-        if (typeof window.UserActions === 'undefined') {
-            console.error('UserActions no está disponible en window');
+        if (!window.UserActions) {
+            console.error('❌ UserActions no está disponible en window');
+            alert('Error: Sistema de usuario no disponible');
             return;
         }
 
-        if (typeof window.userStore === 'undefined') {
-            console.error(' userStore no está disponible en window');
+        if (!window.userStore) {
+            console.error('❌ userStore no está disponible en window');
+            alert('Error: Almacén de usuario no disponible');
             return;
         }
         
-        // Deshabilitamos temporalmente el botón para evitar múltiples clicks
+        // Estado de carga
         saveButton.disabled = true;
+        saveButton.classList.add('loading');
         saveButton.textContent = 'Guardando...'; // Cambiamos el texto del botón
         
         try {
-            console.log(' Enviando el cambio de username al sistema Flux...');
+            console.log('📡 Enviando el cambio de username al sistema Flux...');
             
             // AQUÍ ES DONDE SE CONECTA CON FLUX
             // Llamamos a UserActions para actualizar el username
             window.UserActions.updateUsername(newUsername);
             
-            console.log(' Comando enviado a Flux correctamente');
+            console.log('✅ Comando enviado a Flux correctamente');
             
             // Limpiamos el campo de texto
             inputField.value = '';
             
-            console.log('¡Proceso de guardado completado!');
+            // Mostrar mensaje de éxito
+            this.showSuccessMessage();
+            
+            console.log('🎉 Proceso de guardado completado!');
             
             // También emitimos un evento personalizado para mantener compatibilidad
             // con otros sistemas que puedan estar escuchando
@@ -365,16 +378,58 @@ class CambiarNombreSimple extends HTMLElement {
             }));
             
         } catch (error) {
-            // Si algo sale mal, mostramos el error en consola solamente
-            console.error('Error al actualizar el username:', error);
+            // Si algo sale mal, mostramos el error
+            console.error('❌ Error al actualizar el username:', error);
+            alert('Error al guardar el cambio. Por favor intenta de nuevo.');
         } finally {
             // Restauramos el botón a su estado normal (habilitado o deshabilitado según corresponda)
             setTimeout(() => {
                 saveButton.disabled = false;
+                saveButton.classList.remove('loading');
                 saveButton.textContent = 'Guardar';
                 this.validateInput(); // Revalidamos si el botón debe estar habilitado
-            }, 500);
+            }, 1000); // Pequeño delay para mejor UX
         }
+    }
+
+    // Función para mostrar mensaje de éxito - ESTILO IGUAL AL DE PUBLICACIONES
+    private showSuccessMessage(): void {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            z-index: 10001;
+            font-family: Arial, sans-serif;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        `;
+        toast.textContent = '🎉 Tu nombre de usuario cambió con éxito';
+        
+        document.body.appendChild(toast);
+        
+        // Animación de entrada
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Animación de salida y eliminación
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 400);
+        }, 3000);
     }
 }
 
