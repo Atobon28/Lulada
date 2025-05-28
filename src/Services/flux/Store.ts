@@ -15,8 +15,8 @@ class Store {
         AppDispatcher.register(this._handleActions.bind(this));
     }
 
-    getState(): State {  // ✅ Agregado tipo de retorno específico
-        return this._myState;  // ✅ Retorna el estado real en lugar de {}
+    getState(): State {
+        return this._myState;
     }
 
     _handleActions(action: Action): void {
@@ -32,8 +32,11 @@ class Store {
         }
     }
 
+    subscribe(listener: Listener): void {
+        this._listeners.push(listener);
+    }
+
     unsubscribe(listener: Listener): void {
-        // ✅ Tipo explícito para evitar 'any'
         this._listeners = this._listeners.filter((l: Listener) => l !== listener);
     }
 }

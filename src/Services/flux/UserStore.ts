@@ -1,3 +1,5 @@
+// src/Services/flux/UserStore.ts
+
 import { AppDispatcher, Action } from './Dispacher';
 import { UserData } from './UserActions';
 
@@ -28,18 +30,18 @@ export class UserStore {
         console.log('UserStore: Cargando datos iniciales...');
         
         // Intentar cargar desde localStorage primero
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            try {
+        try {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
                 const userData = JSON.parse(savedUser);
-                console.log(' Datos encontrados en localStorage:', userData);
+                console.log('Datos encontrados en localStorage:', userData);
                 this._state.currentUser = userData;
                 this._emitChange();
                 return;
-            } catch (error) {
-                console.error('Error loading saved user data:', error);
-                localStorage.removeItem('currentUser'); // Limpiar datos corruptos
             }
+        } catch (error) {
+            console.error('Error loading saved user data:', error);
+            localStorage.removeItem('currentUser'); // Limpiar datos corruptos
         }
 
         // Si no hay datos guardados, cargar datos por defecto
@@ -63,7 +65,7 @@ export class UserStore {
             case 'LOAD_USER_DATA':
                 this._state.currentUser = action.payload as UserData;
                 this._state.error = null;
-                console.log(' Datos de usuario cargados:', this._state.currentUser);
+                console.log('Datos de usuario cargados:', this._state.currentUser);
                 this._saveUserData();
                 this._emitChange();
                 break;
@@ -160,7 +162,7 @@ export class UserStore {
             try {
                 listener(this._state);
             } catch (error) {
-                console.error(' Error en listener:', error);
+                console.error('Error en listener:', error);
             }
         }
     }
@@ -177,7 +179,7 @@ export class UserStore {
 
     // Suscribirse a cambios
     subscribe(listener: UserListener): void {
-        console.log(' UserStore: Nuevo listener suscrito. Total:', this._listeners.length + 1);
+        console.log('UserStore: Nuevo listener suscrito. Total:', this._listeners.length + 1);
         this._listeners.push(listener);
         // Emitir estado inicial inmediatamente
         try {
@@ -196,7 +198,7 @@ export class UserStore {
 
     // Método para debugging
     debug(): void {
-        console.log(' UserStore Debug:');
+        console.log('UserStore Debug:');
         console.log('- Estado:', this._state);
         console.log('- Listeners:', this._listeners.length);
         console.log('- LocalStorage:', localStorage.getItem('currentUser'));
@@ -205,10 +207,7 @@ export class UserStore {
 
 export const userStore = new UserStore();
 
-// Exponer para debugging - SIN DECLARAR GLOBAL AQUÍ
-if (typeof window !== 'undefined') {
-    // Solo asignar si no existe ya
-    if (!window.debugUserStore) {
-        window.debugUserStore = () => userStore.debug();
-    }
+// Exponer para debugging en desarrollo
+if (typeof window !== 'undefined' && !window.debugUserStore) {
+    window.debugUserStore = () => userStore.debug();
 }

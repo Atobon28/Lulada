@@ -26,7 +26,14 @@ export class Publication extends HTMLElement {
                         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
                         overflow: hidden;
                         width: 100%;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease;
                     }
+
+                    :host(:hover) {
+                        transform: translateY(-2px);
+                        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+                    }
+
                     .publication-container {
                         padding: 20px;
                     }
@@ -60,6 +67,7 @@ export class Publication extends HTMLElement {
                         max-height: 400px;
                         object-fit: cover;
                     }
+
                     .footer {
                         display: flex;
                         justify-content: space-between;
@@ -73,9 +81,9 @@ export class Publication extends HTMLElement {
                     .actions {
                         display: flex;
                         align-items: center;
+                        gap: 16px;
                     }
                     .action-icon {
-                        margin-right: 16px;
                         cursor: pointer;
                         transition: all 0.2s ease;
                         color: #666;
@@ -84,9 +92,6 @@ export class Publication extends HTMLElement {
                     }
                     .action-icon:hover {
                         transform: scale(1.1);
-                    }
-                    .location-icon:hover {
-                        color: #4285F4;
                     }
                     .like-icon {
                         color: ${this.liked ? 'red' : '#666'};
@@ -101,6 +106,45 @@ export class Publication extends HTMLElement {
                     }
                     .bookmark-icon:hover {
                         color: #FFD700;
+                    }
+
+                    @media (max-width: 768px) {
+                        .publication-container {
+                            padding: 15px;
+                        }
+                        
+                        .header {
+                            margin-bottom: 10px;
+                        }
+                        
+                        .profile-pic {
+                            width: 40px;
+                            height: 40px;
+                            margin-right: 10px;
+                        }
+                        
+                        .username {
+                            font-size: 15px;
+                        }
+                        
+                        .publication-text {
+                            font-size: 15px;
+                            margin-bottom: 12px;
+                        }
+                        
+                        .stars {
+                            font-size: 20px;
+                            letter-spacing: 1px;
+                        }
+                        
+                        .action-icon {
+                            width: 22px;
+                            height: 22px;
+                        }
+                        
+                        .actions {
+                            gap: 12px;
+                        }
                     }
                 </style>
                 
@@ -128,10 +172,6 @@ export class Publication extends HTMLElement {
                     
                     <div class="footer">
                         <div class="actions">
-                            <svg class="action-icon location-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
                             <svg class="action-icon like-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
@@ -182,6 +222,45 @@ export class Publication extends HTMLElement {
                     }));
                 });
             }
+        }
+    }
+
+    // Métodos públicos para acceso externo
+    public toggleLike() {
+        this.liked = !this.liked;
+        const likeIcon = this.shadowRoot?.querySelector('.like-icon') as SVGElement;
+        if (likeIcon) {
+            likeIcon.style.color = this.liked ? 'red' : '#666';
+            likeIcon.style.fill = this.liked ? 'red' : 'none';
+            
+            // Disparar evento personalizado
+            this.dispatchEvent(new CustomEvent('publication-liked', {
+                bubbles: true,
+                composed: true,
+                detail: {
+                    username: this.getAttribute('username'),
+                    liked: this.liked
+                }
+            }));
+        }
+    }
+
+    public toggleBookmark() {
+        this.bookmarked = !this.bookmarked;
+        const bookmarkIcon = this.shadowRoot?.querySelector('.bookmark-icon') as SVGElement;
+        if (bookmarkIcon) {
+            bookmarkIcon.style.color = this.bookmarked ? '#FFD700' : '#666';
+            bookmarkIcon.style.fill = this.bookmarked ? '#FFD700' : 'none';
+            
+            // Disparar evento personalizado
+            this.dispatchEvent(new CustomEvent('publication-bookmarked', {
+                bubbles: true,
+                composed: true,
+                detail: {
+                    username: this.getAttribute('username'),
+                    bookmarked: this.bookmarked
+                }
+            }));
         }
     }
 }
