@@ -1,10 +1,15 @@
+import { InteractionService } from '../../../Services/fluxLikeandSave/InteractionsService';
+
 export class Publication extends HTMLElement {
-    liked: boolean = false;
-    bookmarked: boolean = false;
+    private interactionService: InteractionService;
+    private publicationId: string;
+    private unsubscribe?: () => void;
 
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        this.interactionService = InteractionService.getInstance();
+        this.publicationId = '';
     }
 
     connectedCallback() {
@@ -12,8 +17,27 @@ export class Publication extends HTMLElement {
         const text = this.getAttribute('text') || '';
         const hasImage = this.hasAttribute('has-image');
         const stars = parseInt(this.getAttribute('stars') || '0');
+        
+        this.publicationId = this.generatePublicationId(username, text);
+        this.render(username, text, hasImage, stars);
+        this.setupEventListeners(username);
+        this.subscribeToStore();
+    }
 
-        this.bookmarked = this.hasAttribute('bookmarked');
+    disconnectedCallback() {
+        if (this.unsubscribe) {
+            this.unsubscribe();
+        }
+    }
+
+    private generatePublicationId(username: string, text: string): string {
+        const shortText = text.substring(0, 50);
+        return btoa(username + shortText).replace(/[^a-zA-Z0-9]/g, '');
+    }
+
+    private render(username: string, text: string, hasImage: boolean, stars: number) {
+        const isLiked = this.interactionService.isLiked(this.publicationId);
+        const isBookmarked = this.interactionService.isBookmarked(this.publicationId);
 
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = `
@@ -89,15 +113,15 @@ export class Publication extends HTMLElement {
                         color: #4285F4;
                     }
                     .like-icon {
-                        color: ${this.liked ? 'red' : '#666'};
-                        fill: ${this.liked ? 'red' : 'none'};
+                        color: ${isLiked ? 'red' : '#666'};
+                        fill: ${isLiked ? 'red' : 'none'};
                     }
                     .like-icon:hover {
                         color: red;
                     }
                     .bookmark-icon {
-                        color: ${this.bookmarked ? '#FFD700' : '#666'};
-                        fill: ${this.bookmarked ? '#FFD700' : 'none'};
+                        color: ${isBookmarked ? '#FFD700' : '#666'};
+                        fill: ${isBookmarked ? '#FFD700' : 'none'};
                     }
                     .bookmark-icon:hover {
                         color: #FFD700;
@@ -145,43 +169,47 @@ export class Publication extends HTMLElement {
                     </div>
                 </div>
             `;
+        }
+    }
 
-            const likeIcon = this.shadowRoot.querySelector('.like-icon') as SVGElement;
-            const bookmarkIcon = this.shadowRoot.querySelector('.bookmark-icon') as SVGElement;
-            
-            if (likeIcon) {
-                likeIcon.addEventListener('click', () => {
-                    this.liked = !this.liked;
-                    likeIcon.style.color = this.liked ? 'red' : '#666';
-                    likeIcon.style.fill = this.liked ? 'red' : 'none';
-                    
-                    this.dispatchEvent(new CustomEvent('publication-liked', {
-                        bubbles: true,
-                        composed: true,
-                        detail: {
-                            username: username,
-                            liked: this.liked
-                        }
-                    }));
-                });
-            }
+    private setupEventListeners(username: string): void {
+        const likeIcon = this.shadowRoot?.querySelector('.like-icon') as SVGElement;
+        const bookmarkIcon = this.shadowRoot?.querySelector('.bookmark-icon') as SVGElement;
+        
+        if (likeIcon) {
+            likeIcon.addEventListener('click', () => {
+                this.interactionService.toggleLike(this.publicationId, username);
+            });
+        }
 
-            if (bookmarkIcon) {
-                bookmarkIcon.addEventListener('click', () => {
-                    this.bookmarked = !this.bookmarked;
-                    bookmarkIcon.style.color = this.bookmarked ? '#FFD700' : '#666';
-                    bookmarkIcon.style.fill = this.bookmarked ? '#FFD700' : 'none';
-                    
-                    this.dispatchEvent(new CustomEvent('publication-bookmarked', {
-                        bubbles: true,
-                        composed: true,
-                        detail: {
-                            username: username,
-                            bookmarked: this.bookmarked
-                        }
-                    }));
-                });
-            }
+        if (bookmarkIcon) {
+            bookmarkIcon.addEventListener('click', () => {
+                this.interactionService.toggleBookmark(this.publicationId, username);
+            });
+        }
+    }
+
+    private subscribeToStore(): void {
+        this.unsubscribe = this.interactionService.subscribe(() => {
+            this.updateIconStates();
+        });
+    }
+
+    private updateIconStates(): void {
+        const likeIcon = this.shadowRoot?.querySelector('.like-icon') as SVGElement;
+        const bookmarkIcon = this.shadowRoot?.querySelector('.bookmark-icon') as SVGElement;
+        
+        const isLiked = this.interactionService.isLiked(this.publicationId);
+        const isBookmarked = this.interactionService.isBookmarked(this.publicationId);
+
+        if (likeIcon) {
+            likeIcon.style.color = isLiked ? 'red' : '#666';
+            likeIcon.style.fill = isLiked ? 'red' : 'none';
+        }
+
+        if (bookmarkIcon) {
+            bookmarkIcon.style.color = isBookmarked ? '#FFD700' : '#666';
+            bookmarkIcon.style.fill = isBookmarked ? '#FFD700' : 'none';
         }
     }
 }

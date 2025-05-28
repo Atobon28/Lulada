@@ -1,23 +1,77 @@
 // src/Pages/Save/Save.ts
+import { InteractionService } from "../../Services/fluxLikeandSave/InteractionsService";
 
 class Save extends HTMLElement {
+    private interactionService: InteractionService;
+    private unsubscribe?: () => void;
 
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        this.interactionService = InteractionService.getInstance();
     }
 
     connectedCallback() {
         this.render();
         this.setupEventListeners();
+        this.subscribeToFlux();
         // Configurar el resize handler
         window.addEventListener('resize', this.handleResize.bind(this));
         this.handleResize(); // Ejecutar una vez al cargar
     }
 
     disconnectedCallback() {
+         if (this.unsubscribe) { 
+            this.unsubscribe();
+        }
         // Limpiar el event listener
         window.removeEventListener('resize', this.handleResize.bind(this));
+    }
+
+    private subscribeToFlux(): void {
+        this.unsubscribe = this.interactionService.subscribe(() => {
+            this.updateBookmarkedContent();
+        });
+    }
+
+    private updateBookmarkedContent(): void {
+        const reviewsSection = this.shadowRoot?.querySelector('.reviews-section'); 
+        if (!reviewsSection) return;
+
+        const bookmarkedIds = this.interactionService.getBookmarkedPublications();
+
+        if (bookmarkedIds.length === 0) {
+            // Mostrar mensaje cuando no hay bookmarks
+            reviewsSection.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <h3> No tienes publicaciones guardadas</h3>
+                    <p>Haz clic en  en cualquier publicación para guardarla aquí</p>
+                </div>
+            `; 
+        } else {
+            reviewsSection.innerHTML = ` 
+                <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                    <p style="margin: 0; color: #333;"> Tienes ${bookmarkedIds.length} publicación${bookmarkedIds.length !== 1 ? 'es' : ''} guardada${bookmarkedIds.length !== 1 ? 's' : ''}</p>
+                </div>
+                <lulada-publication 
+                    bookmarked
+                    username="DanaBanana"
+                    text="Este @AsianRooftop es terrible! No le quito todas las estrellas porque la mesera era super atenta, el problema es que la cocina, terrible, pedi una margarita y era sin licor me dijeron que venia aparte, como es posible???? De nunca volver."
+                    stars="1"
+                    has-image="true"
+                    restaurant="AsianRooftop"
+                    location="norte"
+                ></lulada-publication>
+                <lulada-publication
+                    bookmarked
+                    username="FoodLover"
+                    text="La pasta en @Frenchrico es increíble! Los mejores sabores italianos que he probado en mucho tiempo."
+                    stars="4"
+                    restaurant="Frenchrico"
+                    location="sur"
+                ></lulada-publication>
+            `;
+        }
     }
 
     render() {
@@ -113,23 +167,7 @@ class Save extends HTMLElement {
                 <div class="medium-content">
                     <div class="content">
                         <div class="reviews-section">
-                            <lulada-publication 
-                                bookmarked
-                                username="DanaBanana"
-                                text="Este @AsianRooftop es terrible! No le quito todas las estrellas porque la mesera era super atenta, el problema es que la cocina, terrible, pedi una margarita y era sin licor me dijeron que venia aparte, como es posible???? De nunca volver."
-                                stars="1"
-                                has-image="true"
-                                restaurant="AsianRooftop"
-                                location="norte"
-                            ></lulada-publication>
-                            <lulada-publication
-                                bookmarked
-                                username="FoodLover"
-                                text="La pasta en @Frenchrico es increíble! Los mejores sabores italianos que he probado en mucho tiempo."
-                                stars="4"
-                                restaurant="Frenchrico"
-                                location="sur"
-                            ></lulada-publication>
+                            <!-- El contenido se actualiza dinámicamente -->
                         </div>
                     </div>
                 </div>
@@ -143,6 +181,8 @@ class Save extends HTMLElement {
                 <lulada-responsive-bar></lulada-responsive-bar>
             </div>
         `;
+        // Actualizar contenido inicial
+        this.updateBookmarkedContent();
     }
 
     setupEventListeners() {
