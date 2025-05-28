@@ -1,10 +1,8 @@
-// Importamos el servicio de publicaciones
 import PublicationsService from '../../../Services/PublicationsService';
 
 export class LuladaAntojar extends HTMLElement {
     shadow: ShadowRoot;
     selectedStars: number = 0;
-    locationSelected: boolean = false;
     selectedZone: string = "";
 
     constructor() {
@@ -32,7 +30,19 @@ export class LuladaAntojar extends HTMLElement {
                     width: 100%;
                     font-family: Arial, sans-serif;
                     position: relative;
+                    box-sizing: border-box;
                 }
+                
+                /* RESPONSIVE MOBILE */
+                @media (max-width: 600px) {
+                    .popup {
+                        padding: 15px;
+                        border-radius: 15px;
+                        max-width: 95vw;
+                        margin: 10px auto;
+                    }
+                }
+                
                 .close-button {
                     position: absolute;
                     top: 10px;
@@ -87,6 +97,16 @@ export class LuladaAntojar extends HTMLElement {
                     border: 1px solid #eee;
                     border-radius: 8px;
                 }
+                
+                /* MOBILE TEXTAREA */
+                @media (max-width: 600px) {
+                    textarea {
+                        min-height: 100px;
+                        font-size: 14px;
+                        padding: 8px;
+                    }
+                }
+                
                 textarea:focus {
                     border-color: #AAAB54;
                 }
@@ -96,11 +116,29 @@ export class LuladaAntojar extends HTMLElement {
                     margin-bottom: 16px;
                     gap: 10px;
                 }
+                
+                /* MOBILE ZONE SELECTOR */
+                @media (max-width: 600px) {
+                    .zone-selector {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 8px;
+                    }
+                }
+                
                 .zone-label {
                     font-size: 16px;
                     color: #666;
                     min-width: 120px;
                 }
+                
+                @media (max-width: 600px) {
+                    .zone-label {
+                        min-width: auto;
+                        font-size: 14px;
+                    }
+                }
+                
                 .zone-select {
                     padding: 8px 12px;
                     border: 1px solid #ddd;
@@ -110,6 +148,15 @@ export class LuladaAntojar extends HTMLElement {
                     background-color: white;
                     min-width: 120px;
                 }
+                
+                @media (max-width: 600px) {
+                    .zone-select {
+                        width: 100%;
+                        max-width: none;
+                        min-width: auto;
+                    }
+                }
+                
                 .zone-select:focus {
                     outline: none;
                     border-color: #AAAB54;
@@ -121,6 +168,16 @@ export class LuladaAntojar extends HTMLElement {
                     padding-top: 16px;
                     border-top: 1px solid #f0f0f0;
                 }
+                
+                /* MOBILE BOTTOM ACTIONS */
+                @media (max-width: 600px) {
+                    .bottom-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 15px;
+                    }
+                }
+                
                 .icon-buttons {
                     display: flex;
                     gap: 15px;
@@ -141,12 +198,6 @@ export class LuladaAntojar extends HTMLElement {
                     transform: scale(1.1);
                 }
                 
-                .location-icon:hover {
-                    color: #4285F4 !important;
-                }
-                .location-icon.active {
-                    color: rgb(244, 238, 66) !important;
-                }
                 .stars {
                     display: flex;
                     gap: 5px;
@@ -179,6 +230,17 @@ export class LuladaAntojar extends HTMLElement {
                     font-weight: bold;
                     transition: all 0.2s ease;
                 }
+                
+                /* MOBILE PUBLISH BUTTON */
+                @media (max-width: 600px) {
+                    .publish-button {
+                        width: 100%;
+                        padding: 12px;
+                        font-size: 16px;
+                        order: 3;
+                    }
+                }
+                
                 .publish-button:hover {
                     transform: scale(1.05);
                     background-color: rgb(132, 134, 58);
@@ -192,6 +254,13 @@ export class LuladaAntojar extends HTMLElement {
                     display: flex;
                     align-items: center;
                 }
+                
+                @media (max-width: 600px) {
+                    .icon-container {
+                        justify-content: flex-start;
+                    }
+                }
+                
                 .icon-wrapper {
                     width: 30px;
                     height: 30px;
@@ -201,7 +270,14 @@ export class LuladaAntojar extends HTMLElement {
                     display: flex;
                     align-items: center;
                 }
+                
+                @media (max-width: 600px) {
+                    .rating-stars {
+                        justify-content: center;
+                    }
+                }
             </style>
+            
             <div class="popup">
                 <button id="cerrar" class="close-button">✕</button>
                 <div class="header">
@@ -235,13 +311,8 @@ export class LuladaAntojar extends HTMLElement {
                                 <polyline points="21 15 16 10 5 21"></polyline>
                             </svg>
                         </div>
-                        <div class="icon-wrapper">
-                            <svg id="location-icon" class="action-icon location-icon" viewBox="0 0 24 24">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                        </div>
                     </div>
+                    
                     <div class="rating-stars">
                         <span class="star-outline" data-value="1">☆</span>
                         <span class="star-outline" data-value="2">☆</span>
@@ -263,7 +334,6 @@ export class LuladaAntojar extends HTMLElement {
         const publicar = this.shadow.querySelector('#publicar');
         const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
         const estrellas = this.shadow.querySelectorAll('.star-outline');
-        const locationIcon = this.shadow.querySelector('#location-icon');
         const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
 
         if (cerrar) {
@@ -279,7 +349,7 @@ export class LuladaAntojar extends HTMLElement {
                 console.log("Botón publicar clickeado");
                 const texto = textarea.value.trim();
                 if (texto && this.selectedStars > 0 && this.selectedZone) {
-                    // Crear objeto de publicación
+                    // Crear objeto de publicación sin ubicación específica
                     const nuevaPublicacion = {
                         username: "Usuario" + Math.floor(Math.random() * 1000),
                         text: texto,
@@ -354,18 +424,6 @@ export class LuladaAntojar extends HTMLElement {
             });
         });
 
-        // Funcionalidad para el icono de ubicación (opcional)
-        if (locationIcon) {
-            locationIcon.addEventListener('click', () => {
-                this.locationSelected = !this.locationSelected;
-                if (this.locationSelected) {
-                    locationIcon.classList.add('active');
-                } else {
-                    locationIcon.classList.remove('active');
-                }
-            });
-        }
-
         // Actualizar botón cuando se escribe
         if (textarea) {
             textarea.addEventListener('input', () => {
@@ -380,7 +438,7 @@ export class LuladaAntojar extends HTMLElement {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #4CAF50;
+            background: #16a34a;
             color: white;
             padding: 15px 20px;
             border-radius: 8px;
@@ -390,7 +448,7 @@ export class LuladaAntojar extends HTMLElement {
             transform: translateX(100%);
             transition: transform 0.3s ease;
         `;
-        toast.textContent = '¡Reseña publicada con éxito!';
+        toast.textContent = '🎉 ¡Reseña publicada con éxito!';
         
         document.body.appendChild(toast);
         
@@ -407,7 +465,7 @@ export class LuladaAntojar extends HTMLElement {
                     document.body.removeChild(toast);
                 }
             }, 300);
-        }, 2500);
+        }, 3000);
     }
 
     updatePublishButton() {
@@ -436,7 +494,6 @@ export class LuladaAntojar extends HTMLElement {
         console.log("Reiniciando estado del componente");
         const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
         const estrellas = this.shadow.querySelectorAll('.star-outline');
-        const locationIcon = this.shadow.querySelector('#location-icon');
         const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
 
         if (textarea) {
@@ -448,11 +505,6 @@ export class LuladaAntojar extends HTMLElement {
             estrella.textContent = '☆';
             estrella.classList.remove('active');
         });
-
-        this.locationSelected = false;
-        if (locationIcon) {
-            locationIcon.classList.remove('active');
-        }
 
         this.selectedZone = "";
         if (zoneSelect) {
