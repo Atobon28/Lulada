@@ -1,3 +1,5 @@
+// src/Pages/Settings/Settings.ts - CORREGIDO PARA USAR LOGO.TS
+
 class LuladaSettings extends HTMLElement {
     constructor() {
         super();
@@ -20,6 +22,7 @@ class LuladaSettings extends HTMLElement {
                         background-color: white;
                         padding: 20px 0 10px 20px;
                         border-bottom: 1px solid #eaeaea;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                     }
                     
                     .logo-container {
@@ -62,47 +65,47 @@ class LuladaSettings extends HTMLElement {
                     }
                     
                     /* Responsive styles */
-              @media (max-width: 900px) {
-    .header-wrapper {
-        display: none;
-    }
-    
-    .sidebar-wrapper {
-        display: none;
-    }
-    
-    .content-container {
-        padding-left: 10px;
-        padding-right: 10px;
-        padding-top: 10px;
-        padding-bottom: 100px; /* Espacio extra para la barra inferior */
-        height: auto; /* Permitir que crezca automáticamente */
-        max-height: none; /* Quitar limitaciones de altura */
-        overflow-y: visible; /* Permitir scroll natural */
-    }
-    
-    .responsive-nav {
-        display: block;
-    }
-    
-    /* Asegurar que el contenedor principal permita scroll */
-    :host {
-        height: auto !important;
-        min-height: 100vh;
-        overflow-y: auto;
-    }
-    
-    .main-container {
-        height: auto;
-        overflow: visible;
-    }
-}
+                    @media (max-width: 900px) {
+                        .header-wrapper {
+                            display: none;
+                        }
+                        
+                        .sidebar-wrapper {
+                            display: none;
+                        }
+                        
+                        .content-container {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            padding-top: 10px;
+                            padding-bottom: 100px; /* Espacio extra para la barra inferior */
+                            height: auto; /* Permitir que crezca automáticamente */
+                            max-height: none; /* Quitar limitaciones de altura */
+                            overflow-y: visible; /* Permitir scroll natural */
+                        }
+                        
+                        .responsive-nav {
+                            display: block;
+                        }
+                        
+                        /* Asegurar que el contenedor principal permita scroll */
+                        :host {
+                            height: auto !important;
+                            min-height: 100vh;
+                            overflow-y: auto;
+                        }
+                        
+                        .main-container {
+                            height: auto;
+                            overflow: visible;
+                        }
+                    }
                 </style>
                 
                 <!-- Header responsive (SOLO visible en mobile) -->
                 <lulada-responsive-header style="display: none;"></lulada-responsive-header>
                 
-                <!-- Header normal (SOLO visible en desktop) -->
+                <!-- Header normal (SOLO visible en desktop) - USANDO LOGO.TS -->
                 <div class="header-wrapper">
                     <div class="logo-container">
                         <lulada-logo></lulada-logo>

@@ -1,4 +1,4 @@
-// src/Components/Home/Header/reponsiveheader.ts - VERSIÓN CORREGIDA SIN ANY
+// src/Components/Home/Header/reponsiveheader.ts - ÍCONO DE ANTOJAR CORREGIDO
 
 // Interfaces para tipos seguros
 interface ResponsiveBarElement extends HTMLElement {
@@ -135,9 +135,12 @@ class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
                         </svg>
                     </div>
 
+                    <!-- ÍCONO CORREGIDO: Usando el mismo del navbar (sidebar) -->
                     <div class="nav-item ${this.currentActive === 'antojar' ? 'active' : ''}" data-nav="antojar" data-route="/antojar">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M14.828 14.828a4 4 0 0 1-5.656 0M9 10h.01M15 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            <g fill="none" fill-rule="evenodd">
+                                <path fill="currentColor" d="M18.293 17.293a1 1 0 0 1 1.498 1.32l-.084.094l-1.5 1.5a3.12 3.12 0 0 1-4.414 0a1.12 1.12 0 0 0-1.488-.087l-.098.087l-.5.5a1 1 0 0 1-1.497-1.32l.083-.094l.5-.5a3.12 3.12 0 0 1 4.414 0a1.12 1.12 0 0 0 1.488.087l.098-.087zm-1.81-13.31a2.5 2.5 0 0 1 3.657 3.405l-.122.131L8.443 19.094a1.5 1.5 0 0 1-.506.333l-.145.05l-2.837.807a1 1 0 0 1-1.261-1.13l.024-.107l.807-2.838a1.5 1.5 0 0 1 .28-.537l.102-.113zm2.12 1.415a.5.5 0 0 0-.637-.058l-.07.058L6.414 16.88l-.28.988l.987-.28L18.604 6.104a.5.5 0 0 0 0-.707"/>
+                            </g>
                         </svg>
                     </div>
 
@@ -326,28 +329,25 @@ class LuladaResponsiveHeader extends HTMLElement {
                         padding: 15px 20px;
                         display: flex;
                         align-items: center;
-                        justify-content: space-between;
+                        justify-content: center; /* Centrar el logo */
                     }
                     
-                    .logo {
-                        font-size: 1.5rem;
-                        font-weight: bold;
-                        color: #AAAB54;
+                    .logo-container {
+                        display: flex;
+                        justify-content: center;
                     }
                     
                     @media (max-width: 768px) {
                         .header-content {
                             padding: 10px 15px;
                         }
-                        
-                        .logo {
-                            font-size: 1.25rem;
-                        }
                     }
                 </style>
                 
                 <div class="header-content">
-                    <div class="logo">Lulada</div>
+                    <div class="logo-container">
+                        <lulada-logo></lulada-logo>
+                    </div>
                 </div>
             `;
         }
