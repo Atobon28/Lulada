@@ -1,6 +1,31 @@
-// src/Components/Home/Header/reponsiveheader.ts - ARREGLADO
+// src/Components/Home/Header/reponsiveheader.ts - VERSIÓN CORREGIDA SIN ANY
 
-class LuladaResponsiveBar extends HTMLElement {
+// Interfaces para tipos seguros
+interface ResponsiveBarElement extends HTMLElement {
+    setActiveItem(nav: string): void;
+    detectCurrentPage(): void;
+    updateActiveFromRoute(route: string): void;
+    debugInfo?(): void;
+}
+
+interface AntojarServiceInstance {
+    initialize(): void;
+    showPopup(): void;
+    hidePopup?(): void;
+}
+
+interface AntojarService {
+    getInstance(): AntojarServiceInstance;
+}
+
+// Extender Window para tipos seguros
+declare global {
+    interface Window {
+        AntojarPopupService?: AntojarService;
+    }
+}
+
+class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
     private currentActive: string = 'home';
 
     constructor() {
@@ -138,7 +163,10 @@ class LuladaResponsiveBar extends HTMLElement {
 
     setupEventListeners() {
         console.log('🔧 ResponsiveBar: Configurando event listeners...');
-        const navItems = this.shadowRoot!.querySelectorAll('.nav-item');
+        
+        if (!this.shadowRoot) return;
+        
+        const navItems = this.shadowRoot.querySelectorAll('.nav-item');
         
         navItems.forEach((item) => {
             item.addEventListener('click', (e) => {
@@ -155,17 +183,7 @@ class LuladaResponsiveBar extends HTMLElement {
                     // Caso especial para antojar
                     if (route === "/antojar") {
                         console.log('🎯 ResponsiveBar: Abriendo popup de antojar...');
-                        try {
-                            if (window.AntojarPopupService) {
-                                window.AntojarPopupService.getInstance().showPopup();
-                                console.log('✅ ResponsiveBar: Popup de antojar abierto');
-                            } else {
-                                console.error("❌ AntojarPopupService no disponible");
-                                alert("Esta función no está disponible");
-                            }
-                        } catch (error) {
-                            console.error("❌ Error con popup antojar:", error);
-                        }
+                        this.handleAntojarClick();
                     } else {
                         // Para otras rutas, navegar normalmente
                         this.navigate(route);
@@ -177,10 +195,27 @@ class LuladaResponsiveBar extends HTMLElement {
         console.log('✅ ResponsiveBar: Event listeners configurados');
     }
 
-    setActiveItem(activeNav: string) {
+    private handleAntojarClick(): void {
+        try {
+            const antojarService = window.AntojarPopupService;
+            if (antojarService) {
+                antojarService.getInstance().showPopup();
+                console.log('✅ ResponsiveBar: Popup de antojar abierto');
+            } else {
+                console.error("❌ AntojarPopupService no disponible");
+                alert("Esta función no está disponible");
+            }
+        } catch (error) {
+            console.error("❌ Error con popup antojar:", error);
+        }
+    }
+
+    public setActiveItem(activeNav: string): void {
         this.currentActive = activeNav;
         
-        const navItems = this.shadowRoot!.querySelectorAll('.nav-item');
+        if (!this.shadowRoot) return;
+        
+        const navItems = this.shadowRoot.querySelectorAll('.nav-item');
         navItems.forEach((item) => {
             const nav = item.getAttribute('data-nav');
             if (nav === activeNav) {
@@ -193,7 +228,7 @@ class LuladaResponsiveBar extends HTMLElement {
         console.log(`🎯 ResponsiveBar: Item activo: ${activeNav}`);
     }
 
-    detectCurrentPage() {
+    public detectCurrentPage(): void {
         const currentPath = window.location.pathname;
         
         if (currentPath.includes('/home') || currentPath === '/') {
@@ -209,7 +244,7 @@ class LuladaResponsiveBar extends HTMLElement {
         }
     }
 
-    updateActiveFromRoute(route: string) {
+    public updateActiveFromRoute(route: string): void {
         if (route.includes('/home')) {
             this.setActiveItem('home');
         } else if (route.includes('/explore')) {
@@ -223,7 +258,7 @@ class LuladaResponsiveBar extends HTMLElement {
         }
     }
 
-    navigate(route: string) {
+    navigate(route: string): void {
         console.log('🚀 ResponsiveBar: Navegando a:', route);
         
         const event = new CustomEvent("navigate", { 
@@ -250,6 +285,22 @@ class LuladaResponsiveBar extends HTMLElement {
 
     disconnectedCallback(): void {
         console.log('🔌 LuladaResponsiveBar desconectado');
+    }
+
+    public debugInfo(): void {
+        console.log('🔍 ResponsiveBar Debug:');
+        console.log('- Current active:', this.currentActive);
+        console.log('- URL actual:', window.location.pathname);
+        console.log('- Shadow DOM:', !!this.shadowRoot);
+        
+        const navItems = this.shadowRoot?.querySelectorAll('.nav-item');
+        console.log('- Items de navegación:');
+        navItems?.forEach((item, index) => {
+            const route = item.getAttribute('data-route');
+            const nav = item.getAttribute('data-nav');
+            const isActive = item.classList.contains('active');
+            console.log(`  ${index}: ${nav} (${route}) - ${isActive ? 'Activo' : 'Inactivo'}`);
+        });
     }
 }
 
@@ -307,6 +358,7 @@ class LuladaResponsiveHeader extends HTMLElement {
     }
 }
 
+// Registrar los componentes solo si no están ya registrados
 if (!customElements.get('lulada-responsive-bar')) {
     customElements.define('lulada-responsive-bar', LuladaResponsiveBar);
     console.log('✅ lulada-responsive-bar registrado');
@@ -317,4 +369,5 @@ if (!customElements.get('lulada-responsive-header')) {
     console.log('✅ lulada-responsive-header registrado');
 }
 
+export { LuladaResponsiveBar, LuladaResponsiveHeader };
 export default LuladaResponsiveHeader;

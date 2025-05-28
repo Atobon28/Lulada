@@ -1,11 +1,17 @@
-// src/index.ts - VERSIÓN CORREGIDA SIN ERRORES DE TIPOS
+// src/index.ts - VERSIÓN LIMPIA SIN DEBUG SYSTEM
+
+// ============================================================================
+// INTERFACES SIMPLES
+// ============================================================================
+interface ComponentConstructor {
+    new (...args: unknown[]): HTMLElement;
+}
 
 // ============================================================================
 // SERVICIOS GLOBALES - Importar primero
 // ============================================================================
 import './services-global';
 import PublicationsService from './Services/PublicationsService';
-
 
 // ============================================================================
 // COMPONENTES CORE
@@ -38,7 +44,6 @@ import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarCont
 // NAVEGACIÓN
 // ============================================================================
 import Navigation from "./Components/Home/navigation";
-// Importar ResponsiveHeader ANTES del registro para evitar conflictos
 import './Components/Home/Header/reponsiveheader';
 import NavigationBar from './Components/Home/Navbars/responsivebar';
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
@@ -50,7 +55,6 @@ import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
 import HeaderHome from "./Components/Home/Header/Header";
 import Lulada from "./Components/Home/Header/logo";
 import HeaderExplorer from "./Components/Explore/exploreHeader";
-// No importar LuladaResponsiveHeader aquí porque ya se registra en su propio archivo
 
 // ============================================================================
 // PUBLICACIONES Y REVIEWS
@@ -123,12 +127,11 @@ const antojarService = AntojarPopupService.getInstance();
 
 antojarService.initialize();
 
-// Asignar servicios a window de manera consistente con los tipos
+// Asignar servicios a window
 if (typeof window !== 'undefined') {
     try {
         window.AntojarPopupService = AntojarPopupService;
         
-        // Asignar LuladaServices según la interfaz definida
         if (!window.LuladaServices) {
             window.LuladaServices = {
                 publicationsService,
@@ -145,132 +148,163 @@ if (typeof window !== 'undefined') {
 console.log('✅ Servicios inicializados correctamente');
 
 // ============================================================================
+// FUNCIÓN PARA VERIFICAR Y REGISTRAR COMPONENTES
+// ============================================================================
+function registerComponent(name: string, component: ComponentConstructor): boolean {
+    try {
+        if (!customElements.get(name)) {
+            customElements.define(name, component);
+            console.log(`✅ ${name}: Registrado correctamente`);
+            return true;
+        } else {
+            console.log(`⚠️ ${name}: Ya estaba registrado`);
+            return true;
+        }
+    } catch (error) {
+        console.error(`❌ ${name}: Error al registrar -`, error);
+        return false;
+    }
+}
+
+// ============================================================================
 // REGISTRO DE COMPONENTES
 // ============================================================================
 console.log('📦 Registrando componentes...');
 
-// CORE
-customElements.define('root-component', RootComponent);
-customElements.define('load-pages', LoadPage);
+// CORE - CRÍTICOS
+registerComponent('root-component', RootComponent);
+registerComponent('load-pages', LoadPage);
 
 // HEADERS
-customElements.define('lulada-header-complete', HeaderCompleto);
-customElements.define('lulada-header', HeaderHome);
-customElements.define('lulada-logo', Lulada);
-customElements.define('header-explorer', HeaderExplorer);
-// lulada-responsive-header ya se registra en su propio archivo
+registerComponent('lulada-header-complete', HeaderCompleto);
+registerComponent('lulada-header', HeaderHome);
+registerComponent('lulada-logo', Lulada);
+registerComponent('header-explorer', HeaderExplorer);
 
 // NAVEGACIÓN
-customElements.define('lulada-navigation', Navigation);
-// lulada-responsive-header y lulada-responsive-bar ya se registran en sus archivos
-customElements.define('lulada-sidebar', LuladaSidebar);
+registerComponent('lulada-navigation', Navigation);
+registerComponent('lulada-sidebar', LuladaSidebar);
 
-// PÁGINAS
-customElements.define('lulada-home', Home);
-customElements.define('lulada-explore', LuladaExplore);
-customElements.define('puser-page', PUser);
-customElements.define('restaurant-profile', RestaurantProfile);
-customElements.define('save-page', Save);
-customElements.define('login-page', LoginPage);
-customElements.define('lulada-settings', LuladaSettings);
-customElements.define('lulada-notifications', LuladaNotifications);
-customElements.define('register-new-account', NewAccount);
-customElements.define('confirm-role', ConfirmRole);
+// PÁGINAS PRINCIPALES
+registerComponent('lulada-home', Home);
+registerComponent('lulada-explore', LuladaExplore);
+registerComponent('puser-page', PUser);
+registerComponent('restaurant-profile', RestaurantProfile);
+registerComponent('save-page', Save);
+registerComponent('login-page', LoginPage);
+registerComponent('lulada-settings', LuladaSettings);
+registerComponent('lulada-notifications', LuladaNotifications);
+registerComponent('register-new-account', NewAccount);
+registerComponent('confirm-role', ConfirmRole);
 
 // PÁGINAS DE SETTINGS
-customElements.define('lulada-cambiar-correo', CambiarCorreoF);
-customElements.define('lulada-cambiar-nombre', NombreUsuraio);
-customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
+registerComponent('lulada-cambiar-correo', CambiarCorreoF);
+registerComponent('lulada-cambiar-nombre', NombreUsuraio);
+registerComponent('lulada-cambiar-contraseña', CambiarContraseñaF);
 
 // PUBLICACIONES
-customElements.define('lulada-publication', Publication);
-customElements.define('lulada-review', Review);
-customElements.define('lulada-reviews-container', ReviewsContainer);
+registerComponent('lulada-publication', Publication);
+registerComponent('lulada-review', Review);
+registerComponent('lulada-reviews-container', ReviewsContainer);
 
 // ANTOJAR
-customElements.define('lulada-antojar', LuladaAntojar);
-customElements.define('lulada-antojar-boton', LuladaAntojarBoton);
+registerComponent('lulada-antojar', LuladaAntojar);
+registerComponent('lulada-antojar-boton', LuladaAntojarBoton);
 
 // EXPLORACIÓN
-customElements.define('explore-container', ExploreContainer);
-customElements.define('images-explore', ImagesExplore);
-customElements.define('text-card', TextCard);
+registerComponent('explore-container', ExploreContainer);
+registerComponent('images-explore', ImagesExplore);
+registerComponent('text-card', TextCard);
 
 // USUARIO
-customElements.define('user-info', UserInfo);
-customElements.define('user-profile', UserSelftProfile);
-customElements.define('user-edit', UserEdit);
-customElements.define('restaurant-info', restaurantInfo);
+registerComponent('user-info', UserInfo);
+registerComponent('user-profile', UserSelftProfile);
+registerComponent('user-edit', UserEdit);
+registerComponent('restaurant-info', restaurantInfo);
 
 // OTROS
-customElements.define('lulada-suggestions', Suggestions);
-customElements.define('lulada-card-notifications', CardNotifications);
+registerComponent('lulada-suggestions', Suggestions);
+registerComponent('lulada-card-notifications', CardNotifications);
 
 // LOGIN
-customElements.define("caja-de-texto", CajaDeTexto);
-customElements.define("boton-login", BotonLogin);
-customElements.define("login-form", LoginForm);
+registerComponent("caja-de-texto", CajaDeTexto);
+registerComponent("boton-login", BotonLogin);
+registerComponent("login-form", LoginForm);
 
 // NEW ACCOUNT
-customElements.define('lulada-boxtext', BoxText);
-customElements.define('button-new-account', ButtonNewAccount);
+registerComponent('lulada-boxtext', BoxText);
+registerComponent('button-new-account', ButtonNewAccount);
 
 // SETTINGS COMPONENTS
-customElements.define('cajon-texto', CajonTexto);
-customElements.define('cajon-list', CajonList);
-customElements.define('cajon-list-interactive', CajonListInteractive);
-customElements.define('cambiar-nombre-usuario', CambiarNU);
-customElements.define('cambiar-correo-electronico', Cambiarco);
-customElements.define('cambiar-contrasena', CambiarContra);
-customElements.define('cambiar-correo-simple', CambiarCorreoSimple);
-customElements.define('cambiar-nombre-simple', CambiarNombreSimple);
-customElements.define('cambiar-contrasena-simple', CambiarContrasenaSimple);
+registerComponent('cajon-texto', CajonTexto);
+registerComponent('cajon-list', CajonList);
+registerComponent('cajon-list-interactive', CajonListInteractive);
+registerComponent('cambiar-nombre-usuario', CambiarNU);
+registerComponent('cambiar-correo-electronico', Cambiarco);
+registerComponent('cambiar-contrasena', CambiarContra);
+registerComponent('cambiar-correo-simple', CambiarCorreoSimple);
+registerComponent('cambiar-nombre-simple', CambiarNombreSimple);
+registerComponent('cambiar-contrasena-simple', CambiarContrasenaSimple);
 
-console.log('✅ Todos los componentes registrados');
+console.log('✅ Registro de componentes completado');
+
+// ============================================================================
+// VERIFICACIÓN DE COMPONENTES CRÍTICOS
+// ============================================================================
+function verifyComponents(): void {
+    console.log('🔍 Verificando componentes críticos...');
+    
+    const criticalComponents = [
+        'root-component',
+        'load-pages',
+        'lulada-home',
+        'lulada-notifications',
+        'lulada-settings',
+        'lulada-explore',
+        'puser-page',
+        'save-page',
+        'lulada-sidebar'
+    ];
+    
+    let allRegistered = true;
+    
+    criticalComponents.forEach((componentName: string) => {
+        const isRegistered = !!customElements.get(componentName);
+        if (isRegistered) {
+            console.log(`✅ ${componentName}: OK`);
+        } else {
+            console.error(`❌ ${componentName}: FALTA`);
+            allRegistered = false;
+        }
+    });
+    
+    if (allRegistered) {
+        console.log('🎉 Todos los componentes críticos registrados');
+    } else {
+        console.error('❌ Faltan componentes críticos');
+    }
+}
 
 // ============================================================================
 // INICIALIZACIÓN FINAL
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎯 DOM cargado - Verificando componentes...');
+    console.log('🎯 DOM cargado - Inicializando Lulada...');
     
+    // Verificar componentes
+    verifyComponents();
+    
+    // Inicializar servicios
     AntojarPopupService.getInstance().initialize();
-    
-    const criticalComponents = [
-        'root-component',
-        'lulada-home',
-        'lulada-header-complete',
-        'lulada-responsive-bar',
-        'lulada-antojar'
-    ];
-    
-    criticalComponents.forEach((componentName: string) => {
-        const isRegistered = customElements.get(componentName);
-        if (isRegistered) {
-            console.log(`✅ ${componentName}: Registrado`);
-        } else {
-            console.warn(`❌ ${componentName}: NO registrado`);
-        }
-    });
     
     console.log('🎉 Lulada App iniciada correctamente');
 });
 
 // ============================================================================
-// DEBUGGING - Solo en desarrollo Y con verificación de tipos
+// DEBUG SIMPLE (SIN SISTEMA COMPLEJO)
 // ============================================================================
 if (typeof window !== 'undefined') {
-    // Solo en modo desarrollo
     try {
-        const criticalComponents = [
-            'root-component',
-            'lulada-home',
-            'lulada-header-complete',
-            'lulada-responsive-bar',
-            'lulada-antojar'
-        ];
-        
-        // Solo asignar si la propiedad no existe ya
         if (!window.LuladaDebug) {
             window.LuladaDebug = {
                 services: {
@@ -278,7 +312,14 @@ if (typeof window !== 'undefined') {
                     antojar: antojarService
                 },
                 components: {
-                    registered: criticalComponents.map((name: string) => ({
+                    registered: [
+                        'lulada-home',
+                        'lulada-notifications',
+                        'lulada-settings', 
+                        'lulada-explore',
+                        'puser-page',
+                        'save-page'
+                    ].map((name: string) => ({
                         name,
                         registered: !!customElements.get(name)
                     }))
@@ -286,9 +327,9 @@ if (typeof window !== 'undefined') {
             };
         }
         
-        console.log('🛠️ Debug info disponible en window.LuladaDebug');
+        console.log('🛠️ Debug básico disponible en window.LuladaDebug');
     } catch (error) {
-        console.warn('⚠️ No se pudo configurar el debugging:', error);
+        console.warn('⚠️ Debug no disponible:', error);
     }
 }
 
@@ -317,11 +358,11 @@ export {
 
 export default {
     registerAll: () => console.log('Todos los componentes ya registrados'),
-    verify: () => console.log('Verificación de componentes disponible en LuladaDebug'),
+    verify: verifyComponents,
     Publication,
     LuladaAntojar,
     ReviewsContainer,
     AntojarPopupService
 };
 
-console.log('📦 Lulada Components Module cargado');
+console.log('📦 Lulada Components Module cargado - VERSIÓN LIMPIA');

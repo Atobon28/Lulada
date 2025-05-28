@@ -1,4 +1,4 @@
-// global.d.ts - Declaraciones de tipos globales
+// global.d.ts - VERSIÓN LIMPIA SIN DEBUG SYSTEM
 
 import { UserActions } from '../src/Services/flux/UserActions';
 import { UserStore } from '../src/Services/flux/UserStore';
@@ -7,11 +7,11 @@ import AntojarPopupService from '../src/Components/Home/Antojar/antojar-popup';
 
 declare global {
     interface Window {
-        // Flux User Store y Actions
+        // Flux User Store y Actions - ESENCIALES PARA EL CAMBIO DE USERNAME
         UserActions: typeof UserActions;
         userStore: UserStore;
 
-        // Servicios de Antojar
+        // Servicios de Antojar - ESENCIALES PARA EL POPUP DE RESEÑAS
         AntojarPopupService?: {
             getInstance(): {
                 initialize(): void;
@@ -20,13 +20,13 @@ declare global {
             };
         };
 
-        // Servicios Lulada - EXACTAMENTE como se asigna en index.ts
+        // Servicios Lulada - ESENCIALES
         LuladaServices?: {
             publicationsService: PublicationsService;
             antojarService: AntojarPopupService;
         };
 
-        // Debug utilities - EXACTAMENTE como se asigna en index.ts
+        // Debug utilities básicos - ÚTILES PERO NO PROBLEMÁTICOS
         LuladaDebug?: {
             services: {
                 publications: PublicationsService;
@@ -40,7 +40,7 @@ declare global {
             };
         };
 
-        // Debug functions - AGREGADAS las funciones de debug
+        // Funciones de debug simples - ÚTILES PARA EL USUARIO
         debugUserInfo?: () => void;
         forceUpdateUserInfo?: () => void;
         debugUserStore?: () => void;
