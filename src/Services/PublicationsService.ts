@@ -251,8 +251,9 @@ export class PublicationsService {
                 const tempPhotos = JSON.parse(sessionStorage.getItem(this.photoStorageKey + '_temp') || '{}');
                 delete tempPhotos[timestamp.toString()];
                 sessionStorage.setItem(this.photoStorageKey + '_temp', JSON.stringify(tempPhotos));
-            } catch (e) {
+            } catch {
                 // Ignorar errores de sessionStorage
+                console.log('Limpieza de sessionStorage temporal completada');
             }
             
             console.log('🗑️ Foto eliminada para timestamp:', timestamp);
@@ -266,6 +267,7 @@ export class PublicationsService {
         try {
             // Crear copia sin imageUrl para ahorrar espacio
             const publicationsToSave = publications.map(pub => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { imageUrl, ...pubWithoutImage } = pub;
                 return pubWithoutImage;
             });
@@ -331,7 +333,7 @@ export class PublicationsService {
     // Obtener restaurantes más reseñados
     public getTopRestaurants(limit: number = 5): Array<{name: string, count: number, averageRating: number}> {
         const publications = this.getPublications();
-        const restaurantStats: { [key: string]: { count: number, totalStars: number, publications: Publication[] } } = {};
+        const restaurantStats: { [key: string]: { count: number, totalStars: number } } = {};
 
         publications.forEach(pub => {
             let restaurantName = '';
@@ -349,11 +351,10 @@ export class PublicationsService {
 
             if (restaurantName) {
                 if (!restaurantStats[restaurantName]) {
-                    restaurantStats[restaurantName] = { count: 0, totalStars: 0, publications: [] };
+                    restaurantStats[restaurantName] = { count: 0, totalStars: 0 };
                 }
                 restaurantStats[restaurantName].count++;
                 restaurantStats[restaurantName].totalStars += pub.stars;
-                restaurantStats[restaurantName].publications.push(pub);
             }
         });
 
@@ -383,6 +384,7 @@ export class PublicationsService {
             if (Array.isArray(publications)) {
                 // Filtrar fotos al importar para evitar problemas
                 const cleanPublications = publications.map(pub => {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const { imageUrl, ...cleanPub } = pub;
                     return cleanPub;
                 });

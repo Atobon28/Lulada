@@ -381,7 +381,6 @@ export class ReviewsContainer extends HTMLElement {
                 
                 // Agregar indicador visual en el header
                 setTimeout(() => {
-                    const publicationElement = pub.shadowRoot?.querySelector('.publication-container');
                     const header = pub.shadowRoot?.querySelector('.header');
                     
                     if (header && !header.querySelector('.photo-indicator')) {

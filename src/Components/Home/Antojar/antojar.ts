@@ -408,8 +408,6 @@ export class LuladaAntojar extends HTMLElement {
         // NUEVOS ELEMENTOS PARA FOTO
         const photoIcon = this.shadow.querySelector('#photo-icon');
         const fileInput = this.shadow.querySelector('#file-input') as HTMLInputElement;
-        const photoContainer = this.shadow.querySelector('#photo-container') as HTMLElement;
-        const photoPreview = this.shadow.querySelector('#photo-preview') as HTMLImageElement;
         const removePhotoBtn = this.shadow.querySelector('#remove-photo');
 
         if (cerrar) {

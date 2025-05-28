@@ -28,6 +28,16 @@ class Save extends HTMLElement {
                     font-family: 'inter', sans-serif;
                 }
                 
+                /* Header responsive - VISIBLE SOLO EN MOBILE */
+                .responsive-header {
+                    display: none;
+                }
+                
+                /* Logo desktop - VISIBLE SOLO EN DESKTOP */
+                .desktop-logo {
+                    display: block;
+                }
+                
                 .main-layout {
                     display: flex;
                     margin-top: 10px;
@@ -80,10 +90,21 @@ class Save extends HTMLElement {
                     background-color: white;
                     padding: 10px 0;
                     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+                    z-index: 1000;
                 }
 
                 /* Responsive styles */
                 @media (max-width: 900px) {
+                    /* MOSTRAR header responsive en móvil */
+                    .responsive-header {
+                        display: block !important;
+                    }
+                    
+                    /* OCULTAR logo de desktop en móvil */
+                    .desktop-logo {
+                        display: none !important;
+                    }
+                    
                     .sidebar {
                         display: none;
                     }
@@ -103,8 +124,15 @@ class Save extends HTMLElement {
                 }
             </style>
             
-            <!-- Usar lulada-logo como header universal -->
-            <lulada-logo></lulada-logo>
+            <!-- Header responsive (SOLO móvil) -->
+            <div class="responsive-header">
+                <lulada-responsive-header></lulada-responsive-header>
+            </div>
+            
+            <!-- Logo desktop (SOLO desktop) -->
+            <div class="desktop-logo">
+                <lulada-logo></lulada-logo>
+            </div>
 
             <div class="main-layout">
                 <div class="sidebar">
