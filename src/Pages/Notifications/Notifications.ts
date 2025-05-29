@@ -2,7 +2,7 @@ export default class LuladaNotifications extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
-        if (this.shadowRoot) {
+        if (this.shadowRoot) {//encapsula el html y css del componente evistando conflictos
             this.shadowRoot.innerHTML = `
             <style>
                 :host {
@@ -98,60 +98,41 @@ export default class LuladaNotifications extends HTMLElement {
                     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
                 }
 
-                /* RESPONSIVE: Móvil */
                 @media (max-width: 900px) {
-                    /* Ocultar sidebar y suggestions en móvil */
-                    .sidebar {
-                        display: none !important;
-                    }
-                    
-                    .suggestions-section {
-                        display: none !important;
-                    }
-                    
-                    /* Mostrar barra de navegación inferior */
-                    .responsive-nav-bar {
+                    /* MOSTRAR header responsive en móvil */
+                    .responsive-header {
                         display: block !important;
                     }
                     
-                    /* Ajustar contenido para la barra inferior */
-                    .content-area {
-                        padding-bottom: 80px; /* Espacio para la barra inferior */
+                    /* OCULTAR logo de desktop en móvil */
+                    .desktop-logo {
+                        display: none !important;
+                    }
+                    
+                    .sidebar {
+                        display: none;
+                    }
+                    
+                    .suggestions-section {
+                        display: none;
+                    }
+                    
+                    .responsive-bar {
+                        display: block;
                     }
                     
                     .reviews-section {
-                        padding: 12px;
-                        max-width: 100%;
+                        margin-left: 1rem;
+                        margin-right: 1rem;
                     }
-                }
 
-                @media (max-width: 600px) {
-                    .content-area {
-                        padding-bottom: 85px;
+                    .saved-header {
+                        margin-bottom: 20px;
+                        padding: 15px;
                     }
-                    
-                    .reviews-section {
-                        padding: 8px;
-                    }
-                    
-                    .reviews-content h2 {
-                        font-size: 18px;
-                        text-align: center;
-                    }
-                }
 
-                @media (max-width: 480px) {
-                    .content-area {
-                        padding-bottom: 90px;
-                    }
-                    
-                    .reviews-section {
-                        padding: 6px;
-                    }
-                    
-                    .reviews-content h2 {
-                        font-size: 16px;
-                        text-align: center;
+                    .saved-header h2 {
+                        font-size: 20px;
                     }
                 }
             </style>
@@ -185,8 +166,7 @@ export default class LuladaNotifications extends HTMLElement {
                 </div>
             </div>
             
-            <!-- Barra de navegación responsiva (solo móvil) -->
-            <div class="responsive-nav-bar">
+            <div class="responsive-bar">
                 <lulada-responsive-bar></lulada-responsive-bar>
             </div>
             `;
@@ -237,19 +217,19 @@ export default class LuladaNotifications extends HTMLElement {
     }
 
     handleResize() {
-        const isMobile = window.innerWidth <= 900;
-        console.log(`📱 Notifications Layout: ${isMobile ? 'Móvil' : 'Desktop'} (${window.innerWidth}px)`);
-        
-        // Debug: verificar que los elementos estén respondiendo correctamente
-        const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLElement;
-        const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLElement;
-        const responsiveBar = this.shadowRoot?.querySelector('.responsive-nav-bar') as HTMLElement;
-        
+        const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
+        const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
+        const responsiveBar = this.shadowRoot?.querySelector('.responsive-bar') as HTMLDivElement;
+//Si la pantalla es menor a 900px, oculta sidebar y sugerencias, muestra barra móvil
         if (sidebar && suggestions && responsiveBar) {
-            if (isMobile) {
-                console.log('📱 Activando layout móvil para Notifications');
+            if (window.innerWidth < 900) {
+                sidebar.style.display = 'none';
+                suggestions.style.display = 'none';
+                responsiveBar.style.display = 'block';
             } else {
-                console.log('🖥️ Activando layout desktop para Notifications');
+                sidebar.style.display = 'block';
+                suggestions.style.display = 'block';
+                responsiveBar.style.display = 'none';
             }
         }
     }
