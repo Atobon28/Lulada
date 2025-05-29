@@ -27,6 +27,16 @@ class PUser extends HTMLElement {
                     font-family: Arial, sans-serif;
                 }
                 
+                /* Header responsive - VISIBLE SOLO EN MOBILE */
+                .responsive-header {
+                    display: none;
+                }
+                
+                /* Logo desktop - VISIBLE SOLO EN DESKTOP */
+                .desktop-logo {
+                    display: block;
+                }
+                
                 .main-layout {
                     display: flex;
                     margin-top: 10px;
@@ -83,6 +93,16 @@ class PUser extends HTMLElement {
 
                 /* Responsive styles */
                 @media (max-width: 900px) {
+                    /* MOSTRAR header responsive en móvil */
+                    .responsive-header {
+                        display: block !important;
+                    }
+                    
+                    /* OCULTAR logo de desktop en móvil */
+                    .desktop-logo {
+                        display: none !important;
+                    }
+                    
                     .sidebar {
                         display: none;
                     }
@@ -102,8 +122,15 @@ class PUser extends HTMLElement {
                 }
             </style>
             
-            <!-- Usar lulada-logo como header universal -->
-            <lulada-logo></lulada-logo>
+            <!-- Header responsive (SOLO móvil) -->
+            <div class="responsive-header">
+                <lulada-responsive-header></lulada-responsive-header>
+            </div>
+            
+            <!-- Logo desktop (SOLO desktop) -->
+            <div class="desktop-logo">
+                <lulada-logo></lulada-logo>
+            </div>
                 
             <div class="main-layout">
                 <div class="sidebar">

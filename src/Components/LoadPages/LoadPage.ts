@@ -1,4 +1,4 @@
-// src/Components/LoadPages/LoadPage.ts - VERSIÓN CORREGIDA SIN ANY Y TOTALMENTE FUNCIONAL
+// src/Components/LoadPages/LoadPage.ts - CON SOPORTE PARA PERFIL DE RESTAURANTE
 
 // Interfaces para tipos seguros
 interface LoadPageElement extends HTMLElement {
@@ -14,7 +14,7 @@ interface NavigationComponent extends HTMLElement {
 }
 
 class LoadPage extends HTMLElement implements LoadPageElement {
-    private isSetup = false; // Para evitar múltiples configuraciones
+    private isSetup = false;
     private currentRoute = '/';
     
     constructor(){
@@ -52,6 +52,16 @@ class LoadPage extends HTMLElement implements LoadPageElement {
             const route = customEvent.detail;
             console.log('🎯 LoadPage: Recibido evento de navegación:', route);
             this.updateView(route);
+        });
+
+        // Escuchar evento específico de selección de restaurante
+        document.addEventListener('restaurant-selected', (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const restaurantInfo = customEvent.detail;
+            console.log('🏪 LoadPage: Restaurante seleccionado:', restaurantInfo);
+            
+            // Navegar al perfil de restaurante
+            this.updateView('/restaurant-profile');
         });
 
         // Manejar navegación del navegador (botón atrás/adelante)
@@ -175,6 +185,7 @@ class LoadPage extends HTMLElement implements LoadPageElement {
             '/explore': '<lulada-explore></lulada-explore>',
             '/configurations': '<lulada-settings></lulada-settings>',
             '/profile': '<puser-page></puser-page>',
+            '/restaurant-profile': '<restaurant-profile></restaurant-profile>',
             '/cambiar-correo': '<lulada-cambiar-correo></lulada-cambiar-correo>',
             '/cambiar-nombre': '<lulada-cambiar-nombre></lulada-cambiar-nombre>',
             '/cambiar-contraseña': '<lulada-cambiar-contraseña></lulada-cambiar-contraseña>',
@@ -182,14 +193,22 @@ class LoadPage extends HTMLElement implements LoadPageElement {
             '/register': '<register-new-account></register-new-account>'
         };
         
-        // Obtener el componente para la ruta
+        // Manejar rutas dinámicas como /restaurant-profile/restaurant-id
         let newComponent = routeComponentMap[cleanRoute];
         let componentName = '';
         
+        // Si no se encontró una ruta exacta, verificar rutas dinámicas
         if (!newComponent) {
-            console.warn('⚠️ LoadPage: Ruta no reconocida:', cleanRoute, '- Mostrando home');
-            newComponent = '<lulada-home></lulada-home>';
-            componentName = 'lulada-home';
+            if (cleanRoute.startsWith('/restaurant-profile/')) {
+                // Ruta dinámica de perfil de restaurante
+                newComponent = '<restaurant-profile></restaurant-profile>';
+                componentName = 'restaurant-profile';
+                console.log('🏪 LoadPage: Ruta dinámica de restaurante detectada:', cleanRoute);
+            } else {
+                console.warn('⚠️ LoadPage: Ruta no reconocida:', cleanRoute, '- Mostrando home');
+                newComponent = '<lulada-home></lulada-home>';
+                componentName = 'lulada-home';
+            }
         } else {
             // Extraer el nombre del componente
             const match = newComponent.match(/<([^>\s]+)/);
@@ -270,7 +289,7 @@ class LoadPage extends HTMLElement implements LoadPageElement {
                     <button class="error-button" onclick="document.dispatchEvent(new CustomEvent('navigate', {detail: '/home'}))">
                         🏠 Volver al Inicio
                     </button>
-                    <button class="error-button" onclick="window.debugNav?.completo()" style="margin-left: 10px;">
+                    <button class="error-button" onclick="window.debugLoadPage?.()" style="margin-left: 10px;">
                         🔧 Debug Info
                     </button>
                 </div>
@@ -331,6 +350,7 @@ class LoadPage extends HTMLElement implements LoadPageElement {
             'lulada-explore',
             'lulada-settings',
             'puser-page',
+            'restaurant-profile',
             'lulada-cambiar-correo',
             'lulada-cambiar-nombre',
             'lulada-cambiar-contraseña'
@@ -349,6 +369,19 @@ class LoadPage extends HTMLElement implements LoadPageElement {
         const responsiveBar = document.querySelector('lulada-responsive-bar');
         console.log(`  Sidebar: ${sidebar ? 'Encontrado' : 'NO encontrado'}`);
         console.log(`  ResponsiveBar: ${responsiveBar ? 'Encontrado' : 'NO encontrado'}`);
+        
+        // Debug específico de restaurante
+        try {
+            const restaurantInfo = sessionStorage.getItem('selectedRestaurant');
+            if (restaurantInfo) {
+                const parsed = JSON.parse(restaurantInfo);
+                console.log('- Información de restaurante seleccionado:', parsed);
+            } else {
+                console.log('- No hay restaurante seleccionado en sessionStorage');
+            }
+        } catch (error) {
+            console.log('- Error leyendo información de restaurante:', error);
+        }
     }
 
     // Método público para forzar actualización
@@ -370,8 +403,42 @@ class LoadPage extends HTMLElement implements LoadPageElement {
             settingsComponentRegistered: this.isComponentRegistered('lulada-settings'),
             exploreComponentRegistered: this.isComponentRegistered('lulada-explore'),
             profileComponentRegistered: this.isComponentRegistered('puser-page'),
-            saveComponentRegistered: this.isComponentRegistered('save-page')
+            saveComponentRegistered: this.isComponentRegistered('save-page'),
+            restaurantProfileRegistered: this.isComponentRegistered('restaurant-profile')
         };
+    }
+
+    // Método público específico para debugging de restaurantes
+    public debugRestaurantNavigation(): void {
+        console.log('🏪 LoadPage: Debug de navegación de restaurantes');
+        
+        // Verificar si el componente está registrado
+        const isRegistered = this.isComponentRegistered('restaurant-profile');
+        console.log('- restaurant-profile registrado:', isRegistered);
+        
+        // Verificar información en sessionStorage
+        try {
+            const restaurantInfo = sessionStorage.getItem('selectedRestaurant');
+            if (restaurantInfo) {
+                const parsed = JSON.parse(restaurantInfo);
+                console.log('- Restaurante en sessionStorage:', parsed);
+                console.log('- Tiempo desde selección:', Date.now() - parsed.timestamp, 'ms');
+            } else {
+                console.log('- No hay restaurante en sessionStorage');
+            }
+        } catch (error) {
+            console.error('- Error leyendo sessionStorage:', error);
+        }
+        
+        // Verificar si estamos en ruta de restaurante
+        const isRestaurantRoute = this.currentRoute.includes('restaurant-profile');
+        console.log('- En ruta de restaurante:', isRestaurantRoute);
+        console.log('- Ruta actual:', this.currentRoute);
+        
+        // Verificar componente en DOM
+        const main = this.shadowRoot?.querySelector('main');
+        const restaurantComponent = main?.querySelector('restaurant-profile');
+        console.log('- Componente restaurant-profile en DOM:', !!restaurantComponent);
     }
 }
 
@@ -384,6 +451,18 @@ if (typeof window !== 'undefined') {
                 loadPage.debugInfo();
             } else {
                 console.log('❌ No se encontró el componente load-pages o no tiene método debugInfo');
+            }
+        };
+    }
+    
+    // Función específica para debug de restaurantes
+    if (!window.debugRestaurantNav) {
+        window.debugRestaurantNav = () => {
+            const loadPage = document.querySelector('load-pages') as LoadPage | null;
+            if (loadPage && typeof loadPage.debugRestaurantNavigation === 'function') {
+                loadPage.debugRestaurantNavigation();
+            } else {
+                console.log('❌ No se encontró el componente load-pages');
             }
         };
     }
