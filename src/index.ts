@@ -7,6 +7,33 @@ interface ComponentConstructor {
     new (...args: unknown[]): HTMLElement;
 }
 
+// Define interfaces for window extensions
+declare global {
+    interface Window {
+        AntojarPopupService?: typeof AntojarPopupService;
+        LuladaServices?: {
+            publicationsService: PublicationsService;
+            antojarService: AntojarPopupService;
+        };
+        LuladaDebug?: {
+            services: {
+                publications: PublicationsService;
+                antojar: AntojarPopupService;
+            };
+            components: {
+                registered: Array<{
+                    name: string;
+                    registered: boolean;
+                }>;
+            };
+        };
+        luladaDebug?: {
+            getStats: () => unknown;
+            clearAll: () => void;
+        };
+    }
+}
+
 // ============================================================================
 // SERVICIOS GLOBALES - Importar primero
 // ============================================================================
@@ -166,6 +193,22 @@ function registerComponent(name: string, component: ComponentConstructor): boole
         return false;
     }
 }
+
+//interaciones de servicio
+import { InteractionService } from './Services/flux/Interactionservice';
+
+document.addEventListener('DOMContentLoaded', () => {
+    const interactionService = InteractionService.getInstance();
+    interactionService.loadInteractions();
+    
+    // Debug - FIXED: Replace 'any' with proper type
+    window.luladaDebug = {
+        getStats: () => interactionService.getStats(),
+        clearAll: () => interactionService.clearAll()
+    };
+    
+    console.log('✅ Sistema de interacciones listo');
+});
 
 // ============================================================================
 // REGISTRO DE COMPONENTES
