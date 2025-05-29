@@ -83,6 +83,7 @@ import TextCard from "./Components/Explore/textCard";
 import UserInfo from "./Components/PUser/userProfile/UserInfo";
 import UserSelftProfile from "./Components/PUser/userProfile/UserProfile";
 import UserEdit from "./Components/PUser/userProfile/EditButton";
+import EditProfileModal from "./Components/PUser/userProfile/EditProfileModal";
 import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
 
 // ============================================================================
@@ -220,6 +221,7 @@ registerComponent('text-card', TextCard);
 registerComponent('user-info', UserInfo);
 registerComponent('user-profile', UserSelftProfile);
 registerComponent('user-edit', UserEdit);
+registerComponent('edit-profile-modal', EditProfileModal);
 registerComponent('restaurant-info', restaurantInfo);
 
 // OTROS - CORREGIDO

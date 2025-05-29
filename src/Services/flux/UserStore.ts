@@ -1,4 +1,4 @@
-// src/Services/flux/UserStore.ts
+// src/Services/flux/UserStore.ts - FIXED TYPESCRIPT ERRORS
 
 import { AppDispatcher, Action } from './Dispacher';
 import { UserData } from './UserActions';
@@ -10,6 +10,21 @@ export interface UserState {
 }
 
 type UserListener = (state: UserState) => void;
+
+// Extend Window interface for debugging functions
+declare global {
+    interface Window {
+        debugUserStore?: () => void;
+        getUserStats?: () => {
+            hasUsername: boolean;
+            hasName: boolean;
+            hasDescription: boolean;
+            hasPhoto: boolean;
+            completionPercentage: number;
+        };
+        restoreUserBackup?: () => boolean;
+    }
+}
 
 export class UserStore {
     private _state: UserState = {
@@ -33,7 +48,7 @@ export class UserStore {
         try {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
-                const userData = JSON.parse(savedUser);
+                const userData = JSON.parse(savedUser) as UserData;
                 console.log('Datos encontrados en localStorage:', userData);
                 this._state.currentUser = userData;
                 this._emitChange();
@@ -57,7 +72,7 @@ export class UserStore {
         this._emitChange();
     }
 
-    // Manejar acciones
+    // Manejar acciones - UPDATED WITH PROPER TYPES
     private _handleActions(action: Action): void {
         console.log('UserStore: Recibida acción:', action.type, action.payload);
         
@@ -93,9 +108,74 @@ export class UserStore {
                 }
                 break;
 
+            case 'UPDATE_FULL_NAME':
+                if (this._state.currentUser) {
+                    const newName = action.payload as string;
+                    console.log('Actualizando nombre completo de:', this._state.currentUser.nombre, 'a:', newName);
+                    
+                    this._state.currentUser = {
+                        ...this._state.currentUser,
+                        nombre: newName
+                    };
+                    this._state.error = null;
+                    
+                    console.log('Nombre completo actualizado a:', this._state.currentUser.nombre);
+                    this._saveUserData();
+                    this._emitChange();
+                } else {
+                    console.error('No hay usuario actual para actualizar');
+                }
+                break;
+
+            case 'UPDATE_DESCRIPTION':
+                if (this._state.currentUser) {
+                    const newDescription = action.payload as string;
+                    console.log('Actualizando descripción de:', this._state.currentUser.descripcion, 'a:', newDescription);
+                    
+                    this._state.currentUser = {
+                        ...this._state.currentUser,
+                        descripcion: newDescription
+                    };
+                    this._state.error = null;
+                    
+                    console.log('Descripción actualizada a:', this._state.currentUser.descripcion);
+                    this._saveUserData();
+                    this._emitChange();
+                } else {
+                    console.error('No hay usuario actual para actualizar');
+                }
+                break;
+
+            case 'UPDATE_PROFILE':
+                if (this._state.currentUser && action.payload) {
+                    const updates = action.payload as Partial<UserData>;
+                    console.log('Actualizando perfil con múltiples campos:', updates);
+                    
+                    // Formatear username si está incluido
+                    if (updates.nombreDeUsuario) {
+                        updates.nombreDeUsuario = updates.nombreDeUsuario.startsWith('@') 
+                            ? updates.nombreDeUsuario 
+                            : `@${updates.nombreDeUsuario}`;
+                    }
+                    
+                    this._state.currentUser = {
+                        ...this._state.currentUser,
+                        ...updates
+                    };
+                    this._state.error = null;
+                    
+                    console.log('Perfil actualizado:', this._state.currentUser);
+                    this._saveUserData();
+                    this._emitChange();
+                } else {
+                    console.error('No hay usuario actual para actualizar o no hay datos de actualización');
+                }
+                break;
+
             case 'UPDATE_EMAIL':
                 if (this._state.currentUser) {
-                    // Nota: El email no está en el modelo actual, pero podríamos agregarlo
+                    // Nota: El email no está en el modelo actual, pero se puede extender
+                    console.log('Actualización de email solicitada (funcionalidad pendiente)');
                     this._state.error = null;
                     this._saveUserData();
                     this._emitChange();
@@ -105,6 +185,7 @@ export class UserStore {
             case 'UPDATE_PASSWORD':
                 if (this._state.currentUser) {
                     // Aquí iría la lógica de validación de contraseña
+                    console.log('Actualización de contraseña solicitada');
                     this._state.error = null;
                     this._saveUserData();
                     this._emitChange();
@@ -113,26 +194,33 @@ export class UserStore {
 
             case 'UPDATE_PROFILE_PICTURE':
                 if (this._state.currentUser) {
+                    const newPhotoUrl = action.payload as string;
+                    console.log('Actualizando foto de perfil a:', newPhotoUrl);
+                    
                     this._state.currentUser = {
                         ...this._state.currentUser,
-                        foto: action.payload as string
+                        foto: newPhotoUrl
                     };
                     this._state.error = null;
+                    
+                    console.log('Foto de perfil actualizada');
                     this._saveUserData();
                     this._emitChange();
                 }
                 break;
 
-            case 'UPDATE_DESCRIPTION':
-                if (this._state.currentUser) {
-                    this._state.currentUser = {
-                        ...this._state.currentUser,
-                        descripcion: action.payload as string
-                    };
-                    this._state.error = null;
-                    this._saveUserData();
-                    this._emitChange();
-                }
+            case 'RESET_PROFILE':
+                console.log('Reseteando perfil a valores por defecto');
+                this._state.currentUser = {
+                    foto: "https://randomuser.me/api/portraits/women/44.jpg",
+                    nombreDeUsuario: "@CrisTiJauregui",
+                    nombre: "Cristina Jauregui",
+                    descripcion: "Me encanta el alcohol, los cocteles me vuelven loca",
+                    rol: "persona"
+                };
+                this._state.error = null;
+                this._saveUserData();
+                this._emitChange();
                 break;
 
             default:
@@ -140,15 +228,19 @@ export class UserStore {
         }
     }
 
-    // Guardar datos del usuario en localStorage
+    // Guardar datos del usuario en localStorage - IMPROVED
     private _saveUserData(): void {
         if (this._state.currentUser) {
             try {
                 const dataToSave = JSON.stringify(this._state.currentUser);
                 localStorage.setItem('currentUser', dataToSave);
-                console.log('Datos guardados en localStorage:', this._state.currentUser);
+                console.log('📦 Datos guardados en localStorage:', this._state.currentUser);
+                
+                // También guardar en sessionStorage como backup
+                sessionStorage.setItem('currentUser_backup', dataToSave);
             } catch (error) {
                 console.error('Error saving user data:', error);
+                this._state.error = 'Error al guardar datos del usuario';
             }
         }
     }
@@ -196,18 +288,98 @@ export class UserStore {
         console.log('UserStore: Listener desuscrito. Total:', initialLength, '->', this._listeners.length);
     }
 
-    // Método para debugging
+    // NUEVOS MÉTODOS PÚBLICOS
+
+    // Verificar si hay cambios sin guardar
+    hasUnsavedChanges(): boolean {
+        try {
+            const saved = localStorage.getItem('currentUser');
+            if (!saved || !this._state.currentUser) return false;
+            
+            const savedData = JSON.parse(saved) as UserData;
+            return JSON.stringify(savedData) !== JSON.stringify(this._state.currentUser);
+        } catch {
+            return false;
+        }
+    }
+
+    // Obtener estadísticas del perfil
+    getProfileStats(): {
+        hasUsername: boolean;
+        hasName: boolean;
+        hasDescription: boolean;
+        hasPhoto: boolean;
+        completionPercentage: number;
+    } {
+        if (!this._state.currentUser) {
+            return {
+                hasUsername: false,
+                hasName: false,
+                hasDescription: false,
+                hasPhoto: false,
+                completionPercentage: 0
+            };
+        }
+
+        const user = this._state.currentUser;
+        const hasUsername = !!user.nombreDeUsuario && user.nombreDeUsuario !== '';
+        const hasName = !!user.nombre && user.nombre !== '';
+        const hasDescription = !!user.descripcion && user.descripcion !== '';
+        const hasPhoto = !!user.foto && user.foto !== '';
+
+        const fields = [hasUsername, hasName, hasDescription, hasPhoto];
+        const completedFields = fields.filter(Boolean).length;
+        const completionPercentage = Math.round((completedFields / fields.length) * 100);
+
+        return {
+            hasUsername,
+            hasName,
+            hasDescription,
+            hasPhoto,
+            completionPercentage
+        };
+    }
+
+    // Método para debugging - IMPROVED
     debug(): void {
         console.log('UserStore Debug:');
         console.log('- Estado:', this._state);
         console.log('- Listeners:', this._listeners.length);
         console.log('- LocalStorage:', localStorage.getItem('currentUser'));
+        console.log('- SessionStorage backup:', sessionStorage.getItem('currentUser_backup'));
+        console.log('- Estadísticas del perfil:', this.getProfileStats());
+        console.log('- Cambios sin guardar:', this.hasUnsavedChanges());
+    }
+
+    // Restaurar desde backup si es necesario
+    restoreFromBackup(): boolean {
+        try {
+            const backup = sessionStorage.getItem('currentUser_backup');
+            if (backup) {
+                const userData = JSON.parse(backup) as UserData;
+                this._state.currentUser = userData;
+                this._saveUserData();
+                this._emitChange();
+                console.log('✅ Datos restaurados desde backup');
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('❌ Error restaurando backup:', error);
+            return false;
+        }
     }
 }
 
 export const userStore = new UserStore();
 
-// Exponer para debugging en desarrollo
+// Exponer para debugging en desarrollo - IMPROVED WITH PROPER TYPES
 if (typeof window !== 'undefined' && !window.debugUserStore) {
-    window.debugUserStore = () => userStore.debug();
+    window.debugUserStore = (): void => userStore.debug();
+    
+    // Función adicional para estadísticas
+    window.getUserStats = () => userStore.getProfileStats();
+    
+    // Función para restaurar backup
+    window.restoreUserBackup = (): boolean => userStore.restoreFromBackup();
 }
