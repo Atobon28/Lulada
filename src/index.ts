@@ -165,6 +165,21 @@ function registerComponent(name: string, component: ComponentConstructor): boole
         return false;
     }
 }
+//interaciones de servicio
+import { InteractionService } from './Services/flux/Interactionservice';
+
+document.addEventListener('DOMContentLoaded', () => {
+    const interactionService = InteractionService.getInstance();
+    interactionService.loadInteractions();
+    
+    // Debug
+    (window as any).luladaDebug = {
+        getStats: () => interactionService.getStats(),
+        clearAll: () => interactionService.clearAll()
+    };
+    
+    console.log('✅ Sistema de interacciones listo');
+});
 
 // ============================================================================
 // REGISTRO DE COMPONENTES

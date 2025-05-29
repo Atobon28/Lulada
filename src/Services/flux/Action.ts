@@ -16,6 +16,12 @@ interface NavigationPayload {
     route: string;
     timestamp: number;
 }
+//esto es para like y las interacciones 
+interface InteractionPayload {
+    publicationId: string;
+    username: string;
+    timestamp: number;
+}
 
 interface ActiveNavigationPayload {
     navItem: string;
@@ -125,5 +131,53 @@ export const Actions = {
             type: 'NEW_PUBLICATION_CREATED',
             payload: reviewData
         });
+    },
+
+    //toggle like en una publicacion
+    toggleLike:(publicationId: string, username: string)=> {
+        console.log('Actions: toggle like en publicación:', publicationId, 'por usuario:', username);
+        AppDispatcher.dispatch({
+            type: 'TOGGLE_LIKE',
+            payload: {
+                publicationId,
+                username,
+                timestamp: Date.now()
+            } as InteractionPayload
+        });
+    },
+    //toggle del bookmark de una publicacion
+    toggleBookmark: (publicationId: string, username: string) => {
+        console.log('Actions: toggle bookmark en publicación:', publicationId, 'por usuario:', username);
+        AppDispatcher.dispatch({
+            type: 'TOGGLE_BOOKMARK',
+            payload: {
+                publicationId,
+                username,
+                timestamp: Date.now()
+            } as InteractionPayload
+        });
+    },
+    //cargar interacciones de una publicacion
+    loadInteractions: () => {
+        console.log('Actions:Cargando interacciones de publicaciones');
+        AppDispatcher.dispatch({
+            type:'LOAD_INTERACTIONS',
+            payload:{
+                timestamp:Date.now()
+            }
+        });
+    },
+    //limpiar todas las interacciones
+    clearAllInteractions: ()=>{
+        console.log('Actions:Limpiando todas las intaracciones');
+        AppDispatcher.dispatch({
+            type: 'CLEAR_INTERACTIONS',
+            payload:{
+                timestamp: Date.now()
+            }
+        });
     }
+    
+    
+
 };

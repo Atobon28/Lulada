@@ -158,7 +158,7 @@ export default class LuladaNotifications extends HTMLElement {
 
             <!-- Header con layout responsive -->
             <div class="header-wrapper">
-                <lulada-header-complete></lulada-header-complete>
+                <lulada-logo></lulada-logo>
             </div>
             
             <div class="main-layout">
