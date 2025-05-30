@@ -1,5 +1,3 @@
-// src/types.ts - Tipos centralizados para toda la aplicación
-
 // Solo importar los tipos que realmente necesitamos para las interfaces
 import type PublicationsService from './Services/PublicationsService';
 import type AntojarPopupService from './Components/Home/Antojar/antojar-popup';

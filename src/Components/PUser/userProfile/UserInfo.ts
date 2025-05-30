@@ -1,48 +1,52 @@
-// Importamos las herramientas de Flux para conectarnos con los datos del usuario
+// Traemos las herramientas que necesitamos para manejar los datos del usuario
 import { userStore, UserState } from "../../../Services/flux/UserStore";
 import { UserData } from "../../../Services/flux/UserActions";
 
-// Definimos una interfaz que describe los métodos públicos que este componente tendrá
-// Esto ayuda a TypeScript a saber qué funciones están disponibles desde fuera del componente
+// === INTERFACES ===
+// Definimos qué funciones públicas tendrá nuestro componente
+// Es como un "contrato" que dice qué puede hacer el componente desde afuera
 interface UserInfoElement extends HTMLElement {
-    forceUpdate(): void;  // Función para forzar una actualización manual del componente
-    debugInfo(): void;    // Función para mostrar información de debug en la consola
+    forceUpdate(): void;  // Para actualizar manualmente el componente
+    debugInfo(): void;    // Para ver información de debugging en la consola
 }
 
-// URL de la foto fija que usaremos para todos los usuarios
-// En lugar de usar fotos aleatorias, usamos siempre la misma foto profesional
+// === CONFIGURACIÓN ===
+// URL de la foto que usaremos para todos los usuarios
+// En lugar de fotos aleatorias, usamos siempre la misma foto
 const FIXED_PROFILE_PHOTO = "https://randomuser.me/api/portraits/women/44.jpg";
 
-// Definimos un nuevo componente personalizado llamado <user-info>
+// === DEFINICIÓN DEL COMPONENTE ===
+// Creamos nuestro componente personalizado llamado <user-info>
 class UserInfo extends HTMLElement implements UserInfoElement {
     
-    // === PROPIEDADES DEL COMPONENTE ===
-    // Estas variables almacenan el estado interno del componente
-    private currentUser: UserData | null = null;           // Los datos completos del usuario actual
-    private storeListener = this.handleStoreChange.bind(this);  // Función que escucha cambios en Flux
-    private _isConnected = false;                          // Indica si el componente está conectado al DOM
+    // === VARIABLES INTERNAS DEL COMPONENTE ===
+    private currentUser: UserData | null = null;           // Aquí guardamos los datos del usuario
+    private storeListener = this.handleStoreChange.bind(this);  // Función que se ejecuta cuando cambian los datos
+    private _isConnected = false;                          // Para saber si el componente está activo
 
+    // === CONSTRUCTOR ===
+    // Se ejecuta cuando se crea el componente
     constructor() {
-        super(); // Llamamos al constructor de HTMLElement
-        // Creamos el shadow DOM en modo 'open' para aislar los estilos de este componente
+        super(); // Llamamos al constructor padre
+        
+        // Creamos el shadow DOM (un contenedor aislado para nuestro HTML/CSS)
         this.attachShadow({ mode: 'open' });
         console.log('UserInfo: Componente de perfil creado');
     }
 
-    // Este método se ejecuta cuando el componente se añade al DOM de la página
-    // Aquí es donde conectamos el componente con el sistema Flux
+    // === CUANDO EL COMPONENTE SE CONECTA A LA PÁGINA ===
+    // Se ejecuta automáticamente cuando el componente aparece en la página
     connectedCallback() {
         console.log('UserInfo: El componente se conectó al DOM');
-        this._isConnected = true; // Marcamos que el componente está activo
+        this._isConnected = true; // Marcamos que está activo
         
-        // PASO 1: Nos "suscribimos" al UserStore para recibir notificaciones automáticas
-        // Cada vez que cambien los datos del usuario (ej: desde configuraciones),
-        // este componente se actualizará automáticamente
+        // PASO 1: Nos suscribimos para recibir notificaciones cuando cambien los datos del usuario
+        // Es como decir "avísame cuando el usuario cambie su nombre o descripción"
         userStore.subscribe(this.storeListener);
         console.log('📡 Nos suscribimos al UserStore para recibir actualizaciones del perfil');
         
         // PASO 2: Obtenemos los datos actuales del usuario
-        // Usamos setTimeout para asegurar que el sistema Flux esté completamente inicializado
+        // Esperamos un poquito para asegurar que todo esté listo
         setTimeout(() => {
             const initialState = userStore.getState();
             console.log('Datos iniciales del usuario encontrados:', initialState.currentUser?.nombreDeUsuario);
@@ -50,23 +54,24 @@ class UserInfo extends HTMLElement implements UserInfoElement {
         }, 100);
     }
 
-    // Este método se ejecuta cuando el componente se quita del DOM
-    // Es importante hacer "limpieza" para evitar problemas de memoria
+    // === CUANDO EL COMPONENTE SE DESCONECTA DE LA PÁGINA ===
+    // Se ejecuta automáticamente cuando el componente desaparece de la página
     disconnectedCallback() {
         console.log(' UserInfo: El componente se desconectó del DOM');
-        this._isConnected = false; // Marcamos que el componente ya no está activo
+        this._isConnected = false; // Marcamos que ya no está activo
         
-        // Nos "desuscribimos" del UserStore para dejar de recibir notificaciones
+        // Nos desuscribimos para no seguir recibiendo notificaciones
+        // Es importante hacer esto para evitar problemas de memoria
         if (userStore) {
             userStore.unsubscribe(this.storeListener);
             console.log(' Nos desuscribimos del UserStore');
         }
     }
 
-    // Esta función se ejecuta cada vez que cambian los datos del usuario en Flux
-    // Es como un "detector de cambios" que actualiza automáticamente la interfaz del perfil
+    // === FUNCIÓN QUE SE EJECUTA CUANDO CAMBIAN LOS DATOS DEL USUARIO ===
+    // Es como un "detector de cambios" que actualiza automáticamente la interfaz
     private handleStoreChange(state: UserState): void {
-        // Si el componente ya no está conectado al DOM, ignoramos los cambios
+        // Si el componente ya no está en la página, no hacemos nada
         if (!this._isConnected) {
             console.log('UserInfo: Componente desconectado, ignorando cambio de datos');
             return;
@@ -75,8 +80,8 @@ class UserInfo extends HTMLElement implements UserInfoElement {
         const newUser = state.currentUser; // Obtenemos los nuevos datos del usuario
         console.log('UserInfo: Detectamos cambio en los datos del usuario:', newUser?.nombreDeUsuario);
         
-        // Comparamos si realmente hubo cambios importantes (para evitar actualizaciones innecesarias)
-        // Convertimos los objetos a JSON para compararlos fácilmente
+        // Comparamos si realmente hubo cambios importantes
+        // Convertimos los objetos a texto para compararlos fácilmente
         const userChanged = !this.currentUser || 
                           !newUser || 
                           JSON.stringify(this.currentUser) !== JSON.stringify(newUser);
@@ -86,15 +91,13 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             console.log(' Usuario anterior:', this.currentUser?.nombreDeUsuario || 'ninguno');
             console.log(' Usuario nuevo:', newUser?.nombreDeUsuario || 'ninguno');
             
-            // Actualizamos nuestros datos locales haciendo una copia de los nuevos datos
-            // Esto evita problemas de mutación de datos
+            // Guardamos una copia de los nuevos datos
             this.currentUser = newUser ? { ...newUser } : null;
             
-            // Volvemos a dibujar todo el componente con los nuevos datos
+            // Redibujamos todo el componente con los nuevos datos
             this.render();
             
-            // También actualizamos específicamente los elementos que cambiaron
-            // Esto es una actualización adicional más rápida
+            // También actualizamos elementos específicos para mayor rapidez
             setTimeout(() => {
                 if (newUser) {
                     this.updateDOMDirectly(newUser);
@@ -106,17 +109,17 @@ class UserInfo extends HTMLElement implements UserInfoElement {
         }
     }
 
-    // Esta función actualiza directamente elementos específicos del DOM sin volver a dibujar todo
-    // Es más eficiente que hacer un render completo
+    // === FUNCIÓN PARA ACTUALIZAR ELEMENTOS ESPECÍFICOS ===
+    // En lugar de redibujar todo, solo cambia los elementos que necesitan cambiar
     private updateDOMDirectly(user: UserData): void {
-        // Si no hay shadow DOM o el componente no está conectado, no podemos actualizar nada
+        // Si no tenemos shadow DOM o el componente no está activo, salimos
         if (!this.shadowRoot || !this._isConnected) return;
         
         console.log('UserInfo: Actualizando elementos específicos del DOM con:', user.nombreDeUsuario);
         
         // Buscamos los elementos específicos que muestran información del usuario
         const elements = {
-            username: this.shadowRoot.querySelector('.nombreDeUsuario') as HTMLElement | null,     // El username (@NombreUsuario)
+            username: this.shadowRoot.querySelector('.nombreDeUsuario') as HTMLElement | null,     // El @NombreUsuario
             name: this.shadowRoot.querySelector('.nombre') as HTMLElement | null,                   // El nombre real
             description: this.shadowRoot.querySelector('.descripcion') as HTMLElement | null,      // La biografía
             photo: this.shadowRoot.querySelector('.foto') as HTMLImageElement | null               // La foto de perfil
@@ -129,7 +132,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             photo: !!elements.photo
         });
         
-        // Actualizamos el username (sin animaciones para mantener la interfaz limpia)
+        // Actualizamos el username (el @NombreUsuario)
         if (elements.username && user.nombreDeUsuario) {
             console.log('Actualizando username en el DOM:', user.nombreDeUsuario);
             elements.username.textContent = user.nombreDeUsuario;
@@ -147,21 +150,21 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             elements.description.textContent = user.descripcion;
         }
         
-        // Mantenemos siempre la misma foto fija (no cambia con los datos del usuario)
+        // Mantenemos siempre la misma foto (no cambia con los datos del usuario)
         if (elements.photo) {
             console.log('Manteniendo la foto fija del perfil');
             elements.photo.src = FIXED_PROFILE_PHOTO;
         }
     }
 
-    // Esta función dibuja todo el HTML y CSS del componente en la pantalla
-    // Es como el "pincel" que pinta la interfaz del perfil
+    // === FUNCIÓN PRINCIPAL PARA DIBUJAR EL COMPONENTE ===
+    // Es como el "pincel" que pinta toda la interfaz del perfil en la pantalla
     private render(): void {
-        // Si no hay shadow DOM o el componente no está conectado, no podemos dibujar nada
+        // Si no tenemos shadow DOM o el componente no está activo, no dibujamos nada
         if (!this.shadowRoot || !this._isConnected) return;
         console.log('UserInfo: Comenzando a dibujar el componente del perfil...');
 
-        // Si no tenemos datos del usuario, mostramos una pantalla de carga
+        // Si no tenemos datos del usuario, mostramos una pantalla de "Cargando..."
         if (!this.currentUser) {
             console.log('UserInfo: No hay datos del usuario, mostrando pantalla de carga...');
             this.shadowRoot.innerHTML = `
@@ -199,7 +202,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
 
         console.log('UserInfo: Dibujando perfil completo para el usuario:', this.currentUser.nombreDeUsuario);
 
-        // Dibujamos todo el HTML y CSS del perfil usando el estilo original pero con datos de Flux
+        // Dibujamos todo el HTML y CSS del perfil con los datos del usuario
         this.shadowRoot.innerHTML = /*html*/ `
             <style>
                 /* === ESTILOS CSS PARA EL PERFIL === */
@@ -215,7 +218,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     transition: all 0.3s ease;       /* Animación suave para cambios */
                 }
 
-                /* Efecto hover: cuando pasas el mouse por encima */
+                /* Efecto cuando pasas el mouse por encima: se eleva un poco */
                 .userTopCompleto:hover {
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
                     transform: translateY(-2px);     /* Se eleva ligeramente */
@@ -245,7 +248,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     border: 3px solid #AAAB54;       /* Borde verde */
                 }
                 
-                /* Efecto hover en la foto: se agranda ligeramente */
+                /* Efecto cuando pasas el mouse sobre la foto: se agranda un poco */
                 .userTopFoto img:hover {
                     transform: scale(1.05);          /* Aumenta 5% el tamaño */
                 }
@@ -294,12 +297,13 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     margin-top: 0.05rem;
                 }
 
-                /* === RESPONSIVE DESIGN === */
-                /* Adaptaciones para tablets */
+                /* === ADAPTACIONES PARA DIFERENTES TAMAÑOS DE PANTALLA === */
+                
+                /* Para tablets (pantallas medianas) */
                 @media (max-width: 1024px) {
                     .userTopCompleto {
                         max-width: 95%;              /* Más ancho en tablets */
-                        padding: 1rem;               /* Menos padding */
+                        padding: 1rem;               /* Menos espacio interno */
                     }
                     
                     .userTopFoto img {
@@ -308,7 +312,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     }
                 }
                 
-                /* Adaptaciones para móviles */
+                /* Para móviles (pantallas pequeñas) */
                 @media (max-width: 768px) {
                     .userTopCompleto {
                         max-width: 100%;             /* Ancho completo en móviles */
@@ -318,7 +322,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     }
 
                     .userTop {
-                        flex-direction: column;       /* Elementos en columna */
+                        flex-direction: column;       /* Elementos en columna en lugar de fila */
                         text-align: center;          /* Texto centrado */
                         min-width: auto;             /* Sin ancho mínimo */
                         gap: 1rem;
@@ -352,7 +356,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     }
                 }
 
-                /* Adaptaciones para móviles muy pequeños */
+                /* Para móviles muy pequeños */
                 @media (max-width: 480px) {
                     .userTopCompleto {
                         margin: 0.25rem;
@@ -391,8 +395,8 @@ class UserInfo extends HTMLElement implements UserInfoElement {
         console.log('UserInfo: Perfil dibujado completamente para:', this.currentUser.nombreDeUsuario);
     }
 
-    // Esta función genera el HTML específico para mostrar los datos del usuario
-    // Recibe los datos del usuario y devuelve el HTML formateado
+    // === FUNCIÓN PARA GENERAR EL HTML DEL USUARIO ===
+    // Toma los datos del usuario y devuelve el HTML formateado
     private renderUsuario(user: UserData): string {
         console.log('UserInfo: Generando HTML específico para el usuario:', user.nombreDeUsuario);
         
@@ -409,10 +413,10 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                 
                 <!-- Sección de la información del usuario -->
                 <div class="userTopInfo">
-                    <!-- Username (ej: @CrisTiJauregui) -->
+                    <!-- Username (ejemplo: @CrisTiJauregui) -->
                     <p class="nombreDeUsuario">${user.nombreDeUsuario || '@Usuario'}</p>
                     
-                    <!-- Nombre real (ej: Cristina Jauregui) -->
+                    <!-- Nombre real (ejemplo: Cristina Jauregui) -->
                     <p class="nombre">${user.nombre || "Nombre del usuario"}</p>
                     
                     <!-- Línea separadora -->
@@ -421,7 +425,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     <!-- Biografía/descripción del usuario -->
                     <p class="descripcion">${user.descripcion || "Sin descripción"}</p>
                     
-                    <!-- Contenedor para información adicional futura -->
+                    <!-- Contenedor para información adicional en el futuro -->
                     <div id="additional-info"></div>
                 </div>
             </div>
@@ -429,17 +433,17 @@ class UserInfo extends HTMLElement implements UserInfoElement {
     }
 
     // === MÉTODOS PÚBLICOS ===
-    // Estos métodos pueden ser llamados desde fuera del componente
+    // Estas funciones pueden ser llamadas desde fuera del componente
 
-    // Función pública para forzar una actualización manual del componente
-    // Útil para debugging o situaciones especiales
+    // Función para forzar una actualización manual del componente
+    // Útil para pruebas o situaciones especiales
     public forceUpdate(): void {
         console.log('UserInfo: Forzando actualización manual del perfil...');
         const currentState = userStore.getState();
         this.handleStoreChange(currentState);
     }
 
-    // Función pública para mostrar información de debugging en la consola
+    // Función para mostrar información de debugging en la consola
     // Muy útil para desarrolladores para entender qué está pasando
     public debugInfo(): void {
         console.log('UserInfo: === INFORMACIÓN DE DEBUG ===');
@@ -464,13 +468,15 @@ class UserInfo extends HTMLElement implements UserInfoElement {
     }
 }
 
+// === FUNCIONES GLOBALES PARA DEBUGGING ===
 // Estas funciones estarán disponibles en la consola del navegador para hacer pruebas
 
-// Configuramos las funciones de debugging solo si estamos en un navegador
+// Solo las creamos si estamos en un navegador
 if (typeof window !== 'undefined') {
     // Solo creamos las funciones si no existen ya (evita sobrescribir)
     if (!window.debugUserInfo) {
         // Función global para hacer debug del componente UserInfo
+        // Se puede usar escribiendo: debugUserInfo() en la consola del navegador
         window.debugUserInfo = () => {
             const userInfoEl = document.querySelector('user-info') as UserInfoElement | null;
             if (userInfoEl && userInfoEl.debugInfo) {
@@ -483,6 +489,7 @@ if (typeof window !== 'undefined') {
     
     if (!window.forceUpdateUserInfo) {
         // Función global para forzar actualización del componente UserInfo
+        // Se puede usar escribiendo: forceUpdateUserInfo() en la consola del navegador
         window.forceUpdateUserInfo = () => {
             const userInfoEl = document.querySelector('user-info') as UserInfoElement | null;
             if (userInfoEl && userInfoEl.forceUpdate) {
@@ -495,4 +502,5 @@ if (typeof window !== 'undefined') {
     }
 }
 
+// Exportamos el componente para que pueda ser usado en otros archivos
 export default UserInfo;

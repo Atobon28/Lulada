@@ -1,56 +1,63 @@
-// src/Services/flux/Action.ts - ACTUALIZADO CON NAVEGACIÓN
+// Este archivo maneja todas las acciones que puede hacer el usuario en la aplicación
+// Es como un "centro de comandos" que envía órdenes a diferentes partes de la app
 
 import { AppDispatcher } from './Dispacher';
 
-// Definir interfaces para los payloads específicos
+// Aquí definimos qué información necesita cada tipo de acción
+
+// Para cuando alguien escribe una reseña de comida
 interface ReviewData {
-    username?: string;
-    text?: string;
-    stars?: number;
-    location?: string;
-    hasImage?: boolean;
-    timestamp?: number;
+    username?: string;    // Nombre del usuario
+    text?: string;        // Lo que escribió en la reseña
+    stars?: number;       // Cuántas estrellas le dio (1-5)
+    location?: string;    // En qué zona de Cali está el restaurante
+    hasImage?: boolean;   // Si subió una foto o no
+    timestamp?: number;   // Cuándo se creó la reseña
 }
 
+// Para cuando alguien navega a otra página
 interface NavigationPayload {
-    route: string;
-    timestamp: number;
+    route: string;        // A qué página quiere ir (ej: "/home", "/profile")
+    timestamp: number;    // Cuándo hizo el click
 }
-//esto es para like y las interacciones 
+
+// Para cuando alguien da like o guarda una publicación
 interface InteractionPayload {
-    publicationId: string;
-    username: string;
-    timestamp: number;
+    publicationId: string;  // ID único de la publicación
+    username: string;       // Quién hizo la acción
+    timestamp: number;      // Cuándo la hizo
 }
 
+// Para cuando cambia qué botón está activo en el menú
 interface ActiveNavigationPayload {
-    navItem: string;
-    timestamp: number;
+    navItem: string;      // Qué botón del menú está seleccionado
+    timestamp: number;    // Cuándo se seleccionó
 }
 
+// Este es el objeto principal que contiene todas las acciones posibles
 export const Actions = {
-    // Acción existente
+    // Acción básica de ejemplo (no se usa mucho)
     do: () => {
         AppDispatcher.dispatch({ type: 'ACTION_TYPE', payload: undefined });
     },
     
     // ============================================================================
-    // ACCIONES DE NAVEGACIÓN - NUEVAS
+    // ACCIONES PARA NAVEGAR POR LA APP
     // ============================================================================
     
-    // Navegar a una nueva ruta
+    // Cuando el usuario quiere ir a otra página
     navigate: (route: string) => {
         console.log('Actions: Navegando a:', route);
         AppDispatcher.dispatch({ 
             type: 'NAVIGATE_TO_ROUTE', 
             payload: {
                 route,
-                timestamp: Date.now()
+                timestamp: Date.now()  // Date.now() da la fecha/hora actual
             } as NavigationPayload
         });
     },
     
-    // Establecer ruta activa (para sincronización)
+    // Para marcar en qué página está el usuario actualmente
     setActiveRoute: (route: string) => {
         console.log('Actions: Estableciendo ruta activa:', route);
         AppDispatcher.dispatch({ 
@@ -62,7 +69,7 @@ export const Actions = {
         });
     },
     
-    // Establecer navegación activa en sidebar/navbar
+    // Para resaltar qué botón del menú está seleccionado
     setActiveNavigation: (navItem: string) => {
         console.log('Actions: Estableciendo navegación activa:', navItem);
         AppDispatcher.dispatch({ 
@@ -74,7 +81,7 @@ export const Actions = {
         });
     },
     
-    // Volver a la ruta anterior
+    // Para volver a la página anterior (como el botón "atrás" del navegador)
     goBack: () => {
         console.log('Actions: Navegando hacia atrás');
         AppDispatcher.dispatch({ 
@@ -86,10 +93,10 @@ export const Actions = {
     },
     
     // ============================================================================
-    // ACCIONES DE ANTOJAR - NUEVAS
+    // ACCIONES PARA EL POPUP DE "ANTOJAR" (crear reseñas)
     // ============================================================================
     
-    // Mostrar popup de antojar
+    // Para mostrar la ventana donde escribes una reseña
     showAntojar: () => {
         console.log('Actions: Mostrando popup de antojar');
         AppDispatcher.dispatch({ 
@@ -100,7 +107,7 @@ export const Actions = {
         });
     },
     
-    // Ocultar popup de antojar
+    // Para cerrar esa ventana
     hideAntojar: () => {
         console.log('Actions: Ocultando popup de antojar');
         AppDispatcher.dispatch({ 
@@ -112,10 +119,10 @@ export const Actions = {
     },
     
     // ============================================================================
-    // ACCIONES DE PUBLICACIONES - ACTUALIZADAS
+    // ACCIONES PARA LAS PUBLICACIONES (reseñas de restaurantes)
     // ============================================================================
     
-    // Publicar nueva reseña
+    // Cuando alguien publica una nueva reseña
     publishReview: (reviewData: ReviewData) => {
         console.log('Actions: Publicando reseña:', reviewData);
         AppDispatcher.dispatch({ 
@@ -124,7 +131,7 @@ export const Actions = {
         });
     },
     
-    // Nueva publicación creada (para notificar a otros componentes)
+    // Para avisar a toda la app que se creó una nueva publicación
     newPublicationCreated: (reviewData: ReviewData) => {
         console.log('Actions: Nueva publicación creada:', reviewData);
         AppDispatcher.dispatch({
@@ -133,7 +140,7 @@ export const Actions = {
         });
     },
 
-    //toggle like en una publicacion
+    // Para dar o quitar "like" a una publicación (como Instagram)
     toggleLike:(publicationId: string, username: string)=> {
         console.log('Actions: toggle like en publicación:', publicationId, 'por usuario:', username);
         AppDispatcher.dispatch({
@@ -145,7 +152,8 @@ export const Actions = {
             } as InteractionPayload
         });
     },
-    //toggle del bookmark de una publicacion
+    
+    // Para guardar o quitar de guardados una publicación (como el bookmark)
     toggleBookmark: (publicationId: string, username: string) => {
         console.log('Actions: toggle bookmark en publicación:', publicationId, 'por usuario:', username);
         AppDispatcher.dispatch({
@@ -157,7 +165,8 @@ export const Actions = {
             } as InteractionPayload
         });
     },
-    //cargar interacciones de una publicacion
+    
+    // Para cargar todos los likes y bookmarks guardados
     loadInteractions: () => {
         console.log('Actions:Cargando interacciones de publicaciones');
         AppDispatcher.dispatch({
@@ -167,7 +176,8 @@ export const Actions = {
             }
         });
     },
-    //limpiar todas las interacciones
+    
+    // Para borrar todos los likes y bookmarks (limpiar todo)
     clearAllInteractions: ()=>{
         console.log('Actions:Limpiando todas las intaracciones');
         AppDispatcher.dispatch({
@@ -177,7 +187,4 @@ export const Actions = {
             }
         });
     }
-    
-    
-
 };

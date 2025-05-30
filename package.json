@@ -25,7 +25,7 @@
   "homepage": "https://github.com/Atobon28/Lulada#readme",
   "devDependencies": {
     "@eslint/js": "^9.23.0",
-    "eslint": "^9.23.0",
+    "eslint": "^9.27.0",
     "globals": "^16.0.0",
     "husky": "^9.1.7",
     "ts-loader": "^9.5.2",
