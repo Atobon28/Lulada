@@ -327,6 +327,44 @@ class RegisterNewAccount extends HTMLElement {
               height: 16px;
               margin-right: 10px;
             }
+            /* Responsive styles */
+                @media (max-width: 900px) {
+                    /* MOSTRAR header responsive en móvil */
+                    .responsive-header {
+                        display: block !important;
+                    }
+                    
+                    /* OCULTAR logo de desktop en móvil */
+                    .desktop-logo {
+                        display: none !important;
+                    }
+                    
+                    .sidebar {
+                        display: none;
+                    }
+                    
+                    .suggestions-section {
+                        display: none;
+                    }
+                    
+                    .responsive-bar {
+                        display: block;
+                    }
+                    
+                    .reviews-section {
+                        margin-left: 1rem;
+                        margin-right: 1rem;
+                    }
+
+                    .saved-header {
+                        margin-bottom: 20px;
+                        padding: 15px;
+                    }
+
+                    .saved-header h2 {
+                        font-size: 20px;
+                    }
+                }
           }
         </style>
 
@@ -441,6 +479,23 @@ class RegisterNewAccount extends HTMLElement {
     // Redirigir a home
     window.location.href = '/home';
   }
+   handleResize() {
+        const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
+        const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
+        const responsiveBar = this.shadowRoot?.querySelector('.responsive-bar') as HTMLDivElement;
+//Si la pantalla es menor a 900px, oculta sidebar y sugerencias, muestra barra móvil
+        if (sidebar && suggestions && responsiveBar) {
+            if (window.innerWidth < 900) {
+                sidebar.style.display = 'none';
+                suggestions.style.display = 'none';
+                responsiveBar.style.display = 'block';
+            } else {
+                sidebar.style.display = 'block';
+                suggestions.style.display = 'block';
+                responsiveBar.style.display = 'none';
+            }
+        }
+    }
 }
 
 export default RegisterNewAccount;

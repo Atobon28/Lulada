@@ -23,36 +23,39 @@ class Save extends HTMLElement {
 
     constructor() {
         super();
+        // crea un Shadow DOM en modo 'open'
         this.attachShadow({ mode: 'open' });
     }
-
+//conecta al dom el elemnto
     connectedCallback() {
-        this.loadSavedPublications();
-        this.render();
-        this.setupEventListeners();
-        window.addEventListener('resize', this.handleResize.bind(this));
-        this.handleResize();
+        this.loadSavedPublications();//la idea es que carge las publicaciones desde el localstorage
+        this.render();//genera el Html del componente
+        this.setupEventListeners();//configura los eventos internos
+        window.addEventListener('resize', this.handleResize.bind(this));//decta cambios del tamaño de la venta 
+        this.handleResize();//aplica el responsive
         
         // Escuchar cuando se guarden nuevas publicaciones
         this.setupStorageListener();
     }
-
+//ejecuta cuando un evento de desconecta del dom
+//limpia los event listener para evitar el problemas en la memoria
     disconnectedCallback() {
         window.removeEventListener('resize', this.handleResize.bind(this));
         window.removeEventListener('storage', this.handleStorageChange.bind(this));
     }
-
+//configura event listeners para cambios en local storage
+//permitiendo que el componente se actualice cuando se guarde o se quite el componente de otras pestañas
     private setupStorageListener() {
         // Escuchar cambios en localStorage para publicaciones guardadas
         window.addEventListener('storage', this.handleStorageChange.bind(this));
         
-        // Escuchar eventos de bookmark desde publicaciones
+        // Escuchar eventos de bookmark desde publicaciones esto es un evento personalizado
         document.addEventListener('publication-bookmarked', (e: Event) => {
             const customEvent = e as CustomEvent<{
                 username: string;
                 bookmarked: boolean;
             }>;
-            console.log('📚 Bookmark event detectado:', customEvent.detail);
+            console.log(' Bookmark event detectado:', customEvent.detail);
             
             setTimeout(() => {
                 this.loadSavedPublications();
@@ -60,22 +63,23 @@ class Save extends HTMLElement {
             }, 100);
         });
 
-        // NUEVO: Escuchar eventos de likes para actualizar contadores
+        // Escuchar eventos de likes para actualizar contadores
         document.addEventListener('publication-liked', () => {
             // Actualizar las publicaciones mostradas para reflejar los likes
             setTimeout(() => {
                 this.updateSavedContent();
-            }, 100);
+            }, 100);//mantemiendo una sincronizacion de los likes con los guardados
         });
     }
-
+//cambios especificos del local storage
     private handleStorageChange(e: StorageEvent) {
+        //se establecen unas llaves que son las claves donde se guardan like,bookmark y save reviews
         if (e.key === 'lulada_saved_reviews' || e.key === 'lulada_likes' || e.key === 'lulada_bookmarks') {
             this.loadSavedPublications();
             this.updateSavedContent();
         }
     }
-
+//lee las publicaciones guardad del localstorage
     private loadSavedPublications() {
         try {
             const saved = localStorage.getItem('lulada_saved_reviews');
@@ -162,25 +166,6 @@ class Save extends HTMLElement {
                     position: relative;
                     overflow: hidden;
                 }
-
-                .saved-header::before {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    left: -50%;
-                    width: 200%;
-                    height: 200%;
-                    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-                    transform: rotate(45deg);
-                    animation: shine 3s infinite;
-                }
-
-                @keyframes shine {
-                    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-                    50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-                    100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-                }
-
                 .saved-header h2 {
                     margin: 0 0 10px 0;
                     font-size: 24px;
@@ -230,10 +215,7 @@ class Save extends HTMLElement {
                     animation: float 3s ease-in-out infinite;
                 }
 
-                @keyframes float {
-                    0%, 100% { transform: translateY(0px); }
-                    50% { transform: translateY(-10px); }
-                }
+                
 
                 .empty-state h3 {
                     margin: 0 0 10px 0;
@@ -340,7 +322,7 @@ class Save extends HTMLElement {
         // Cargar contenido guardado
         this.updateSavedContent();
     }
-
+//Si no hay publicaciones guardadas, muestra un estado vacío amigable.
     private updateSavedContent() {
         const contentDiv = this.shadowRoot?.querySelector('#saved-content');
         if (!contentDiv) return;
@@ -348,20 +330,21 @@ class Save extends HTMLElement {
         if (this.savedPublications.length === 0) {
             contentDiv.innerHTML = `
                 <div class="empty-state">
-                    <div class="icon">🔖</div>
+                    <div class="icon"></div>
                     <h3>No tienes publicaciones guardadas</h3>
-                    <p>Las publicaciones que marques con el ícono de bookmark aparecerán aquí.<br>
-                    ¡Empieza a guardar tus reseñas favoritas para acceder a ellas fácilmente!</p>
+                    <p>Las publicaciones que marques con el ícono de bookmark aparecerán aquí.<br></p>
                 </div>
             `;
             return;
         }
-
+//itera sobre cada publicacion
         let publicationsHTML = '';
         this.savedPublications.forEach((pub, index) => {
             // IMPORTANTE: Agregar un ID único para cada publicación en Save
+            //crea elementos de publicationcon los datos
             publicationsHTML += `
                 <lulada-publication 
+                
                     username="${pub.username}" 
                     text="${pub.text}" 
                     stars="${pub.stars}"
@@ -370,8 +353,9 @@ class Save extends HTMLElement {
                     data-save-index="${index}"
                     data-publication-id="${pub.id}"
                 ></lulada-publication>
-            `;
+            `;//añada atributos que identifiacan a la publicacion
         });
+        //nserta el HTML generado y sincroniza los estados después de una brave pausa
 
         contentDiv.innerHTML = publicationsHTML;
         console.log('Contenido guardado actualizado con persistencia completa');
@@ -382,7 +366,7 @@ class Save extends HTMLElement {
         }, 100);
     }
 
-    // NUEVO: Sincronizar los estados de las publicaciones con los datos guardados
+    // Sincronizar los estados de las publicaciones con los datos guardados
     private syncPublicationStates() {
         const publications = this.shadowRoot?.querySelectorAll('lulada-publication');
         if (!publications) return;
@@ -392,14 +376,15 @@ class Save extends HTMLElement {
             const publicationId = pub.getAttribute('data-publication-id');
             
             if (publicationId && publicationElement.interactionService) {
-                // Forzar actualización del UI para reflejar el estado actual
+                // Forzar actualización del de la interfaz
                 publicationElement.updateInteractionUI?.();
             }
-        });
+        });//Asegura que los botones de like/bookmark reflejen el estado correcto
     }
 
-    // NUEVO: Método para limpiar todas las publicaciones guardadas
+    //Método para limpiar todas las publicaciones guardadas
     public clearAllSaved() {
+        //Pide confirmación al usuario
         if (confirm('¿Estás seguro de que quieres eliminar todas las publicaciones guardadas?')) {
             // Limpiar localStorage
             localStorage.removeItem('lulada_saved_reviews');
@@ -415,13 +400,13 @@ class Save extends HTMLElement {
                 console.error('Error updating bookmarks:', error);
             }
             
-            // Recargar
+            // Recargar o renderiza
             this.loadSavedPublications();
             this.render();
             
             console.log('✨ Todas las publicaciones guardadas eliminadas');
         }
-    }
+    }//este es un boton a ventana que te pide aseguarte de que lo quieres borrar
 
     setupEventListeners() {
         if (this.shadowRoot) {
@@ -431,8 +416,9 @@ class Save extends HTMLElement {
                     detail: customEvent.detail
                 }));
             });
-
-            // NUEVO: Escuchar eventos de bookmark dentro de la página Save
+//Propaga eventos de navegación desde el Shadow DOM al documento principal.
+            //Escuchar eventos de bookmark dentro de la página Save
+            //Cuando una publicación se desmarca desde la página de guardados, actualiza la lista automáticamente.
             this.shadowRoot.addEventListener('publication-bookmarked', (e: Event) => {
                 const customEvent = e as CustomEvent<{
                     bookmarked: boolean;
@@ -442,7 +428,7 @@ class Save extends HTMLElement {
                 
                 if (!bookmarked) {
                     // Si se quita el bookmark desde Save, remover de la lista
-                    console.log('📚 Publicación removida desde Save');
+                    console.log('Publicación removida desde Save');
                     setTimeout(() => {
                         this.loadSavedPublications();
                         this.updateSavedContent();
@@ -451,12 +437,13 @@ class Save extends HTMLElement {
             });
         }
     }
-
+    
+//obtener refencias de elemtos layot
     handleResize() {
         const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
         const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
         const responsiveBar = this.shadowRoot?.querySelector('.responsive-bar') as HTMLDivElement;
-
+//Si la pantalla es menor a 900px, oculta sidebar y sugerencias, muestra barra móvil
         if (sidebar && suggestions && responsiveBar) {
             if (window.innerWidth < 900) {
                 sidebar.style.display = 'none';

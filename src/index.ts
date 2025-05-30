@@ -10,7 +10,7 @@ interface ComponentConstructor {
 // Define interfaces for window extensions
 declare global {
     interface Window {
-        AntojarPopupService?: typeof AntojarPopupService;
+        AntojarPopupService?: { getInstance(): { initialize(): void; showPopup(): void; hidePopup?: (() => void) | undefined; }; } | undefined;
         LuladaServices?: {
             publicationsService: PublicationsService;
             antojarService: AntojarPopupService;

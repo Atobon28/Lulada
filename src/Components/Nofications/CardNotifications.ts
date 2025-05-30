@@ -101,7 +101,7 @@ export class CardNotifications extends HTMLElement {
                     }
                     
                     .reviews-section {
-                        padding: 90pxpx;
+                        padding: 90px;
                         background-color: white;
                         flex-grow: 1;
                     }
