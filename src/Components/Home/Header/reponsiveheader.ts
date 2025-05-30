@@ -1,30 +1,11 @@
-// src/Components/Home/Header/reponsiveheader.ts - CON ICONOS DE SETTINGS Y NOTIFICACIONES
-
-// Interfaces para tipos seguros
+// Interface para el elemento de navegación
 interface ResponsiveBarElement extends HTMLElement {
     setActiveItem(nav: string): void;
     detectCurrentPage(): void;
     updateActiveFromRoute(route: string): void;
-    debugInfo?(): void;
 }
 
-interface AntojarServiceInstance {
-    initialize(): void;
-    showPopup(): void;
-    hidePopup?(): void;
-}
-
-interface AntojarService {
-    getInstance(): AntojarServiceInstance;
-}
-
-// Extender Window para tipos seguros
-declare global {
-    interface Window {
-        AntojarPopupService?: AntojarService;
-    }
-}
-
+// Barra de navegación responsiva inferior
 class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
     private currentActive: string = 'home';
 
@@ -135,7 +116,6 @@ class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
                         </svg>
                     </div>
 
-                    <!-- ÍCONO CORREGIDO: Usando el mismo del navbar (sidebar) -->
                     <div class="nav-item ${this.currentActive === 'antojar' ? 'active' : ''}" data-nav="antojar" data-route="/antojar">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <g fill="none" fill-rule="evenodd">
@@ -165,8 +145,6 @@ class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
     }
 
     setupEventListeners() {
-        console.log('🔧 ResponsiveBar: Configurando event listeners...');
-        
         if (!this.shadowRoot) return;
         
         const navItems = this.shadowRoot.querySelectorAll('.nav-item');
@@ -179,40 +157,31 @@ class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
                 const nav = item.getAttribute('data-nav');
                 
                 if (route && nav) {
-                    console.log(`🔧 ResponsiveBar: Navegando: ${nav} -> ${route}`);
-                    
                     this.setActiveItem(nav);
                     
-                    // Caso especial para antojar
+                    // Caso especial para antojar - abre popup
                     if (route === "/antojar") {
-                        console.log('🎯 ResponsiveBar: Abriendo popup de antojar...');
                         this.handleAntojarClick();
                     } else {
-                        // Para otras rutas, navegar normalmente
                         this.navigate(route);
                     }
                 }
             });
         });
-
-        console.log('✅ ResponsiveBar: Event listeners configurados');
     }
 
+    // Manejar click en antojar - SIN DECLARACIÓN DE TIPOS DUPLICADA
     private handleAntojarClick(): void {
         try {
-            const antojarService = window.AntojarPopupService;
-            if (antojarService) {
-                antojarService.getInstance().showPopup();
-                console.log('✅ ResponsiveBar: Popup de antojar abierto');
-            } else {
-                console.error("❌ AntojarPopupService no disponible");
-                alert("Esta función no está disponible");
+            if (window.AntojarPopupService) {
+                window.AntojarPopupService.getInstance().showPopup();
             }
         } catch (error) {
-            console.error("❌ Error con popup antojar:", error);
+            console.error("Error con popup antojar:", error);
         }
     }
 
+    // Marcar botón como activo
     public setActiveItem(activeNav: string): void {
         this.currentActive = activeNav;
         
@@ -227,10 +196,9 @@ class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
                 item.classList.remove('active');
             }
         });
-        
-        console.log(`🎯 ResponsiveBar: Item activo: ${activeNav}`);
     }
 
+    // Detectar página actual
     public detectCurrentPage(): void {
         const currentPath = window.location.pathname;
         
@@ -247,6 +215,7 @@ class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
         }
     }
 
+    // Actualizar activo basado en ruta
     public updateActiveFromRoute(route: string): void {
         if (route.includes('/home')) {
             this.setActiveItem('home');
@@ -261,52 +230,27 @@ class LuladaResponsiveBar extends HTMLElement implements ResponsiveBarElement {
         }
     }
 
+    // Navegar a nueva página
     navigate(route: string): void {
-        console.log('🚀 ResponsiveBar: Navegando a:', route);
-        
         const event = new CustomEvent("navigate", { 
             detail: route,
             bubbles: true,
             composed: true 
         });
         
-        // Disparar evento global
         document.dispatchEvent(event);
         
-        // También actualizar URL si es posible
         if (window.history && window.history.pushState) {
             window.history.pushState(null, '', route);
         }
-        
-        console.log(`✅ ResponsiveBar: Navegado a: ${route}`);
     }
 
     connectedCallback(): void {
-        console.log('🔗 LuladaResponsiveBar conectado');
         setTimeout(() => this.detectCurrentPage(), 100);
-    }
-
-    disconnectedCallback(): void {
-        console.log('🔌 LuladaResponsiveBar desconectado');
-    }
-
-    public debugInfo(): void {
-        console.log('🔍 ResponsiveBar Debug:');
-        console.log('- Current active:', this.currentActive);
-        console.log('- URL actual:', window.location.pathname);
-        console.log('- Shadow DOM:', !!this.shadowRoot);
-        
-        const navItems = this.shadowRoot?.querySelectorAll('.nav-item');
-        console.log('- Items de navegación:');
-        navItems?.forEach((item, index) => {
-            const route = item.getAttribute('data-route');
-            const nav = item.getAttribute('data-nav');
-            const isActive = item.classList.contains('active');
-            console.log(`  ${index}: ${nav} (${route}) - ${isActive ? 'Activo' : 'Inactivo'}`);
-        });
     }
 }
 
+// Header responsivo superior
 class LuladaResponsiveHeader extends HTMLElement {
     constructor() {
         super();
@@ -329,23 +273,21 @@ class LuladaResponsiveHeader extends HTMLElement {
                         padding: 15px 20px;
                         display: flex;
                         align-items: center;
-                        justify-content: space-between; /* Cambio: space-between para distribuir elementos */
+                        justify-content: space-between;
                     }
                     
                     .logo-container {
                         display: flex;
                         justify-content: center;
-                        flex: 1; /* El logo ocupa el espacio central */
+                        flex: 1;
                     }
                     
-                    /* NUEVO: Contenedor para iconos de acciones */
                     .actions-container {
                         display: flex;
                         align-items: center;
                         gap: 15px;
                     }
                     
-                    /* NUEVO: Estilos para iconos de acción */
                     .action-icon {
                         width: 28px;
                         height: 28px;
@@ -401,15 +343,12 @@ class LuladaResponsiveHeader extends HTMLElement {
                 </style>
                 
                 <div class="header-content">
-                    <!-- Espacio vacío para balance visual -->
                     <div style="width: 72px;"></div>
                     
-                    <!-- Logo centrado -->
                     <div class="logo-container">
                         <lulada-logo></lulada-logo>
                     </div>
                     
-                    <!-- ICONOS MOVIDOS AL LADO DERECHO -->
                     <div class="actions-container">
                         <!-- Icono de Configuraciones -->
                         <svg class="action-icon" id="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -428,7 +367,7 @@ class LuladaResponsiveHeader extends HTMLElement {
         this.setupEventListeners();
     }
     
-    // NUEVO: Configurar event listeners para los iconos
+    // Configurar eventos para los iconos
     setupEventListeners() {
         if (!this.shadowRoot) return;
         
@@ -437,51 +376,36 @@ class LuladaResponsiveHeader extends HTMLElement {
         
         if (settingsIcon) {
             settingsIcon.addEventListener('click', () => {
-                console.log('🔧 ResponsiveHeader: Navegando a configuraciones');
                 this.navigate('/configurations');
             });
         }
         
         if (notificationsIcon) {
             notificationsIcon.addEventListener('click', () => {
-                console.log('🔔 ResponsiveHeader: Navegando a notificaciones');
                 this.navigate('/notifications');
             });
         }
-        
-        console.log('✅ ResponsiveHeader: Event listeners configurados');
     }
     
-    // NUEVO: Función para navegación
+    // Navegación
     private navigate(route: string): void {
-        console.log('🚀 ResponsiveHeader: Navegando a:', route);
-        
         const event = new CustomEvent("navigate", { 
             detail: route,
             bubbles: true,
             composed: true 
         });
         
-        // Disparar evento global
         document.dispatchEvent(event);
-        
-        console.log(`✅ ResponsiveHeader: Navegado a: ${route}`);
-    }
-
-    connectedCallback() {
-        console.log('🔗 LuladaResponsiveHeader conectado');
     }
 }
 
-// Registrar los componentes solo si no están ya registrados
+// Registrar componentes
 if (!customElements.get('lulada-responsive-bar')) {
     customElements.define('lulada-responsive-bar', LuladaResponsiveBar);
-    console.log('✅ lulada-responsive-bar registrado');
 }
 
 if (!customElements.get('lulada-responsive-header')) {
     customElements.define('lulada-responsive-header', LuladaResponsiveHeader);
-    console.log('✅ lulada-responsive-header registrado');
 }
 
 export { LuladaResponsiveBar, LuladaResponsiveHeader };

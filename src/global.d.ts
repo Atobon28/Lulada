@@ -5,26 +5,20 @@ import AntojarPopupService from '../src/Components/Home/Antojar/antojar-popup';
 
 declare global {
     interface Window {
-        // Flux User Store y Actions - ESENCIALES PARA EL CAMBIO DE USERNAME
-        UserActions: typeof UserActions;
-        userStore: UserStore;
+        // Flux User Store y Actions
+        UserActions?: typeof UserActions;
+        userStore?: UserStore;
 
-        // Servicios de Antojar - ESENCIALES PARA EL POPUP DE RESEÑAS
-        AntojarPopupService?: {
-            getInstance(): {
-                initialize(): void;
-                showPopup(): void;
-                hidePopup?: () => void;
-            };
-        };
+        // Servicios de Antojar - CONSISTENTE Y OPCIONAL
+        AntojarPopupService?: typeof AntojarPopupService;
 
-        // Servicios Lulada - ESENCIALES
+        // Servicios Lulada
         LuladaServices?: {
             publicationsService: PublicationsService;
             antojarService: AntojarPopupService;
         };
 
-        // Debug utilities básicos - ÚTILES PERO NO PROBLEMÁTICOS
+        // Debug utilities
         LuladaDebug?: {
             services: {
                 publications: PublicationsService;
@@ -38,7 +32,7 @@ declare global {
             };
         };
 
-        // Funciones de debug simples - ÚTILES PARA EL USUARIO
+        // Funciones de debug simples
         debugUserInfo?: () => void;
         forceUpdateUserInfo?: () => void;
         debugUserStore?: () => void;
@@ -46,9 +40,6 @@ declare global {
         debugLoadPage?: () => void;
         debugSuggestions?: () => void;
         debugRestaurantNav?: () => void;
-
-        // Google Maps API
-        google?: unknown;
     }
 }
 

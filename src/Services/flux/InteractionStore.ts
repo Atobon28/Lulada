@@ -2,8 +2,8 @@ import { AppDispatcher, Action } from "./Dispacher";
 
 // Define la estructura de datos para las interacciones (likes y bookmarks)
 export interface InteractionState {
-    likes: { [publicationId: string]: boolean };        // Guarda qué publicaciones tienen like (true/false)
-    bookmarks: { [publicationId: string]: boolean };    // Guarda qué publicaciones están guardadas (true/false)
+    likes: { [publicationId: string]: boolean };        // Guarda qué publicaciones tienen like
+    bookmarks: { [publicationId: string]: boolean };    // Guarda qué publicaciones están guardadas
     isLoading: boolean;                                  // Indica si se están cargando datos
     error: string | null;                                // Guarda mensajes de error si algo sale mal
 }
@@ -18,70 +18,60 @@ interface ToggleInteractionPayload {
 
 // Clase principal que maneja todas las interacciones (likes y bookmarks)
 export class InteractionStore {
-    // Estado interno del store - aquí se guardan todos los datos
+    // Estado interno del store
     private _state: InteractionState = {
-        likes: {},           // Empieza vacío - no hay likes
-        bookmarks: {},       // Empieza vacío - no hay bookmarks
-        isLoading: false,    // No está cargando al inicio
-        error: null          // No hay errores al inicio
+        likes: {},
+        bookmarks: {},
+        isLoading: false,
+        error: null
     };
     
     // Lista de funciones que escuchan cambios en el estado
     private _listeners: InteractionListener[] = [];
     
-    // Nombres de las "llaves" donde se guardan los datos en localStorage
-    private readonly STORAGE_KEY_LIKES = 'lulada_likes';           // Donde se guardan los likes
-    private readonly STORAGE_KEY_BOOKMARKS = 'lulada_bookmarks';   // Donde se guardan los bookmarks
+    // Nombres de las llaves donde se guardan los datos en localStorage
+    private readonly STORAGE_KEY_LIKES = 'lulada_likes';
+    private readonly STORAGE_KEY_BOOKMARKS = 'lulada_bookmarks';
 
     constructor() {
-        // Se registra para escuchar acciones del sistema Flux
         AppDispatcher.register(this._handleActions.bind(this));
-        // Carga los datos guardados del navegador al iniciar
         this._loadFromStorage();
     }
 
     // Función pública para obtener una copia del estado actual
     getState(): InteractionState {
-        return { ...this._state };  // Devuelve una copia para evitar modificaciones accidentales
+        return { ...this._state };
     }
 
-    // Función privada que carga los datos guardados del localStorage del navegador
+    // Función privada que carga los datos guardados del localStorage
     private _loadFromStorage(): void {
         console.log('InteractionStore: Cargando datos de interacciones desde localStorage...');
         try {
-            // Intenta leer los likes guardados
             const likes = localStorage.getItem(this.STORAGE_KEY_LIKES);
-            // Intenta leer los bookmarks guardados
             const bookmarks = localStorage.getItem(this.STORAGE_KEY_BOOKMARKS);
             
-            // Si hay likes guardados, los carga al estado
             if (likes) {
                 this._state.likes = JSON.parse(likes) as { [key: string]: boolean };
                 console.log('likes cargados:', this._state.likes);
             }
             
-            // Si hay bookmarks guardados, los carga al estado
             if (bookmarks) {
                 this._state.bookmarks = JSON.parse(bookmarks) as { [key: string]: boolean };
                 console.log('bookmarks cargados:', this._state.bookmarks);
             }
         } catch (error) {
-            // Si algo sale mal al cargar, registra el error
             console.error('Error al cargar datos de interacciones:', error);
             this._state.error = 'Error al cargar datos de interacciones';
         }
     }
 
-    // Función privada que guarda el estado actual en localStorage del navegador
+    // Función privada que guarda el estado actual en localStorage
     private _saveToStorage(): void {
         try {
-            // Guarda los likes como texto en localStorage
             localStorage.setItem(this.STORAGE_KEY_LIKES, JSON.stringify(this._state.likes));
-            // Guarda los bookmarks como texto en localStorage
             localStorage.setItem(this.STORAGE_KEY_BOOKMARKS, JSON.stringify(this._state.bookmarks));
             console.log('Interacciones guardadas en localStorage');
         } catch (error) {
-            // Si algo sale mal al guardar, registra el error
             console.error('Error saving interactions to storage:', error);
             this._state.error = 'Error guardando interacciones';
         }
@@ -91,63 +81,52 @@ export class InteractionStore {
     private _handleActions(action: Action): void {
         console.log('InteractionStore: Recibida accion:', action.type, action.payload);
 
-        // Decide qué hacer según el tipo de acción
         switch (action.type) {
             case 'TOGGLE_LIKE':
-                // Verifica que los datos de la acción sean válidos
                 if (this.isToggleInteractionPayload(action.payload)) {
                     const { publicationId } = action.payload;
-                    // Obtiene el estado actual del like (true o false)
                     const wasLiked = this._state.likes[publicationId];
-                    // Cambia el estado al opuesto (si era true, ahora false y viceversa)
                     this._state.likes[publicationId] = !wasLiked;
 
                     console.log(`Like ${wasLiked ? 'removido' : 'agregado'} en publicación:`, publicationId);
-                    this._state.error = null;    // Limpia cualquier error anterior
-                    this._saveToStorage();       // Guarda en localStorage
-                    this._emitChange();         // Notifica a todos los componentes que escuchan
+                    this._state.error = null;
+                    this._saveToStorage();
+                    this._emitChange();
                 }
                 break;
 
             case 'TOGGLE_BOOKMARK':
-                // Verifica que los datos de la acción sean válidos
                 if (this.isToggleInteractionPayload(action.payload)) {
                     const { publicationId } = action.payload;
-                    // Obtiene el estado actual del bookmark (true o false)
                     const wasBookmarked = this._state.bookmarks[publicationId];
-                    // Cambia el estado al opuesto (si era true, ahora false y viceversa)
                     this._state.bookmarks[publicationId] = !wasBookmarked;
 
                     console.log(`Bookmark ${wasBookmarked ? 'removido' : 'agregado'} en publicación:`, publicationId);
-                    this._state.error = null;    // Limpia cualquier error anterior
-                    this._saveToStorage();       // Guarda en localStorage
-                    this._emitChange();         // Notifica a todos los componentes que escuchan
+                    this._state.error = null;
+                    this._saveToStorage();
+                    this._emitChange();
                 }
                 break;
 
             case 'LOAD_INTERACTIONS':
-                // Recarga todos los datos desde localStorage
                 this._loadFromStorage();
-                this._emitChange();  // Notifica que los datos cambiaron
+                this._emitChange();
                 break;
 
             case 'CLEAR_INTERACTIONS':
                 console.log('Limpiando todas las interacciones...');
-                // Resetea todo el estado a valores iniciales (vacío)
                 this._state = {
                     likes: {},
                     bookmarks: {},
                     isLoading: false,
                     error: null
                 };
-                // Borra los datos del localStorage del navegador
                 localStorage.removeItem(this.STORAGE_KEY_LIKES);
                 localStorage.removeItem(this.STORAGE_KEY_BOOKMARKS);
-                this._emitChange();  // Notifica que todo se limpió
+                this._emitChange();
                 break;
 
             default:
-                // Si la acción no es reconocida, no hace nada
                 break;
         }
     }
@@ -155,10 +134,10 @@ export class InteractionStore {
     // Función que verifica si los datos de la acción tienen el formato correcto
     private isToggleInteractionPayload(payload: unknown): payload is ToggleInteractionPayload {
         return (
-            payload !== null &&                    // No es null
-            typeof payload === 'object' &&         // Es un objeto
-            'publicationId' in payload &&          // Tiene la propiedad 'publicationId'
-            typeof (payload as ToggleInteractionPayload).publicationId === 'string'  // Y es un string
+            payload !== null &&
+            typeof payload === 'object' &&
+            'publicationId' in payload &&
+            typeof (payload as ToggleInteractionPayload).publicationId === 'string'
         );
     }
 
@@ -167,13 +146,10 @@ export class InteractionStore {
         console.log('InteractionStore: Emitiendo cambios a', this._listeners.length, 'listeners');
         console.log('Estado actual:', this._state);
 
-        // Recorre todos los componentes que están escuchando
         for (const listener of this._listeners) {
             try {
-                // Le dice a cada componente que el estado cambió
                 listener(this._state);
             } catch (error) {
-                // Si un componente falla, registra el error pero continúa con los demás
                 console.error('Error en listener de InteractionStore:', error);
             }
         }
@@ -181,12 +157,12 @@ export class InteractionStore {
 
     // Función pública: verifica si una publicación tiene like
     isLiked(publicationId: string): boolean {
-        return !!this._state.likes[publicationId];  // !! convierte a true/false
+        return !!this._state.likes[publicationId];
     }
 
     // Función pública: verifica si una publicación está guardada (bookmark)
     isBookmarked(publicationId: string): boolean {
-        return !!this._state.bookmarks[publicationId];  // !! convierte a true/false
+        return !!this._state.bookmarks[publicationId];
     }
 
     // Función pública: obtiene lista de IDs de publicaciones con like
@@ -202,13 +178,9 @@ export class InteractionStore {
     // Función pública: obtiene estadísticas generales de las interacciones
     getStats() {
         return {
-            // Cuenta cuántos likes hay en total
             totalLikes: Object.values(this._state.likes).filter(Boolean).length,
-            // Cuenta cuántos bookmarks hay en total
             totalBookmarks: Object.values(this._state.bookmarks).filter(Boolean).length,
-            // Lista de IDs con like
             likedIds: this.getLikePublications(),
-            // Lista de IDs con bookmark
             bookmarkedIds: this.getBookmarkPublications()
         };
     }
@@ -216,7 +188,6 @@ export class InteractionStore {
     // Función pública: permite que un componente escuche cambios en las interacciones
     subscribe(listener: InteractionListener): () => void {
         console.log('InteractionStore: Nuevo listener suscrito. Total:', this._listeners.length + 1);
-        // Añade el componente a la lista de "escuchadores"
         this._listeners.push(listener);
 
         // Inmediatamente le envía el estado actual al nuevo componente
@@ -226,19 +197,19 @@ export class InteractionStore {
             console.error('Error en listener inicial de InteractionStore:', error);
         }
 
-        // Devuelve una función para "desuscribirse" (dejar de escuchar)
+        // Devuelve una función para "desuscribirse"
         return () => {
             this._listeners = this._listeners.filter(l => l !== listener);
             console.log('InteractionStore: Listener desuscrito. Total:', this._listeners.length);
         };
     }
 
-    // Función pública para hacer debugging (ver qué está pasando internamente)
+    // Función pública para hacer debugging
     debug(): void {
         console.log('InteractionStore Debug:');
-        console.log('- Estado:', this._state);                                                    // Muestra el estado actual
-        console.log('- Listeners:', this._listeners.length);                                     // Cuántos componentes están escuchando
-        console.log('- LocalStorage Likes:', localStorage.getItem(this.STORAGE_KEY_LIKES));      // Qué hay guardado en el navegador
+        console.log('- Estado:', this._state);
+        console.log('- Listeners:', this._listeners.length);
+        console.log('- LocalStorage Likes:', localStorage.getItem(this.STORAGE_KEY_LIKES));
         console.log('- LocalStorage Bookmarks:', localStorage.getItem(this.STORAGE_KEY_BOOKMARKS));
     }
 }
@@ -254,7 +225,6 @@ declare global {
 }
 
 // Hace que la función de debug esté disponible globalmente en el navegador
-// Se puede usar escribiendo "debugInteractionStore()" en la consola del navegador
 if (typeof window !== 'undefined' && !window.debugInteractionStore) {
     window.debugInteractionStore = (): void => interactionStore.debug();
 }

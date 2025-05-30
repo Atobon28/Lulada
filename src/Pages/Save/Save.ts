@@ -1,158 +1,136 @@
-// src/Pages/Save/Save.ts
-
-// Definimos tipos de datos para que TypeScript sepa qué esperar
+// Interfaces para TypeScript
 interface SavedPublication {
-    id: string;        // Identificador único de la publicación
-    username: string;  // Nombre del usuario que hizo la reseña
-    text: string;      // Texto de la reseña
-    stars: number;     // Calificación en estrellas (1-5)
-    hasImage: boolean; // Si la publicación tiene imagen o no
-    timestamp: number; // Cuándo se guardó la publicación
+    id: string;
+    username: string;
+    text: string;
+    stars: number;
+    hasImage: boolean;
+    timestamp: number;
 }
 
-// Tipo para los elementos de publicación en el DOM
 interface PublicationElement extends HTMLElement {
     interactionService?: {
-        isLiked: (id: string) => boolean;      // Función para saber si algo tiene like
-        isBookmarked: (id: string) => boolean; // Función para saber si algo está guardado
+        isLiked: (id: string) => boolean;
+        isBookmarked: (id: string) => boolean;
     };
-    updateInteractionUI?: () => void; // Función para actualizar la interfaz
+    updateInteractionUI?: () => void;
 }
 
+// Componente web personalizado para la página de publicaciones guardadas
 class Save extends HTMLElement {
-    // Variable que guarda todas las publicaciones que el usuario ha marcado como favoritas
     private savedPublications: SavedPublication[] = [];
 
     constructor() {
         super();
-        // Crea un "contenedor privado" para el HTML de este componente
-        // Esto evita que los estilos se mezclen con el resto de la página
+        // Crea shadow DOM para aislar estilos
         this.attachShadow({ mode: 'open' });
     }
 
-    // Se ejecuta cuando el componente se añade a la página
+    // Lifecycle: cuando el componente se conecta al DOM
     connectedCallback() {
-        this.loadSavedPublications(); // Carga las publicaciones guardadas del navegador
-        this.render();                // Dibuja el componente en la pantalla
-        this.setupEventListeners();   // Configura los eventos (clicks, etc.)
+        this.loadSavedPublications();
+        this.render();
+        this.setupEventListeners();
         
-        // Escucha cuando cambia el tamaño de la ventana para adaptar el diseño
+        // Configura responsive design
         window.addEventListener('resize', this.handleResize.bind(this));
-        this.handleResize(); // Aplica el diseño responsivo inmediatamente
+        this.handleResize();
         
-        // Configura la escucha para cambios en las publicaciones guardadas
         this.setupStorageListener();
     }
 
-    // Se ejecuta cuando el componente se quita de la página
+    // Lifecycle: limpieza al desconectar
     disconnectedCallback() {
-        // Limpia los "escuchadores" para evitar problemas de memoria
         window.removeEventListener('resize', this.handleResize.bind(this));
         window.removeEventListener('storage', this.handleStorageChange.bind(this));
     }
 
-    // Configura la escucha para cambios en el almacenamiento del navegador
+    // Configura listeners para cambios en publicaciones
     private setupStorageListener() {
-        // Si el usuario abre otra pestaña y guarda/quita algo, esta página se actualiza automáticamente
+        // Escucha cambios en localStorage entre pestañas
         window.addEventListener('storage', this.handleStorageChange.bind(this));
         
-        // Escucha cuando alguien marca o desmarca una publicación como favorita
-        document.addEventListener('publication-bookmarked', (e: Event) => {
-            const customEvent = e as CustomEvent<{
-                username: string;
-                bookmarked: boolean;
-            }>;
-            console.log(' Alguien marcó/desmarcó una publicación:', customEvent.detail);
-            
-            // Espera un poquito y luego actualiza la lista
-            setTimeout(() => {
-                this.loadSavedPublications();
-                this.updateSavedContent();
-            }, 100);
-        });
+        // Escucha cuando se marca/desmarca bookmark
+        document.addEventListener('publication-bookmarked', () => {
+    setTimeout(() => {
+        this.loadSavedPublications();
+        this.updateSavedContent();
+    }, 100);
+});
 
-        // Escucha cuando alguien da like a una publicación
+
+        // Escucha likes para actualizar UI
         document.addEventListener('publication-liked', () => {
-            // Actualiza la visualización para mostrar los likes actualizados
             setTimeout(() => {
                 this.updateSavedContent();
             }, 100);
         });
     }
 
-    // Se ejecuta cuando hay cambios en el almacenamiento del navegador
+    // Maneja cambios en localStorage
     private handleStorageChange(e: StorageEvent) {
-        // Solo nos interesan los cambios en publicaciones guardadas, likes y bookmarks
         if (e.key === 'lulada_saved_reviews' || e.key === 'lulada_likes' || e.key === 'lulada_bookmarks') {
-            this.loadSavedPublications(); // Recarga las publicaciones
-            this.updateSavedContent();    // Actualiza lo que se ve en pantalla
+            this.loadSavedPublications();
+            this.updateSavedContent();
         }
     }
 
-    // Lee las publicaciones guardadas del almacenamiento del navegador
+    // Carga publicaciones desde localStorage
     private loadSavedPublications() {
         try {
-            // Intenta leer los datos guardados
-            const saved = localStorage.getItem('lulada_saved_reviews');
-            // Si hay datos, los convierte de texto a objetos JavaScript
-            this.savedPublications = saved ? JSON.parse(saved) as SavedPublication[] : [];
-            console.log('Publicaciones guardadas cargadas:', this.savedPublications.length);
-        } catch (error) {
-            // Si algo sale mal, muestra el error y usa una lista vacía
-            console.error('Error loading saved publications:', error);
-            this.savedPublications = [];
-        }
+    const saved = localStorage.getItem('lulada_saved_reviews');
+    this.savedPublications = saved ? JSON.parse(saved) as SavedPublication[] : [];
+} catch (error) {
+    console.warn('Error cargando publicaciones guardadas:', error);
+    this.savedPublications = [];
+}
+
     }
 
-    // Dibuja todo el HTML del componente
+    // Renderiza el componente principal
     render() {
-        if (!this.shadowRoot) return; // Si no hay contenedor, no puede dibujar nada
+        if (!this.shadowRoot) return;
 
-        // Aquí va todo el HTML y CSS del componente
         this.shadowRoot.innerHTML = /*html*/ `
             <style>
-                /* Estilos CSS que definen cómo se ve el componente */
+                /* === ESTILOS BASE === */
                 :host {
                     display: block;
                     font-family: 'inter', sans-serif;
                 }
                 
-                /* Header que solo se ve en dispositivos móviles */
+                /* Headers responsive */
                 .responsive-header {
                     display: none;
                 }
                 
-                /* Logo que solo se ve en computadoras */
                 .desktop-logo {
                     display: block;
                 }
                 
-                /* Contenedor principal que organiza la página en columnas */
+                /* === LAYOUT PRINCIPAL === */
                 .main-layout {
                     display: flex;
                     margin-top: 10px;
                 }
                 
-                /* Barra lateral izquierda */
                 .sidebar {
                     width: 250px;
                 }
 
-                /* Contenido del medio que se expande */
                 .medium-content {
                     flex-grow: 1;
                     display: flex; 
                     flex-direction: column;
                 }
 
-                /* Área de contenido principal */
                 .content {
                     flex-grow: 1;
                     display: flex; 
                     padding: 20px;
                 }
                 
-                /* Sección donde aparecen las publicaciones guardadas */
+                /* Área de publicaciones guardadas */
                 .reviews-section {
                     margin-left: 5.9rem;
                     margin-right: 5.9rem;
@@ -160,13 +138,12 @@ class Save extends HTMLElement {
                     flex-grow: 1; 
                 }
                 
-                /* Sección de sugerencias a la derecha */
                 .suggestions-section {
                     width: 250px; 
                     padding: 20px 10px;
                 }
 
-                /* Barra de navegación inferior para móviles (inicialmente oculta) */
+                /* Navegación móvil */
                 .responsive-bar {
                     display: none;
                     position: fixed;
@@ -179,19 +156,20 @@ class Save extends HTMLElement {
                     z-index: 1000;
                 }
 
-                /* Encabezado bonito para la sección de guardados */
+                /* === COMPONENTES UI === */
+                
+                /* Header de la sección guardados */
                 .saved-header {
                     text-align: center;
                     margin-bottom: 30px;
                     padding: 20px;
-                    background: linear-gradient(135deg, #AAAB54, #999A4A); /* Degradado verde */
+                    background: linear-gradient(135deg, #AAAB54, #999A4A);
                     border-radius: 15px;
                     color: white;
                     position: relative;
                     overflow: hidden;
                 }
 
-                /* Título del encabezado */
                 .saved-header h2 {
                     margin: 0 0 10px 0;
                     font-size: 24px;
@@ -199,7 +177,6 @@ class Save extends HTMLElement {
                     z-index: 1;
                 }
 
-                /* Texto descriptivo del encabezado */
                 .saved-header p {
                     margin: 0;
                     opacity: 0.9;
@@ -207,7 +184,7 @@ class Save extends HTMLElement {
                     z-index: 1;
                 }
 
-                /* Botón para limpiar todas las publicaciones guardadas */
+                /* Botón limpiar todo */
                 .clear-all-btn {
                     background: rgba(255, 255, 255, 0.2);
                     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -222,13 +199,12 @@ class Save extends HTMLElement {
                     z-index: 1;
                 }
 
-                /* Efecto cuando pasas el mouse sobre el botón */
                 .clear-all-btn:hover {
                     background: rgba(255, 255, 255, 0.3);
                     transform: translateY(-1px);
                 }
 
-                /* Diseño para cuando no hay publicaciones guardadas */
+                /* Estado vacío cuando no hay publicaciones */
                 .empty-state {
                     text-align: center;
                     padding: 60px 20px;
@@ -238,7 +214,6 @@ class Save extends HTMLElement {
                     border: 2px dashed #dee2e6;
                 }
 
-                /* Icono grande para el estado vacío */
                 .empty-state .icon {
                     font-size: 64px;
                     margin-bottom: 20px;
@@ -246,14 +221,12 @@ class Save extends HTMLElement {
                     animation: float 3s ease-in-out infinite;
                 }
 
-                /* Título del estado vacío */
                 .empty-state h3 {
                     margin: 0 0 10px 0;
                     color: #333;
                     font-size: 22px;
                 }
 
-                /* Texto explicativo del estado vacío */
                 .empty-state p {
                     margin: 0;
                     font-size: 16px;
@@ -262,47 +235,42 @@ class Save extends HTMLElement {
                     margin: 0 auto;
                 }
 
-                /* Contenedor para organizar las publicaciones en columna */
+                /* Grid de publicaciones */
                 .publications-grid {
                     display: flex;
                     flex-direction: column;
                     gap: 20px;
                 }
 
-                /* Estilos para pantallas pequeñas (móviles) */
+                /* === RESPONSIVE DESIGN === */
                 @media (max-width: 900px) {
-                    /* Muestra el header para móviles */
+                    /* Modo móvil: mostrar elementos móviles */
                     .responsive-header {
                         display: block !important;
                     }
                     
-                    /* Oculta el logo de escritorio */
                     .desktop-logo {
                         display: none !important;
                     }
                     
-                    /* Oculta la barra lateral */
                     .sidebar {
                         display: none;
                     }
                     
-                    /* Oculta las sugerencias */
                     .suggestions-section {
                         display: none;
                     }
                     
-                    /* Muestra la barra de navegación inferior */
                     .responsive-bar {
                         display: block;
                     }
                     
-                    /* Ajusta los márgenes para móviles */
+                    /* Ajustar márgenes para móvil */
                     .reviews-section {
                         margin-left: 1rem;
                         margin-right: 1rem;
                     }
 
-                    /* Hace el encabezado más pequeño en móviles */
                     .saved-header {
                         margin-bottom: 20px;
                         padding: 15px;
@@ -314,28 +282,26 @@ class Save extends HTMLElement {
                 }
             </style>
             
-            <!-- Header que solo aparece en móviles -->
+            <!-- Header móvil -->
             <div class="responsive-header">
                 <lulada-responsive-header></lulada-responsive-header>
             </div>
             
-            <!-- Logo que solo aparece en computadoras -->
+            <!-- Logo desktop -->
             <div class="desktop-logo">
                 <lulada-logo></lulada-logo>
             </div>
 
-            <!-- Estructura principal de la página -->
+            <!-- Layout principal -->
             <div class="main-layout">
-                <!-- Barra lateral izquierda (solo en computadoras) -->
                 <div class="sidebar">
                     <lulada-sidebar></lulada-sidebar>
                 </div>
                 
-                <!-- Contenido principal -->
                 <div class="medium-content">
                     <div class="content">
                         <div class="reviews-section">
-                            <!-- Encabezado con información de las publicaciones guardadas -->
+                            <!-- Header con contador y botón limpiar -->
                             <div class="saved-header">
                                 <h2>Publicaciones Guardadas</h2>
                                 <p>${this.savedPublications.length} publicación${this.savedPublications.length !== 1 ? 'es' : ''} guardada${this.savedPublications.length !== 1 ? 's' : ''}</p>
@@ -345,37 +311,33 @@ class Save extends HTMLElement {
                                     </button>
                                 ` : ''}
                             </div>
-                            <!-- Aquí se mostrarán las publicaciones guardadas -->
+                            <!-- Contenido dinámico de publicaciones -->
                             <div id="saved-content" class="publications-grid">
-                                <!-- Las publicaciones se cargan dinámicamente aquí -->
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Sección de sugerencias (solo en computadoras) -->
                 <div class="suggestions-section">
                     <lulada-suggestions></lulada-suggestions>
                 </div>
             </div>
             
-            <!-- Barra de navegación inferior (solo en móviles) -->
+            <!-- Navegación móvil -->
             <div class="responsive-bar">
                 <lulada-responsive-bar></lulada-responsive-bar>
             </div>
         `;
 
-        // Después de crear el HTML, carga las publicaciones guardadas
         this.updateSavedContent();
     }
 
-    // Actualiza el contenido que se muestra al usuario
+    // Actualiza el contenido de publicaciones guardadas
     private updateSavedContent() {
-        // Busca el lugar donde van las publicaciones
         const contentDiv = this.shadowRoot?.querySelector('#saved-content');
-        if (!contentDiv) return; // Si no lo encuentra, no puede hacer nada
+        if (!contentDiv) return;
 
-        // Si no hay publicaciones guardadas, muestra un mensaje amigable
+        // Mostrar estado vacío si no hay publicaciones
         if (this.savedPublications.length === 0) {
             contentDiv.innerHTML = `
                 <div class="empty-state">
@@ -387,10 +349,9 @@ class Save extends HTMLElement {
             return;
         }
 
-        // Si hay publicaciones, crea el HTML para cada una
+        // Generar HTML para cada publicación guardada
         let publicationsHTML = '';
         this.savedPublications.forEach((pub, index) => {
-            // Crea un elemento de publicación para cada publicación guardada
             publicationsHTML += `
                 <lulada-publication 
                     username="${pub.username}" 
@@ -404,64 +365,56 @@ class Save extends HTMLElement {
             `;
         });
 
-        // Coloca todas las publicaciones en la página
         contentDiv.innerHTML = publicationsHTML;
-        console.log('Contenido guardado actualizado con persistencia completa');
 
-        // Espera un poquito y luego sincroniza los estados de like/bookmark
+        // Sincronizar estados de interacción
         setTimeout(() => {
             this.syncPublicationStates();
         }, 100);
     }
 
-    // Se asegura de que los botones de like y bookmark muestren el estado correcto
+    // Sincroniza estados de likes y bookmarks
     private syncPublicationStates() {
-        // Busca todas las publicaciones en la página
         const publications = this.shadowRoot?.querySelectorAll('lulada-publication');
         if (!publications) return;
 
-        // Para cada publicación, actualiza su interfaz
         publications.forEach((pub) => {
             const publicationElement = pub as PublicationElement;
             const publicationId = pub.getAttribute('data-publication-id');
             
-            // Si la publicación tiene un sistema de interacciones, lo actualiza
             if (publicationId && publicationElement.interactionService) {
                 publicationElement.updateInteractionUI?.();
             }
         });
     }
 
-    // Función que se ejecuta cuando el usuario quiere borrar todas las publicaciones guardadas
+    // Función pública para limpiar todas las publicaciones guardadas
     public clearAllSaved() {
-        // Pregunta al usuario si está seguro
         if (confirm('¿Estás seguro de que quieres eliminar todas las publicaciones guardadas?')) {
-            // Borra las publicaciones del almacenamiento del navegador
+            // Limpiar localStorage
             localStorage.removeItem('lulada_saved_reviews');
             
-            // También actualiza los bookmarks para que todo esté sincronizado
+            // Actualizar bookmarks para mantener sincronización
             try {
-                const bookmarks = JSON.parse(localStorage.getItem('lulada_bookmarks') || '{}') as Record<string, boolean>;
-                this.savedPublications.forEach(pub => {
-                    delete bookmarks[pub.id];
-                });
-                localStorage.setItem('lulada_bookmarks', JSON.stringify(bookmarks));
-            } catch (error) {
-                console.error('Error updating bookmarks:', error);
-            }
+    const bookmarks = JSON.parse(localStorage.getItem('lulada_bookmarks') || '{}') as Record<string, boolean>;
+    this.savedPublications.forEach(pub => {
+        delete bookmarks[pub.id];
+    });
+    localStorage.setItem('lulada_bookmarks', JSON.stringify(bookmarks));
+} catch (error) {
+    console.warn('Error limpiando bookmarks:', error);
+}
+
             
-            // Recarga y redibuja todo
             this.loadSavedPublications();
             this.render();
-            
-            console.log(' Todas las publicaciones guardadas eliminadas');
         }
     }
 
-    // Configura los eventos (clicks, etc.) del componente
+    // Configura event listeners
     setupEventListeners() {
         if (this.shadowRoot) {
-            // Escucha eventos de navegación y los reenvía al sistema principal
+            // Reenvía eventos de navegación
             this.shadowRoot.addEventListener('navigate', (event: Event) => {
                 const customEvent = event as CustomEvent;
                 document.dispatchEvent(new CustomEvent('navigate', {
@@ -469,7 +422,7 @@ class Save extends HTMLElement {
                 }));
             });
 
-            // Escucha cuando alguien desmarca una publicación como favorita
+            // Maneja cambios en bookmarks
             this.shadowRoot.addEventListener('publication-bookmarked', (e: Event) => {
                 const customEvent = e as CustomEvent<{
                     bookmarked: boolean;
@@ -477,9 +430,7 @@ class Save extends HTMLElement {
                 }>;
                 const { bookmarked } = customEvent.detail;
                 
-                // Si se quita el bookmark, actualiza la lista
                 if (!bookmarked) {
-                    console.log(' Publicación removida desde Save');
                     setTimeout(() => {
                         this.loadSavedPublications();
                         this.updateSavedContent();
@@ -489,24 +440,23 @@ class Save extends HTMLElement {
         }
     }
     
-    // Maneja los cambios de tamaño de la ventana para hacer la página responsiva
+    // Maneja responsive design
     handleResize() {
-        // Busca los elementos que necesitan cambiar según el tamaño de pantalla
         const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
         const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
         const responsiveBar = this.shadowRoot?.querySelector('.responsive-bar') as HTMLDivElement;
 
         if (sidebar && suggestions && responsiveBar) {
-            // Si la pantalla es pequeña (móvil)
             if (window.innerWidth < 900) {
-                sidebar.style.display = 'none';        // Oculta la barra lateral
-                suggestions.style.display = 'none';    // Oculta las sugerencias
-                responsiveBar.style.display = 'block'; // Muestra la barra inferior
+                // Modo móvil
+                sidebar.style.display = 'none';
+                suggestions.style.display = 'none';
+                responsiveBar.style.display = 'block';
             } else {
-                // Si la pantalla es grande (computadora)
-                sidebar.style.display = 'block';       // Muestra la barra lateral
-                suggestions.style.display = 'block';   // Muestra las sugerencias
-                responsiveBar.style.display = 'none';  // Oculta la barra inferior
+                // Modo desktop
+                sidebar.style.display = 'block';
+                suggestions.style.display = 'block';
+                responsiveBar.style.display = 'none';
             }
         }
     }

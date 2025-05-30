@@ -2,17 +2,13 @@
 import type PublicationsService from './Services/PublicationsService';
 import type AntojarPopupService from './Components/Home/Antojar/antojar-popup';
 
-// ============================================================================
-// INTERFACES PRINCIPALES
-// ============================================================================
-
-// Interface para LuladaServices - DEBE coincidir con lo asignado en index.ts
+// Interface para LuladaServices
 export interface LuladaServicesType {
     publicationsService: PublicationsService;
     antojarService: AntojarPopupService;
 }
 
-// Interface para LuladaDebug - DEBE coincidir con lo asignado en index.ts
+// Interface para LuladaDebug
 export interface LuladaDebugType {
     services: {
         publications: PublicationsService;
@@ -34,12 +30,5 @@ export interface AntojarServiceType {
         hidePopup?: () => void;
     };
 }
-
-// ============================================================================
-// EXTENSIÓN DE WINDOW - SIN REDECLARAR
-// ============================================================================
-
-// Los tipos para Window ya están declarados en global.d.ts
-// NO redeclarar aquí para evitar conflictos
 
 export {};

@@ -1,5 +1,3 @@
-// FUNCIÓN PRINCIPAL: getUsers
-// Esta función obtiene la lista de usuarios desde un archivo JSON
 async function getUsers() {
   // FETCH: Hacemos una petición al servidor para obtener el archivo User.json
   return fetch('/data/User.json')

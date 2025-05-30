@@ -1,27 +1,24 @@
-// Este es un componente que crea una lista interactiva de configuraciones
-// Permite cambiar configuraciones como correo, nombre de usuario, contraseña, etc.
+// Componente que crea una lista interactiva de configuraciones
 class CajonListInteractive extends HTMLElement {
     // Variables para controlar qué opción está seleccionada y qué vista se muestra
-    private selectedOption: string | null = null; // Guarda cuál opción está seleccionada
-    private currentView: 'list' | 'form' = 'list'; // Controla si mostramos la lista o un formulario
+    private selectedOption: string | null = null;
+    private currentView: 'list' | 'form' = 'list';
 
     constructor() {
-        super(); // Llama al constructor del elemento HTML base
-        this.attachShadow({ mode: 'open' }); // Crea un "espacio privado" para este componente
-        this.render(); // Dibuja el componente en la pantalla
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.render();
     }
 
-    // Se ejecuta cuando el componente se añade a la página
     connectedCallback() {
-        this.setupEventListeners(); // Configura los eventos (clicks, etc.)
+        this.setupEventListeners();
     }
 
-    // Esta función dibuja todo el HTML y CSS del componente
+    // Dibuja todo el HTML y CSS del componente
     private render() {
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = `
                 <style>
-                    /* Estilos para que el componente ocupe todo el espacio disponible */
                     :host {
                         display: block;
                         width: 100%;
@@ -56,12 +53,10 @@ class CajonListInteractive extends HTMLElement {
                         justify-content: flex-start;
                     }
                     
-                    /* Mensaje que aparece cuando no hay nada seleccionado */
                     .placeholder-message {
                         display: none;
                     }
                     
-                    /* Contenedor que organiza todos los elementos de la lista */
                     .list-container {
                         display: flex;
                         flex-direction: column;
@@ -70,7 +65,7 @@ class CajonListInteractive extends HTMLElement {
                         padding: 20px;
                     }
                     
-                    /* Estilos para cada opción de configuración (botones y textos) */
+                    /* Estilos para cada opción de configuración */
                     .settings-item {
                         width: 100%;
                         padding: 16px;
@@ -91,7 +86,7 @@ class CajonListInteractive extends HTMLElement {
                         border: none;
                     }
                     
-                    /* Efectos visuales cuando pasas el mouse por encima de cualquier opción */
+                    /* Efectos visuales cuando pasas el mouse por encima */
                     .settings-item:hover {
                         background-color: rgba(226, 245, 228, 0.54);
                         border-left: 4px solid #AAAB54;
@@ -100,7 +95,7 @@ class CajonListInteractive extends HTMLElement {
                         transform: translateX(5px);
                     }
 
-                    /* Estilos para la opción que está seleccionada actualmente */
+                    /* Estilos para la opción seleccionada */
                     .settings-item.selected {
                         background-color: rgba(226, 245, 228, 0.54);
                         border-left: 4px solid #AAAB54;
@@ -108,7 +103,7 @@ class CajonListInteractive extends HTMLElement {
                         font-weight: bold;
                     }
 
-                    /* Flecha que aparece en las opciones que se pueden clickear */
+                    /* Flecha que aparece en las opciones clickeables */
                     .arrow {
                         color: #AAAB54;
                         font-size: 18px;
@@ -116,48 +111,46 @@ class CajonListInteractive extends HTMLElement {
                         transition: opacity 0.2s ease;
                     }
 
-                    /* Mostrar la flecha solo cuando pasas el mouse por opciones clickeables */
                     .settings-item.clickable:hover .arrow {
                         opacity: 1;
                     }
 
-                    /* DISEÑO RESPONSIVO: Cómo se ve en móviles (pantallas pequeñas) */
+                    /* DISEÑO RESPONSIVO: móviles (pantallas pequeñas) */
                     @media (max-width: 900px) {
                         .container {
-                            flex-direction: column; /* Organizar elementos uno debajo del otro */
+                            flex-direction: column;
                             gap: 0;
-                            height: auto; /* Permitir que crezca automáticamente */
-                            min-height: 100vh; /* Altura mínima de toda la pantalla */
+                            height: auto;
+                            min-height: 100vh;
                         }
                         
                         .list-view {
-                            width: 100%; /* Ocupar todo el ancho en móvil */
+                            width: 100%;
                             height: auto;
-                            overflow-y: visible; /* Mostrar todo el contenido */
+                            overflow-y: visible;
                         }
                         
                         .form-view {
-                            display: none !important; /* Ocultar el panel derecho en móvil */
+                            display: none !important;
                             width: 100%;
                             padding: 10px;
                         }
                         
                         .list-container {
-                            padding: 10px 10px 100px 10px; /* Espacio extra abajo para la barra de navegación */
+                            padding: 10px 10px 100px 10px;
                             height: auto;
                             overflow-y: visible;
                         }
                         
                         .settings-item {
-                            font-size: 16px; /* Texto más grande en móvil */
-                            padding: 18px; /* Más espacio para tocar con el dedo */
+                            font-size: 16px;
+                            padding: 18px;
                             margin-bottom: 12px;
                         }
                         
-                        /* Asegurar que el componente permita scroll en móvil */
                         :host {
                             height: auto !important;
-                            min-height: calc(100vh - 80px); /* Descontar altura de la barra inferior */
+                            min-height: calc(100vh - 80px);
                             overflow-y: auto;
                         }
                     }
@@ -167,7 +160,7 @@ class CajonListInteractive extends HTMLElement {
                     <!-- Vista de lista: todas las opciones de configuración -->
                     <div class="list-view">
                         <div class="list-container">
-                            <!-- Opciones que SÍ se pueden clickear (tienen la clase "clickable") -->
+                            <!-- Opciones que SÍ se pueden clickear -->
                             <button class="settings-item clickable" data-option="cambiar-correo">
                                 <span>Cambiar correo</span>
                                 <span class="arrow">→</span>
@@ -183,7 +176,7 @@ class CajonListInteractive extends HTMLElement {
                                 <span class="arrow">→</span>
                             </button>
                             
-                            <!-- Opciones que NO se pueden clickear (solo texto informativo) -->
+                            <!-- Opciones que NO se pueden clickear -->
                             <div class="settings-item">
                                 <span>Cambiar foto de perfil</span>
                             </div>
@@ -226,7 +219,6 @@ class CajonListInteractive extends HTMLElement {
                     
                     <!-- Vista de formulario: aquí aparecen los formularios cuando seleccionas una opción -->
                     <div class="form-view" id="form-view">
-                        <!-- Sin contenido inicial, se llena cuando seleccionas algo -->
                     </div>
                 </div>
             `;
@@ -235,17 +227,15 @@ class CajonListInteractive extends HTMLElement {
 
     // Configura los eventos (qué pasa cuando haces click en cada opción)
     private setupEventListeners() {
-        // Busca todos los elementos que se pueden clickear
         const clickableItems = this.shadowRoot?.querySelectorAll('.settings-item.clickable');
         
-        // Para cada elemento clickeable, añade un evento de click
         clickableItems?.forEach(item => {
             item.addEventListener('click', (e) => {
                 const target = e.currentTarget as HTMLElement;
-                const option = target.getAttribute('data-option'); // Obtiene qué opción fue clickeada
+                const option = target.getAttribute('data-option');
                 
                 if (option) {
-                    this.handleOptionClick(option); // Maneja el click en esa opción
+                    this.handleOptionClick(option);
                 }
             });
         });
@@ -253,9 +243,6 @@ class CajonListInteractive extends HTMLElement {
     
     // Decide qué hacer cuando se clickea una opción
     private handleOptionClick(option: string) {
-        console.log('Opción clickeada:', option);
-        
-        // Verifica si estamos en móvil o escritorio
         const isMobile = window.innerWidth <= 900;
         
         if (isMobile) {
@@ -269,9 +256,8 @@ class CajonListInteractive extends HTMLElement {
     
     // Navega a una página completa (para móvil)
     private navigateToFullPage(option: string) {
-        let route = ''; // Variable para guardar la ruta a la que vamos
+        let route = '';
         
-        // Decide a qué página ir según la opción seleccionada
         switch (option) {
             case 'cambiar-correo':
                 route = '/cambiar-correo';
@@ -283,11 +269,10 @@ class CajonListInteractive extends HTMLElement {
                 route = '/cambiar-contraseña';
                 break;
             case 'cerrar-sesion':
-                this.handleLogout(); // Caso especial: cerrar sesión
+                this.handleLogout();
                 return;
         }
         
-        // Si hay una ruta válida, navegar a ella
         if (route) {
             const navigationEvent = new CustomEvent('navigate', {
                 detail: route,
@@ -295,7 +280,7 @@ class CajonListInteractive extends HTMLElement {
                 composed: true
             });
             
-            document.dispatchEvent(navigationEvent); // Envía el evento de navegación
+            document.dispatchEvent(navigationEvent);
         }
     }
     
@@ -305,10 +290,8 @@ class CajonListInteractive extends HTMLElement {
         
         if (!formView) return;
         
-        // Limpiar el contenido anterior del panel derecho
         formView.innerHTML = '';
         
-        // Decide qué componente mostrar según la opción
         let formComponent = '';
         
         switch (option) {
@@ -322,43 +305,35 @@ class CajonListInteractive extends HTMLElement {
                 formComponent = '<cambiar-contrasena-simple></cambiar-contrasena-simple>';
                 break;
             case 'cerrar-sesion':
-                this.handleLogout(); // Caso especial: cerrar sesión
+                this.handleLogout();
                 return;
         }
         
-        // Si hay un componente válido, mostrarlo
         if (formComponent) {
             formView.innerHTML = formComponent;
-            this.currentView = 'form'; // Cambia la vista actual a formulario
+            this.currentView = 'form';
             
-            // Marca la opción como seleccionada (resaltarla)
+            // Marca la opción como seleccionada
             this.markAsSelected(option);
             
-            // Configura los eventos del formulario (botones guardar, cancelar, etc.)
             this.setupFormEventListeners(formView);
         }
     }
     
-    // Configura los eventos de los formularios (cuando aparecen en el panel derecho)
+    // Configura los eventos de los formularios
     private setupFormEventListeners(formView: HTMLElement) {
-        // Escucha cuando se presiona el botón "Volver"
         formView.addEventListener('back', () => {
-            this.showPlaceholder(); // Vuelve a la vista vacía
+            this.showPlaceholder();
         });
         
-        // Escucha cuando se presiona el botón "Guardar"
-        formView.addEventListener('save', (event: Event) => {
-            const customEvent = event as CustomEvent;
-            console.log('Datos guardados:', customEvent.detail);
-            
-            // Muestra un mensaje de éxito
-            this.showSuccessMessage();
-            
-            // Después de un momento, vuelve a la vista vacía
-            setTimeout(() => {
-                this.showPlaceholder();
-            }, 1500);
-        });
+formView.addEventListener('save', () => {
+    this.showSuccessMessage();
+
+    setTimeout(() => {
+        this.showPlaceholder();
+    }, 1500);
+});
+
     }
     
     // Vuelve al estado inicial (panel derecho vacío)
@@ -367,52 +342,43 @@ class CajonListInteractive extends HTMLElement {
         
         if (!formView) return;
         
-        formView.innerHTML = ''; // Limpia el contenido del panel derecho
+        formView.innerHTML = '';
         
-        this.currentView = 'list'; // Cambia la vista actual a lista
+        this.currentView = 'list';
         
-        // Quita la selección de cualquier opción
         this.clearSelection();
     }
     
-    // Marca una opción como seleccionada (la resalta visualmente)
+    // Marca una opción como seleccionada
     private markAsSelected(option: string) {
-        // Primero quita la selección anterior
         this.clearSelection();
         
-        // Busca la opción que fue clickeada y la marca como seleccionada
         const items = this.shadowRoot?.querySelectorAll('.settings-item.clickable');
         items?.forEach(item => {
             const itemOption = item.getAttribute('data-option');
             if (itemOption === option) {
-                item.classList.add('selected'); // Añade la clase que la resalta
+                item.classList.add('selected');
             }
         });
         
-        this.selectedOption = option; // Guarda cuál opción está seleccionada
+        this.selectedOption = option;
     }
     
-    // Función que no se usa pero está aquí por compatibilidad
     private showListView() {
-        // En el nuevo layout, no necesitamos ocultar/mostrar vistas
-        // Solo resetear al placeholder
         this.showPlaceholder();
     }
     
     // Maneja el proceso de cerrar sesión
     private handleLogout() {
-        // Pregunta al usuario si está seguro
         const confirmLogout = confirm('¿Estás seguro de que quieres cerrar sesión?');
         if (confirmLogout) {
             try {
-                // Borra los datos guardados del usuario
                 localStorage.removeItem('userToken');
                 sessionStorage.clear();
             } catch (e) {
                 console.log('Error limpiando datos:', e);
             }
             
-            // Navega a la página de login
             const loginEvent = new CustomEvent('navigate', {
                 detail: '/login',
                 bubbles: true,
@@ -423,9 +389,9 @@ class CajonListInteractive extends HTMLElement {
         }
     }
     
-    // Muestra un mensaje verde de éxito cuando se guardan cambios
+    // Muestra un mensaje verde de éxito
     private showSuccessMessage() {
-        const message = document.createElement('div'); // Crea un elemento para el mensaje
+        const message = document.createElement('div');
         message.style.cssText = `
             position: fixed;
             top: 20px;
@@ -441,10 +407,8 @@ class CajonListInteractive extends HTMLElement {
         `;
         message.textContent = '¡Cambios guardados exitosamente!';
         
-        // Añade el mensaje a la página
         document.body.appendChild(message);
         
-        // Después de 3 segundos, quita el mensaje
         setTimeout(() => {
             if (document.body.contains(message)) {
                 document.body.removeChild(message);
@@ -452,11 +416,11 @@ class CajonListInteractive extends HTMLElement {
         }, 3000);
     }
     
-    // Método público para quitar la selección de cualquier opción
+    // Quita la selección de cualquier opción
     public clearSelection() {
         const clickableItems = this.shadowRoot?.querySelectorAll('.settings-item.clickable');
-        clickableItems?.forEach(item => item.classList.remove('selected')); // Quita la clase 'selected'
-        this.selectedOption = null; // Resetea la opción seleccionada
+        clickableItems?.forEach(item => item.classList.remove('selected'));
+        this.selectedOption = null;
     }
 }
 

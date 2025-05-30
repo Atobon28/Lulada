@@ -1,33 +1,25 @@
-// Importamos el servicio que maneja las publicaciones
 import PublicationsService from '../../../Services/PublicationsService';
 
-// Definimos la clase principal que representa el popup de "Antojar"
+// Popup para crear reseñas
 export class LuladaAntojar extends HTMLElement {
-    shadow: ShadowRoot; // El contenedor donde va nuestro HTML y CSS
-    selectedStars: number = 0; // Cuántas estrellas ha seleccionado el usuario (0-5)
-    selectedZone: string = ""; // Qué zona de Cali seleccionó (centro, norte, sur, oeste)
-    selectedPhoto: string | undefined = undefined; // La foto que subió el usuario (en formato base64)
+    shadow: ShadowRoot;
+    selectedStars: number = 0;
+    selectedZone: string = "";
+    selectedPhoto: string | undefined = undefined;
 
     constructor() {
-        super(); // Llamamos al constructor de HTMLElement
-        // Creamos un shadow DOM (como una caja privada para nuestro HTML)
+        super();
         this.shadow = this.attachShadow({ mode: 'open' });
-        console.log("Componente LuladaAntojar creado");
     }
 
-    // Esta función se ejecuta cuando el componente se añade a la página
     connectedCallback() {
-        console.log("Componente LuladaAntojar conectado al DOM");
-        this.render(); // Dibujamos el popup
-        this.setupEvents(); // Configuramos todos los botones y eventos
+        this.render();
+        this.setupEvents();
     }
 
-    // Esta función dibuja todo el HTML y CSS del popup
     render() {
         this.shadow.innerHTML = `
             <style>
-                /* === ESTILOS CSS === */
-                /* Estilo principal del popup */
                 .popup {
                     background: white;
                     padding: 25px;
@@ -40,7 +32,6 @@ export class LuladaAntojar extends HTMLElement {
                     box-sizing: border-box;
                 }
                 
-                /* Estilos para móviles */
                 @media (max-width: 600px) {
                     .popup {
                         padding: 15px;
@@ -50,7 +41,6 @@ export class LuladaAntojar extends HTMLElement {
                     }
                 }
                 
-                /* Botón X para cerrar el popup */
                 .close-button {
                     position: absolute;
                     top: 10px;
@@ -69,10 +59,9 @@ export class LuladaAntojar extends HTMLElement {
                     z-index: 10;
                 }
                 .close-button:hover {
-                    transform: scale(1.1); /* Se agranda un poco al pasar el mouse */
+                    transform: scale(1.1);
                 }
 
-                /* Cabecera con foto de perfil y texto */
                 .header {
                     display: flex;
                     align-items: center;
@@ -82,7 +71,7 @@ export class LuladaAntojar extends HTMLElement {
                 .profile-pic {
                     width: 48px;
                     height: 48px;
-                    border-radius: 50%; /* Hace la imagen circular */
+                    border-radius: 50%;
                     margin-right: 12px;
                     object-fit: cover;
                 }
@@ -92,7 +81,6 @@ export class LuladaAntojar extends HTMLElement {
                     font-weight: normal;
                 }
 
-                /* Área de texto donde el usuario escribe su reseña */
                 textarea {
                     width: 100%;
                     min-height: 140px;
@@ -110,7 +98,6 @@ export class LuladaAntojar extends HTMLElement {
                     border-radius: 8px;
                 }
                 
-                /* Textarea más pequeño en móviles */
                 @media (max-width: 600px) {
                     textarea {
                         min-height: 100px;
@@ -119,19 +106,15 @@ export class LuladaAntojar extends HTMLElement {
                     }
                 }
                 
-                /* Borde verde cuando el usuario hace click en el textarea */
                 textarea:focus {
                     border-color: #AAAB54;
                 }
 
-                /* === ESTILOS PARA LA FOTO === */
-                /* Contenedor que muestra la foto seleccionada */
                 .photo-container {
                     margin-bottom: 16px;
-                    display: none; /* Oculto al principio */
+                    display: none;
                 }
 
-                /* La imagen de vista previa */
                 .photo-preview {
                     width: 100%;
                     max-height: 300px;
@@ -141,7 +124,6 @@ export class LuladaAntojar extends HTMLElement {
                     margin-bottom: 10px;
                 }
 
-                /* Botones para manejar la foto */
                 .photo-actions {
                     display: flex;
                     gap: 10px;
@@ -162,7 +144,6 @@ export class LuladaAntojar extends HTMLElement {
                     background: #f5f5f5;
                 }
 
-                /* Botón rojo para quitar la foto */
                 .photo-btn.remove {
                     color: #e74c3c;
                     border-color: #e74c3c;
@@ -173,12 +154,10 @@ export class LuladaAntojar extends HTMLElement {
                     color: white;
                 }
 
-                /* Input de archivo oculto (se activa con el ícono) */
                 .file-input {
                     display: none;
                 }
 
-                /* === SELECTOR DE ZONA === */
                 .zone-selector {
                     display: flex;
                     align-items: center;
@@ -186,7 +165,6 @@ export class LuladaAntojar extends HTMLElement {
                     gap: 10px;
                 }
                 
-                /* En móviles, el selector se pone vertical */
                 @media (max-width: 600px) {
                     .zone-selector {
                         flex-direction: column;
@@ -208,7 +186,6 @@ export class LuladaAntojar extends HTMLElement {
                     }
                 }
                 
-                /* El dropdown para seleccionar zona */
                 .zone-select {
                     padding: 8px 12px;
                     border: 1px solid #ddd;
@@ -232,7 +209,6 @@ export class LuladaAntojar extends HTMLElement {
                     border-color: #AAAB54;
                 }
 
-                /* === PARTE INFERIOR DEL POPUP === */
                 .bottom-actions {
                     display: flex;
                     justify-content: space-between;
@@ -241,7 +217,6 @@ export class LuladaAntojar extends HTMLElement {
                     border-top: 1px solid #f0f0f0;
                 }
                 
-                /* En móviles, los elementos se apilan verticalmente */
                 @media (max-width: 600px) {
                     .bottom-actions {
                         flex-direction: column;
@@ -255,7 +230,6 @@ export class LuladaAntojar extends HTMLElement {
                     gap: 15px;
                 }
 
-                /* Iconos (como el de la cámara) */
                 .action-icon {
                     cursor: pointer;
                     transition: all 0.2s ease;
@@ -269,17 +243,15 @@ export class LuladaAntojar extends HTMLElement {
                     fill: none;
                 }
                 .action-icon:hover {
-                    transform: scale(1.1); /* Se agranda al pasar el mouse */
+                    transform: scale(1.1);
                     color: #AAAB54;
                 }
 
-                /* Ícono activo (cuando ya seleccionaste algo) */
                 .action-icon.active {
                     color: #AAAB54;
                     transform: scale(1.1);
                 }
                 
-                /* === ESTRELLAS DE CALIFICACIÓN === */
                 .stars {
                     display: flex;
                     gap: 5px;
@@ -291,7 +263,7 @@ export class LuladaAntojar extends HTMLElement {
                     transition: all 0.2s ease;
                 }
                 .star-outline {
-                    color: #ddd; /* Estrellas vacías en gris */
+                    color: #ddd;
                     display: inline-block;
                     font-size: 24px;
                     cursor: pointer;
@@ -299,12 +271,11 @@ export class LuladaAntojar extends HTMLElement {
                 }
                 .star-outline:hover,
                 .star-outline.active {
-                    color: #FFD700 !important; /* Se vuelven doradas */
+                    color: #FFD700 !important;
                 }
 
-                /* === BOTÓN DE PUBLICAR === */
                 .publish-button {
-                    background-color: #AAAB54; /* Verde de la marca */
+                    background-color: #AAAB54;
                     color: white;
                     border: none;
                     border-radius: 20px;
@@ -315,7 +286,6 @@ export class LuladaAntojar extends HTMLElement {
                     transition: all 0.2s ease;
                 }
                 
-                /* En móviles, el botón ocupa todo el ancho */
                 @media (max-width: 600px) {
                     .publish-button {
                         width: 100%;
@@ -326,16 +296,15 @@ export class LuladaAntojar extends HTMLElement {
                 }
                 
                 .publish-button:hover {
-                    transform: scale(1.05); /* Se agranda un poco */
-                    background-color: rgb(132, 134, 58); /* Verde más oscuro */
+                    transform: scale(1.05);
+                    background-color: rgb(132, 134, 58);
                 }
                 .publish-button:disabled {
-                    background-color: #ccc; /* Gris cuando está deshabilitado */
+                    background-color: #ccc;
                     cursor: not-allowed;
                     transform: none;
                 }
 
-                /* Contenedores para organizar los elementos */
                 .icon-container {
                     display: flex;
                     align-items: center;
@@ -364,12 +333,9 @@ export class LuladaAntojar extends HTMLElement {
                 }
             </style>
             
-            <!-- === HTML DEL POPUP === -->
             <div class="popup">
-                <!-- Botón X para cerrar -->
                 <button id="cerrar" class="close-button">✕</button>
                 
-                <!-- Cabecera con foto de perfil y texto -->
                 <div class="header">
                     <img 
                         id="profile-pic"
@@ -380,10 +346,8 @@ export class LuladaAntojar extends HTMLElement {
                     <div class="header-text">¿Qué probaste?</div>
                 </div>
                 
-                <!-- Área donde el usuario escribe su reseña -->
                 <textarea placeholder="Cuéntanos tu experiencia..."></textarea>
                 
-                <!-- Contenedor que aparece cuando el usuario sube una foto -->
                 <div class="photo-container" id="photo-container">
                     <img id="photo-preview" class="photo-preview" alt="Vista previa">
                     <div class="photo-actions">
@@ -391,10 +355,8 @@ export class LuladaAntojar extends HTMLElement {
                     </div>
                 </div>
 
-                <!-- Input oculto para seleccionar archivos -->
                 <input type="file" id="file-input" class="file-input" accept="image/*">
                 
-                <!-- Selector de zona de Cali -->
                 <div class="zone-selector">
                     <label class="zone-label" for="zone-select">Zona de Cali:</label>
                     <select id="zone-select" class="zone-select">
@@ -406,11 +368,9 @@ export class LuladaAntojar extends HTMLElement {
                     </select>
                 </div>
                 
-                <!-- Parte inferior con ícono de foto, estrellas y botón publicar -->
                 <div class="bottom-actions">
                     <div class="icon-container">
                         <div class="icon-wrapper">
-                            <!-- Ícono de cámara para subir fotos -->
                             <svg class="action-icon photo-icon" id="photo-icon" viewBox="0 0 24 24">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -419,7 +379,6 @@ export class LuladaAntojar extends HTMLElement {
                         </div>
                     </div>
                     
-                    <!-- Las 5 estrellas para calificar -->
                     <div class="rating-stars">
                         <span class="star-outline" data-value="1">☆</span>
                         <span class="star-outline" data-value="2">☆</span>
@@ -428,83 +387,63 @@ export class LuladaAntojar extends HTMLElement {
                         <span class="star-outline" data-value="5">☆</span>
                     </div>
                     
-                    <!-- Botón para publicar la reseña -->
                     <button id="publicar" class="publish-button">Publicar</button>
                 </div>
             </div>
         `;
 
-        // Ponemos una foto de perfil aleatoria
         this.updateProfilePicture();
     }
 
-    // Esta función configura todos los eventos (clicks, cambios, etc.)
     setupEvents() {
-        console.log("Configurando eventos del componente LuladaAntojar");
+        const cerrar = this.shadow.querySelector('#cerrar');
+        const publicar = this.shadow.querySelector('#publicar');
+        const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
+        const estrellas = this.shadow.querySelectorAll('.star-outline');
+        const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
         
-        // Obtenemos todos los elementos que necesitamos
-        const cerrar = this.shadow.querySelector('#cerrar'); // Botón X
-        const publicar = this.shadow.querySelector('#publicar'); // Botón publicar
-        const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement; // Área de texto
-        const estrellas = this.shadow.querySelectorAll('.star-outline'); // Las 5 estrellas
-        const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement; // Selector de zona
-        
-        // Elementos para manejar fotos
-        const photoIcon = this.shadow.querySelector('#photo-icon'); // Ícono de cámara
-        const fileInput = this.shadow.querySelector('#file-input') as HTMLInputElement; // Input de archivo
-        const removePhotoBtn = this.shadow.querySelector('#remove-photo'); // Botón quitar foto
+        const photoIcon = this.shadow.querySelector('#photo-icon');
+        const fileInput = this.shadow.querySelector('#file-input') as HTMLInputElement;
+        const removePhotoBtn = this.shadow.querySelector('#remove-photo');
 
-        // === EVENTO: Botón cerrar ===
+        // Evento cerrar
         if (cerrar) {
             cerrar.addEventListener('click', () => {
-                console.log("Botón cerrar clickeado");
-                this.resetComponentState(); // Limpiamos todo
-                // Enviamos señal de que se cerró el popup
+                this.resetComponentState();
                 this.dispatchEvent(new CustomEvent('antojar-cerrado', { bubbles: true, composed: true }));
             });
         }
 
-        // === EVENTO: Botón publicar ===
+        // Evento publicar
         if (publicar) {
             publicar.addEventListener('click', () => {
-                console.log("Botón publicar clickeado");
-                const texto = textarea.value.trim(); // Obtenemos el texto sin espacios extra
+                const texto = textarea.value.trim();
                 
-                // Verificamos que el usuario haya llenado todo
                 if (texto && this.selectedStars > 0 && this.selectedZone) {
-                    // Creamos el objeto con los datos de la publicación
                     const nuevaPublicacion = {
-                        username: "Usuario" + Math.floor(Math.random() * 1000), // Username aleatorio
+                        username: "Usuario" + Math.floor(Math.random() * 1000),
                         text: texto,
                         stars: this.selectedStars,
                         location: this.selectedZone,
-                        hasImage: !!this.selectedPhoto, // TRUE si hay foto
-                        timestamp: Date.now(), // Momento actual
-                        imageUrl: this.selectedPhoto // La foto en base64
+                        hasImage: !!this.selectedPhoto,
+                        timestamp: Date.now(),
+                        imageUrl: this.selectedPhoto
                     };
 
                     try {
-                        // Intentamos guardar usando el servicio de publicaciones
                         const publicationsService = PublicationsService.getInstance();
                         publicationsService.addPublication(nuevaPublicacion);
                         
-                        console.log("Publicación creada:", nuevaPublicacion);
-                        
-                        this.resetComponentState(); // Limpiamos el formulario
-                        // Cerramos el popup
+                        this.resetComponentState();
                         this.dispatchEvent(new CustomEvent('antojar-cerrado', { bubbles: true, composed: true }));
-                        
-                        // Mostramos mensaje de éxito
                         this.showSuccessMessage();
                         
                     } catch (error) {
                         console.error("Error al publicar:", error);
-                        // Si falla, usamos el método de respaldo (sessionStorage)
                         const publicaciones = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
                         publicaciones.unshift(nuevaPublicacion);
                         sessionStorage.setItem('publicaciones', JSON.stringify(nuevaPublicacion));
                         
-                        // Enviamos evento de que se publicó
                         this.dispatchEvent(new CustomEvent('resena-publicada', {
                             detail: nuevaPublicacion,
                             bubbles: true,
@@ -515,105 +454,92 @@ export class LuladaAntojar extends HTMLElement {
                         alert('¡Publicación creada exitosamente!');
                     }
                 } else {
-                    // Si falta información, mostramos error
                     alert('Por favor completa todos los campos: texto, calificación y zona.');
                 }
             });
         }
 
-        // === EVENTO: Selector de zona ===
+        // Evento selector de zona
         if (zoneSelect) {
             zoneSelect.addEventListener('change', () => {
-                this.selectedZone = zoneSelect.value; // Guardamos la zona seleccionada
-                this.updatePublishButton(); // Verificamos si ya se puede publicar
+                this.selectedZone = zoneSelect.value;
+                this.updatePublishButton();
             });
         }
 
-        // === EVENTOS PARA FOTOS ===
-        
-        // Cuando hacen click en el ícono de cámara
+        // Eventos para fotos
         if (photoIcon) {
             photoIcon.addEventListener('click', () => {
-                console.log("Icono de foto clickeado");
-                fileInput?.click(); // Abrimos el selector de archivos
+                fileInput?.click();
             });
         }
 
-        // Cuando seleccionan un archivo
         if (fileInput) {
             fileInput.addEventListener('change', (e) => {
                 const target = e.target as HTMLInputElement;
-                const file = target.files?.[0]; // Obtenemos el primer archivo
+                const file = target.files?.[0];
                 if (file) {
-                    this.handlePhotoSelection(file); // Procesamos la foto
+                    this.handlePhotoSelection(file);
                 }
             });
         }
 
-        // Cuando hacen click en "Quitar foto"
         if (removePhotoBtn) {
             removePhotoBtn.addEventListener('click', () => {
-                this.removePhoto(); // Quitamos la foto
+                this.removePhoto();
             });
         }
 
-        // === EVENTOS PARA LAS ESTRELLAS ===
+        // Eventos para estrellas
         estrellas.forEach((estrella) => {
             estrella.addEventListener('click', (e) => {
                 const target = e.target as HTMLElement;
-                const value = parseInt(target.getAttribute('data-value') || '0'); // Qué estrella clickearon (1-5)
-                this.selectedStars = value; // Guardamos la calificación
+                const value = parseInt(target.getAttribute('data-value') || '0');
+                this.selectedStars = value;
 
-                // Actualizamos la apariencia de todas las estrellas
                 estrellas.forEach((e) => {
                     const starValue = parseInt(e.getAttribute('data-value') || '0');
                     if (starValue <= value) {
-                        e.textContent = '★'; // Estrella llena (dorada)
+                        e.textContent = '★';
                         e.classList.add('active');
                     } else {
-                        e.textContent = '☆'; // Estrella vacía
+                        e.textContent = '☆';
                         e.classList.remove('active');
                     }
                 });
 
-                this.updatePublishButton(); // Verificamos si ya se puede publicar
+                this.updatePublishButton();
             });
         });
 
-        // === EVENTO: Escribir en el textarea ===
+        // Evento textarea
         if (textarea) {
             textarea.addEventListener('input', () => {
-                this.updatePublishButton(); // Cada vez que escriben, verificamos el botón
+                this.updatePublishButton();
             });
         }
     }
 
-    // Esta función maneja cuando el usuario selecciona una foto
+    // Manejar selección de foto
     handlePhotoSelection(file: File) {
-        console.log("Foto seleccionada:", file.name);
-
-        // Verificamos que sea realmente una imagen
         if (!file.type.startsWith('image/')) {
             alert('Por favor selecciona un archivo de imagen válido.');
             return;
         }
 
-        // Verificamos que no sea muy grande (máximo 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+        const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
             alert('La imagen es muy grande. Por favor selecciona una imagen menor a 5MB.');
             return;
         }
 
-        // Convertimos la imagen a base64 (texto) para poder guardarla
         const reader = new FileReader();
         reader.onload = (e) => {
             const base64 = e.target?.result as string;
-            this.selectedPhoto = base64; // Guardamos la foto
-            this.showPhotoPreview(base64); // Mostramos la vista previa
-            this.updatePhotoIcon(true); // Marcamos el ícono como activo
-            this.updatePublishButton(); // Actualizamos el botón
-            console.log("Foto convertida a base64 y almacenada");
+            this.selectedPhoto = base64;
+            this.showPhotoPreview(base64);
+            this.updatePhotoIcon(true);
+            this.updatePublishButton();
         };
 
         reader.onerror = () => {
@@ -621,57 +547,53 @@ export class LuladaAntojar extends HTMLElement {
             alert('Error al procesar la imagen. Por favor intenta de nuevo.');
         };
 
-        reader.readAsDataURL(file); // Iniciamos la conversión
+        reader.readAsDataURL(file);
     }
 
-    // Esta función muestra la vista previa de la foto seleccionada
+    // Mostrar vista previa de foto
     showPhotoPreview(base64: string) {
         const photoContainer = this.shadow.querySelector('#photo-container') as HTMLElement;
         const photoPreview = this.shadow.querySelector('#photo-preview') as HTMLImageElement;
 
         if (photoContainer && photoPreview) {
-            photoPreview.src = base64; // Ponemos la imagen
-            photoContainer.style.display = 'block'; // Mostramos el contenedor
-            console.log("Vista previa de foto mostrada");
+            photoPreview.src = base64;
+            photoContainer.style.display = 'block';
         }
     }
 
-    // Esta función quita la foto seleccionada
+    // Quitar foto
     removePhoto() {
-        console.log("Quitando foto seleccionada");
-        
-        this.selectedPhoto = undefined; // Borramos la foto guardada
+        this.selectedPhoto = undefined;
         
         const photoContainer = this.shadow.querySelector('#photo-container') as HTMLElement;
         const fileInput = this.shadow.querySelector('#file-input') as HTMLInputElement;
         
         if (photoContainer) {
-            photoContainer.style.display = 'none'; // Ocultamos la vista previa
+            photoContainer.style.display = 'none';
         }
         
         if (fileInput) {
-            fileInput.value = ''; // Limpiamos el input de archivo
+            fileInput.value = '';
         }
         
-        this.updatePhotoIcon(false); // Desactivamos el ícono
-        this.updatePublishButton(); // Actualizamos el botón
+        this.updatePhotoIcon(false);
+        this.updatePublishButton();
     }
 
-    // Esta función cambia la apariencia del ícono de foto
+    // Actualizar ícono de foto
     updatePhotoIcon(hasPhoto: boolean) {
         const photoIcon = this.shadow.querySelector('#photo-icon');
         if (photoIcon) {
             if (hasPhoto) {
-                photoIcon.classList.add('active'); // Lo marcamos como activo (verde)
+                photoIcon.classList.add('active');
             } else {
-                photoIcon.classList.remove('active'); // Lo volvemos gris
+                photoIcon.classList.remove('active');
             }
         }
     }
 
-    // Esta función muestra un mensaje de éxito cuando se publica
+    // Mostrar mensaje de éxito
     showSuccessMessage() {
-        // Creamos un elemento de notificación
         const toast = document.createElement('div');
         toast.style.cssText = `
             position: fixed;
@@ -687,17 +609,14 @@ export class LuladaAntojar extends HTMLElement {
             transform: translateX(100%);
             transition: transform 0.3s ease;
         `;
-        // Mensaje diferente si tiene foto o no
         toast.textContent = this.selectedPhoto ? '🎉📸 ¡Reseña con foto publicada!' : '🎉 ¡Reseña publicada con éxito!';
         
-        document.body.appendChild(toast); // Lo añadimos a la página
+        document.body.appendChild(toast);
         
-        // Animación de entrada (viene desde la derecha)
         setTimeout(() => {
             toast.style.transform = 'translateX(0)';
         }, 10);
         
-        // Animación de salida y eliminación después de 3 segundos
         setTimeout(() => {
             toast.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -708,72 +627,58 @@ export class LuladaAntojar extends HTMLElement {
         }, 3000);
     }
 
-    // Esta función verifica si el botón de publicar debe estar habilitado
+    // Actualizar botón de publicar
     updatePublishButton() {
         const publicar = this.shadow.querySelector('#publicar') as HTMLButtonElement;
         const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
         
         if (publicar && textarea) {
-            // Verificamos que tenga: texto, estrellas y zona
             const hasText = textarea.value.trim().length > 0;
             const hasStars = this.selectedStars > 0;
             const hasZone = this.selectedZone !== "";
             
-            // Solo habilitamos el botón si tiene las 3 cosas
             publicar.disabled = !(hasText && hasStars && hasZone);
         }
     }
 
-    // Esta función pone una foto de perfil aleatoria
+    // Actualizar foto de perfil aleatoria
     updateProfilePicture() {
         const profilePic = this.shadow.querySelector('#profile-pic') as HTMLImageElement;
         if (profilePic) {
-            const gender = Math.random() > 0.5 ? 'men' : 'women'; // Género aleatorio
-            const randomId = Math.floor(Math.random() * 100); // ID aleatorio
+            const gender = Math.random() > 0.5 ? 'men' : 'women';
+            const randomId = Math.floor(Math.random() * 100);
             profilePic.src = `https://randomuser.me/api/portraits/thumb/${gender}/${randomId}.jpg`;
         }
     }
 
-    // Esta función limpia todo el formulario (lo deja como al principio)
+    // Limpiar formulario
     resetComponentState() {
-        console.log("Reiniciando estado del componente");
-        
         const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
         const estrellas = this.shadow.querySelectorAll('.star-outline');
         const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
 
-        // Limpiamos el texto
         if (textarea) {
             textarea.value = '';
         }
 
-        // Limpiamos las estrellas
         this.selectedStars = 0;
         estrellas.forEach((estrella) => {
-            estrella.textContent = '☆'; // Todas vacías
+            estrella.textContent = '☆';
             estrella.classList.remove('active');
         });
 
-        // Limpiamos la zona
         this.selectedZone = "";
         if (zoneSelect) {
             zoneSelect.value = "";
         }
 
-        // Limpiamos la foto
         this.removePhoto();
-
-        // Ponemos nueva foto de perfil
         this.updateProfilePicture();
-        // Actualizamos el botón (quedará deshabilitado)
         this.updatePublishButton();
     }
 }
 
-// Registramos el componente para poder usarlo en HTML como <lulada-antojar>
+// Registrar componente
 if (!customElements.get('lulada-antojar')) {
-    console.log("Registrando componente LuladaAntojar");
     customElements.define('lulada-antojar', LuladaAntojar);
-} else {
-    console.log("Componente LuladaAntojar ya está registrado");
 }

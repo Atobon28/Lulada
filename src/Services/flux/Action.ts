@@ -1,9 +1,6 @@
 // Este archivo maneja todas las acciones que puede hacer el usuario en la aplicación
-// Es como un "centro de comandos" que envía órdenes a diferentes partes de la app
 
 import { AppDispatcher } from './Dispacher';
-
-// Aquí definimos qué información necesita cada tipo de acción
 
 // Para cuando alguien escribe una reseña de comida
 interface ReviewData {
@@ -36,14 +33,10 @@ interface ActiveNavigationPayload {
 
 // Este es el objeto principal que contiene todas las acciones posibles
 export const Actions = {
-    // Acción básica de ejemplo (no se usa mucho)
+    // Acción básica de ejemplo
     do: () => {
         AppDispatcher.dispatch({ type: 'ACTION_TYPE', payload: undefined });
     },
-    
-    // ============================================================================
-    // ACCIONES PARA NAVEGAR POR LA APP
-    // ============================================================================
     
     // Cuando el usuario quiere ir a otra página
     navigate: (route: string) => {
@@ -52,7 +45,7 @@ export const Actions = {
             type: 'NAVIGATE_TO_ROUTE', 
             payload: {
                 route,
-                timestamp: Date.now()  // Date.now() da la fecha/hora actual
+                timestamp: Date.now()
             } as NavigationPayload
         });
     },
@@ -81,7 +74,7 @@ export const Actions = {
         });
     },
     
-    // Para volver a la página anterior (como el botón "atrás" del navegador)
+    // Para volver a la página anterior
     goBack: () => {
         console.log('Actions: Navegando hacia atrás');
         AppDispatcher.dispatch({ 
@@ -91,10 +84,6 @@ export const Actions = {
             }
         });
     },
-    
-    // ============================================================================
-    // ACCIONES PARA EL POPUP DE "ANTOJAR" (crear reseñas)
-    // ============================================================================
     
     // Para mostrar la ventana donde escribes una reseña
     showAntojar: () => {
@@ -118,10 +107,6 @@ export const Actions = {
         });
     },
     
-    // ============================================================================
-    // ACCIONES PARA LAS PUBLICACIONES (reseñas de restaurantes)
-    // ============================================================================
-    
     // Cuando alguien publica una nueva reseña
     publishReview: (reviewData: ReviewData) => {
         console.log('Actions: Publicando reseña:', reviewData);
@@ -140,8 +125,8 @@ export const Actions = {
         });
     },
 
-    // Para dar o quitar "like" a una publicación (como Instagram)
-    toggleLike:(publicationId: string, username: string)=> {
+    // Para dar o quitar "like" a una publicación
+    toggleLike: (publicationId: string, username: string) => {
         console.log('Actions: toggle like en publicación:', publicationId, 'por usuario:', username);
         AppDispatcher.dispatch({
             type: 'TOGGLE_LIKE',
@@ -153,7 +138,7 @@ export const Actions = {
         });
     },
     
-    // Para guardar o quitar de guardados una publicación (como el bookmark)
+    // Para guardar o quitar de guardados una publicación
     toggleBookmark: (publicationId: string, username: string) => {
         console.log('Actions: toggle bookmark en publicación:', publicationId, 'por usuario:', username);
         AppDispatcher.dispatch({
@@ -168,21 +153,21 @@ export const Actions = {
     
     // Para cargar todos los likes y bookmarks guardados
     loadInteractions: () => {
-        console.log('Actions:Cargando interacciones de publicaciones');
+        console.log('Actions: Cargando interacciones de publicaciones');
         AppDispatcher.dispatch({
-            type:'LOAD_INTERACTIONS',
-            payload:{
-                timestamp:Date.now()
+            type: 'LOAD_INTERACTIONS',
+            payload: {
+                timestamp: Date.now()
             }
         });
     },
     
-    // Para borrar todos los likes y bookmarks (limpiar todo)
-    clearAllInteractions: ()=>{
-        console.log('Actions:Limpiando todas las intaracciones');
+    // Para borrar todos los likes y bookmarks
+    clearAllInteractions: () => {
+        console.log('Actions: Limpiando todas las interacciones');
         AppDispatcher.dispatch({
             type: 'CLEAR_INTERACTIONS',
-            payload:{
+            payload: {
                 timestamp: Date.now()
             }
         });

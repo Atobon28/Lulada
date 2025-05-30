@@ -12,22 +12,6 @@ export interface UserState {
 // Tipo de función que puede escuchar cambios en el estado del usuario
 type UserListener = (state: UserState) => void;
 
-// Extendemos la interfaz de Window para agregar funciones de debugging
-// Esto nos permite usar funciones como window.debugUserStore() en la consola del navegador
-declare global {
-    interface Window {
-        debugUserStore?: () => void;                    // Función para ver información de debug
-        getUserStats?: () => {                          // Función para ver estadísticas del perfil
-            hasUsername: boolean;                       // ¿Tiene nombre de usuario?
-            hasName: boolean;                          // ¿Tiene nombre completo?
-            hasDescription: boolean;                   // ¿Tiene descripción?
-            hasPhoto: boolean;                         // ¿Tiene foto?
-            completionPercentage: number;              // Porcentaje de completitud del perfil
-        };
-        restoreUserBackup?: () => boolean;            // Función para restaurar backup de datos
-    }
-}
-
 // Clase principal que maneja todos los datos del usuario
 export class UserStore {
     // Estado inicial del usuario (privado, solo esta clase puede modificarlo)
@@ -50,15 +34,12 @@ export class UserStore {
 
     // Función privada que carga los datos del usuario cuando inicia la aplicación
     private _loadInitialData(): void {
-        console.log('UserStore: Cargando datos iniciales...');
-        
         // Primero intentamos cargar datos guardados en el navegador (localStorage)
         try {
             const savedUser = localStorage.getItem('currentUser'); // Buscamos datos guardados
             if (savedUser) {
                 // Si encontramos datos, los convertimos de texto a objeto JavaScript
                 const userData = JSON.parse(savedUser) as UserData;
-                console.log('Datos encontrados en localStorage:', userData);
                 // Establecemos estos datos como el usuario actual
                 this._state.currentUser = userData;
                 // Notificamos a todos los componentes que escuchan cambios
@@ -72,7 +53,6 @@ export class UserStore {
         }
 
         // Si no hay datos guardados, creamos un usuario por defecto
-        console.log('Cargando datos por defecto...');
         this._state.currentUser = {
             foto: "https://randomuser.me/api/portraits/women/44.jpg",  // Foto de ejemplo
             nombreDeUsuario: "@CrisTiJauregui",                        // Username de ejemplo
@@ -88,15 +68,12 @@ export class UserStore {
 
     // Función que maneja todas las acciones/eventos que pueden cambiar los datos del usuario
     private _handleActions(action: Action): void {
-        console.log('UserStore: Recibida acción:', action.type, action.payload);
-        
         // Usamos switch para manejar diferentes tipos de acciones
         switch (action.type) {
             case 'LOAD_USER_DATA':
                 // Acción: cargar datos completos del usuario
                 this._state.currentUser = action.payload as UserData;
                 this._state.error = null; // Limpiamos cualquier error previo
-                console.log('Datos de usuario cargados:', this._state.currentUser);
                 this._saveUserData(); // Guardamos en el navegador
                 this._emitChange();   // Notificamos el cambio
                 break;
@@ -105,7 +82,6 @@ export class UserStore {
                 // Acción: cambiar el nombre de usuario
                 if (this._state.currentUser) { // Solo si hay un usuario actual
                     const newUsername = action.payload as string;
-                    console.log('Actualizando username de:', this._state.currentUser.nombreDeUsuario, 'a:', newUsername);
                     
                     // Nos aseguramos de que el username empiece con @
                     const formattedUsername = newUsername.startsWith('@') ? newUsername : `@${newUsername}`;
@@ -117,7 +93,6 @@ export class UserStore {
                     };
                     this._state.error = null;
                     
-                    console.log('Username actualizado a:', this._state.currentUser.nombreDeUsuario);
                     this._saveUserData(); // Guardamos
                     this._emitChange();   // Notificamos
                 } else {
@@ -129,7 +104,6 @@ export class UserStore {
                 // Acción: cambiar el nombre completo del usuario
                 if (this._state.currentUser) {
                     const newName = action.payload as string;
-                    console.log('Actualizando nombre completo de:', this._state.currentUser.nombre, 'a:', newName);
                     
                     // Creamos nuevo objeto con el nombre actualizado
                     this._state.currentUser = {
@@ -138,7 +112,6 @@ export class UserStore {
                     };
                     this._state.error = null;
                     
-                    console.log('Nombre completo actualizado a:', this._state.currentUser.nombre);
                     this._saveUserData();
                     this._emitChange();
                 } else {
@@ -150,7 +123,6 @@ export class UserStore {
                 // Acción: cambiar la descripción/biografía del usuario
                 if (this._state.currentUser) {
                     const newDescription = action.payload as string;
-                    console.log('Actualizando descripción de:', this._state.currentUser.descripcion, 'a:', newDescription);
                     
                     // Actualizamos solo la descripción
                     this._state.currentUser = {
@@ -159,7 +131,6 @@ export class UserStore {
                     };
                     this._state.error = null;
                     
-                    console.log('Descripción actualizada a:', this._state.currentUser.descripcion);
                     this._saveUserData();
                     this._emitChange();
                 } else {
@@ -171,7 +142,6 @@ export class UserStore {
                 // Acción: actualizar múltiples campos del perfil a la vez
                 if (this._state.currentUser && action.payload) {
                     const updates = action.payload as Partial<UserData>; // Cambios parciales
-                    console.log('Actualizando perfil con múltiples campos:', updates);
                     
                     // Si se está actualizando el username, le agregamos @ si no lo tiene
                     if (updates.nombreDeUsuario) {
@@ -187,7 +157,6 @@ export class UserStore {
                     };
                     this._state.error = null;
                     
-                    console.log('Perfil actualizado:', this._state.currentUser);
                     this._saveUserData();
                     this._emitChange();
                 } else {
@@ -198,7 +167,6 @@ export class UserStore {
             case 'UPDATE_EMAIL':
                 // Acción: cambiar email (funcionalidad básica, se puede expandir)
                 if (this._state.currentUser) {
-                    console.log('Actualización de email solicitada (funcionalidad pendiente)');
                     this._state.error = null;
                     this._saveUserData();
                     this._emitChange();
@@ -208,7 +176,6 @@ export class UserStore {
             case 'UPDATE_PASSWORD':
                 // Acción: cambiar contraseña (funcionalidad básica, se puede expandir)
                 if (this._state.currentUser) {
-                    console.log('Actualización de contraseña solicitada');
                     this._state.error = null;
                     this._saveUserData();
                     this._emitChange();
@@ -219,7 +186,6 @@ export class UserStore {
                 // Acción: cambiar la foto de perfil
                 if (this._state.currentUser) {
                     const newPhotoUrl = action.payload as string;
-                    console.log('Actualizando foto de perfil a:', newPhotoUrl);
                     
                     // Actualizamos solo la foto
                     this._state.currentUser = {
@@ -228,7 +194,6 @@ export class UserStore {
                     };
                     this._state.error = null;
                     
-                    console.log('Foto de perfil actualizada');
                     this._saveUserData();
                     this._emitChange();
                 }
@@ -236,7 +201,6 @@ export class UserStore {
 
             case 'RESET_PROFILE':
                 // Acción: resetear el perfil a los valores por defecto
-                console.log('Reseteando perfil a valores por defecto');
                 this._state.currentUser = {
                     foto: "https://randomuser.me/api/portraits/women/44.jpg",
                     nombreDeUsuario: "@CrisTiJauregui",
@@ -263,7 +227,6 @@ export class UserStore {
                 const dataToSave = JSON.stringify(this._state.currentUser);
                 // Guardamos en localStorage (permanente hasta que el usuario borre datos del navegador)
                 localStorage.setItem('currentUser', dataToSave);
-                console.log(' Datos guardados en localStorage:', this._state.currentUser);
                 
                 // También guardamos en sessionStorage como respaldo (se borra al cerrar la pestaña)
                 sessionStorage.setItem('currentUser_backup', dataToSave);
@@ -276,9 +239,6 @@ export class UserStore {
 
     // Función privada que notifica a todos los componentes que escuchan cambios
     private _emitChange(): void {
-        console.log('UserStore: Emitiendo cambios a', this._listeners.length, 'listeners');
-        console.log('Estado actual:', this._state);
-        
         // Llamamos a cada función que está escuchando cambios
         for (const listener of this._listeners) {
             try {
@@ -302,7 +262,6 @@ export class UserStore {
 
     // Función pública: suscribirse para escuchar cambios en el usuario
     subscribe(listener: UserListener): void {
-        console.log('UserStore: Nuevo listener suscrito. Total:', this._listeners.length + 1);
         // Agregamos la función a nuestra lista de oyentes
         this._listeners.push(listener);
         // Inmediatamente le enviamos el estado actual
@@ -315,13 +274,9 @@ export class UserStore {
 
     // Función pública: desuscribirse (dejar de escuchar cambios)
     unsubscribe(listener: UserListener): void {
-        const initialLength = this._listeners.length;
         // Removemos la función de nuestra lista de oyentes
         this._listeners = this._listeners.filter(l => l !== listener);
-        console.log('UserStore: Listener desuscrito. Total:', initialLength, '->', this._listeners.length);
     }
-
-    // NUEVOS MÉTODOS PÚBLICOS
 
     // Función pública: verificar si hay cambios que no se han guardado
     hasUnsavedChanges(): boolean {
@@ -378,17 +333,6 @@ export class UserStore {
         };
     }
 
-    // Función pública para debugging: muestra información detallada en la consola
-    debug(): void {
-        console.log('UserStore Debug:');
-        console.log('- Estado:', this._state);
-        console.log('- Listeners:', this._listeners.length);
-        console.log('- LocalStorage:', localStorage.getItem('currentUser'));
-        console.log('- SessionStorage backup:', sessionStorage.getItem('currentUser_backup'));
-        console.log('- Estadísticas del perfil:', this.getProfileStats());
-        console.log('- Cambios sin guardar:', this.hasUnsavedChanges());
-    }
-
     // Función pública: restaurar datos desde el backup si es necesario
     restoreFromBackup(): boolean {
         try {
@@ -400,12 +344,11 @@ export class UserStore {
                 this._state.currentUser = userData;
                 this._saveUserData(); // Lo guardamos como datos principales
                 this._emitChange();   // Notificamos el cambio
-                console.log(' Datos restaurados desde backup');
                 return true; // Éxito
             }
             return false; // No había backup
         } catch (error) {
-            console.error(' Error restaurando backup:', error);
+            console.error('Error restaurando backup:', error);
             return false; // Error al restaurar
         }
     }
@@ -413,15 +356,3 @@ export class UserStore {
 
 // Creamos una instancia única de UserStore que será usada en toda la aplicación
 export const userStore = new UserStore();
-
-// Exponemos funciones de debugging en el navegador (solo en desarrollo)
-if (typeof window !== 'undefined' && !window.debugUserStore) {
-    // Función para hacer debug del UserStore
-    window.debugUserStore = (): void => userStore.debug();
-    
-    // Función para obtener estadísticas del perfil
-    window.getUserStats = () => userStore.getProfileStats();
-    
-    // Función para restaurar backup de datos
-    window.restoreUserBackup = (): boolean => userStore.restoreFromBackup();
-}
