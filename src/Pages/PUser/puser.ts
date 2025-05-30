@@ -1,3 +1,4 @@
+// Página de perfil de usuario
 class PUser extends HTMLElement {
 
     constructor() {
@@ -8,23 +9,30 @@ class PUser extends HTMLElement {
     connectedCallback() {
         this.render();
         this.setupEventListeners();
-        // Configurar el resize handler
         window.addEventListener('resize', this.handleResize.bind(this));
-        this.handleResize(); // Ejecutar una vez al cargar
+        this.handleResize();
     }
 
     disconnectedCallback() {
-        // Limpiar el event listener
         window.removeEventListener('resize', this.handleResize.bind(this));
     }
 
+    // Dibuja el HTML y CSS del componente
     render() {
         if (this.shadowRoot) {
-            this.shadowRoot.innerHTML = /*html*/ `
+            this.shadowRoot.innerHTML = `
             <style>
                 :host {
                     display: block;
                     font-family: Arial, sans-serif;
+                }
+                
+                .responsive-header {
+                    display: none;
+                }
+                
+                .desktop-logo {
+                    display: block;
                 }
                 
                 .main-layout {
@@ -52,22 +60,12 @@ class PUser extends HTMLElement {
                     margin-left: 5.9rem;
                     margin-right: 5.9rem;
                     background-color: white;
-                    flex-grow: 1; 
+                    flex-grow: 1;
                 }
 
                 .suggestions-section {
-                    width: 250px; 
+                    width: 250px;
                     padding: 20px 10px;
-                }
-                
-                .no-content {
-                    padding: 40px;
-                    text-align: center;
-                    color: #666;
-                    font-style: italic;
-                    background-color: #f9f9f9;
-                    border-radius: 8px;
-                    margin-top: 20px;
                 }
 
                 .responsive-bar {
@@ -81,38 +79,35 @@ class PUser extends HTMLElement {
                     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
                 }
 
-                /* Responsive styles */
+                /* Responsive para móviles */
                 @media (max-width: 900px) {
-                    .sidebar {
-                        display: none;
-                    }
-                    
-                    .suggestions-section {
-                        display: none;
-                    }
-                    
-                    .responsive-bar {
-                        display: block;
-                    }
-                    
-                    .reviews-section {
-                        margin-left: 1rem;
-                        margin-right: 1rem;
-                    }
+                    .responsive-header { display: block !important; }
+                    .desktop-logo { display: none !important; }
+                    .sidebar { display: none; }
+                    .suggestions-section { display: none; }
+                    .responsive-bar { display: block; }
+                    .reviews-section { margin-left: 1rem; margin-right: 1rem; }
                 }
             </style>
             
-            <!-- Usar lulada-logo como header universal -->
-            <lulada-logo></lulada-logo>
+            <div class="responsive-header">
+                <lulada-responsive-header></lulada-responsive-header>
+            </div>
+            
+            <div class="desktop-logo">
+                <lulada-logo></lulada-logo>
+            </div>
                 
             <div class="main-layout">
                 <div class="sidebar">
                     <lulada-sidebar></lulada-sidebar>
                 </div>
+                
                 <div class="medium-content">
                     <div class="user-profile">
                         <user-profile></user-profile>
                     </div>
+                    
                     <div class="content">
                         <div class="reviews-section">
                             <lulada-publication 
@@ -123,12 +118,12 @@ class PUser extends HTMLElement {
                         </div>
                     </div>
                 </div>
+                
                 <div class="suggestions-section">
                     <lulada-suggestions></lulada-suggestions>
                 </div>
             </div>
             
-            <!-- Barra responsive para móviles -->
             <div class="responsive-bar">
                 <lulada-responsive-bar></lulada-responsive-bar>
             </div>
@@ -136,12 +131,11 @@ class PUser extends HTMLElement {
         }
     }
 
+    // Configura eventos de navegación
     setupEventListeners() {
-        // Escuchar eventos de navegación
         if (this.shadowRoot) {
             this.shadowRoot.addEventListener('navigate', (event: Event) => {
                 const customEvent = event as CustomEvent;
-                // Reenviar el evento hacia arriba para que lo maneje LoadPage
                 document.dispatchEvent(new CustomEvent('navigate', {
                     detail: customEvent.detail
                 }));
@@ -149,6 +143,7 @@ class PUser extends HTMLElement {
         }
     }
 
+    // Adapta el diseño entre móvil y escritorio
     handleResize() {
         const sidebar = this.shadowRoot?.querySelector('.sidebar') as HTMLDivElement;
         const suggestions = this.shadowRoot?.querySelector('.suggestions-section') as HTMLDivElement;
@@ -156,10 +151,12 @@ class PUser extends HTMLElement {
 
         if (sidebar && suggestions && responsiveBar) {
             if (window.innerWidth < 900) {
+                // Modo móvil
                 sidebar.style.display = 'none';
                 suggestions.style.display = 'none';
                 responsiveBar.style.display = 'block';
             } else {
+                // Modo escritorio
                 sidebar.style.display = 'block';
                 suggestions.style.display = 'block';
                 responsiveBar.style.display = 'none';

@@ -2,10 +2,10 @@ export class ConfirmRole extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = /*html*/ `
                 <style>
-                    
                     :host {
                         display: flex;
                         justify-content: center;
@@ -17,7 +17,6 @@ export class ConfirmRole extends HTMLElement {
                         left: 0;
                     }
                      
-                    
                     .main {
                         width: 100%;
                         height: 100%;
@@ -114,11 +113,11 @@ export class ConfirmRole extends HTMLElement {
                         background-color: #c99700;
                     }
                 </style>
+                
                 <div class="selection-container">
                     <div class="logo">
                         <lulada-logo></lulada-logo>
                     </div>
-                    
                     
                     <div class="options-container">
                         <label class="option-label">
@@ -138,35 +137,22 @@ export class ConfirmRole extends HTMLElement {
                 </div>
             `;
 
-            // Lógica para manejar los checkboxes
             const personCheckbox = this.shadowRoot.getElementById('person-checkbox') as HTMLInputElement;
             const restaurantCheckbox = this.shadowRoot.getElementById('restaurant-checkbox') as HTMLInputElement;
             
-            
-            // logica para manejar la seleccionde las chack boxs
             personCheckbox?.addEventListener('change', () => {
                 if (personCheckbox.checked) {
                     restaurantCheckbox.checked = false;
                 }
             });
-            // logica para manejar la seleccionde las chack boxs
-
+            
             restaurantCheckbox?.addEventListener('change', () => {
                 if (restaurantCheckbox.checked) {
                     personCheckbox.checked = false;
                 }
             });
-
-            
-           
-
-           
-            
         }
     }
 }
-
-
-
 
 export default ConfirmRole;

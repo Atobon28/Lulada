@@ -1,7 +1,10 @@
+// Componente web personalizado para campos de texto de login
 class CajaDeTexto extends HTMLElement {
+    
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = /*html*/ `
                 <style>
@@ -11,11 +14,11 @@ class CajaDeTexto extends HTMLElement {
                     
                     input {
                         width: 100%;
-                        padding: 8px 10px; 
+                        padding: 8px 10px;
                         border: 1px solid #CCCCCC;
                         border-radius: 6px;
-                        font-size: 14px; 
-                        height: 36px; 
+                        font-size: 14px;
+                        height: 36px;
                         box-sizing: border-box;
                     }
                     
@@ -38,6 +41,5 @@ class CajaDeTexto extends HTMLElement {
         }
     }
 }
-
 
 export default CajaDeTexto;

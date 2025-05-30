@@ -132,4 +132,3 @@ class LuladaSidebar extends HTMLElement {
     }
 }
 export default LuladaSidebar; // Exporta la clase LuladaSidebar como exportación por defecto
-

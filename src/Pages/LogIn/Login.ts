@@ -1,10 +1,11 @@
+// Página de inicio de sesión
 class LoginPage extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        
         if (this.shadowRoot) {
-            
-            this.shadowRoot.innerHTML = /*html*/ `
+            this.shadowRoot.innerHTML = `
                 <style>
                     :host {
                         font-family: Arial, sans-serif;
@@ -35,11 +36,11 @@ class LoginPage extends HTMLElement {
                     }
                     
                     .logo-section img {
-                        width: 400px; 
-                        height: auto; 
+                        width: 400px;
+                        height: auto;
                     }
-                                
                     
+                    /* Responsive para móviles */
                     @media (max-width: 768px) {
                         .content-wrapper {
                             flex-direction: column;
@@ -51,31 +52,28 @@ class LoginPage extends HTMLElement {
                         }
                         
                         .logo-section img {
-                            width: 150px; 
+                            width: 150px;
                         }
                     }
                 </style>
                 
                <div class="login-page-container">
                     <div class="content-wrapper">
-            <div class="logo-section">
-                <img 
-                    src="https://i.postimg.cc/t44LmL1m/Capa-1.png" 
-                    alt="Lulada Logo"
-                >
-            </div>
-            
-            <div class="form-section">
-                <login-form></login-form>
-            </div>
-        </div>
-    </div>
+                        <div class="logo-section">
+                            <img 
+                                src="https://i.postimg.cc/t44LmL1m/Capa-1.png" 
+                                alt="Lulada Logo"
+                            >
+                        </div>
+                        
+                        <div class="form-section">
+                            <login-form></login-form>
+                        </div>
+                    </div>
+                </div>
             `;
-        } else {
-            console.error('shadowRoot is null');
         }
     }
 }
-
 
 export default LoginPage;

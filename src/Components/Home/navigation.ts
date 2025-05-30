@@ -1,3 +1,4 @@
+// Web Component para navegación por zonas de la ciudad
 export class Navigation extends HTMLElement {
     constructor() {
         super();
@@ -9,6 +10,7 @@ export class Navigation extends HTMLElement {
                     :host {
                         display: block;
                     }
+                    
                     .navigation {
                         display: flex;
                         justify-content: center;
@@ -17,22 +19,26 @@ export class Navigation extends HTMLElement {
                         padding: 10px;
                         text-align: center;
                     }
+                    
                     .navigation-container {
                         display: flex;
                         gap: 20px;
                     }
+                    
                     .navigation a {
                         text-decoration: none;
                         color: #333;
                         font-weight: bold;
                         padding: 5px 10px;
                     }
+                    
                     .navigation a:hover {
                         color: #666;
                         background-color: #e0e0e0;
                         border-radius: 5px;
                     }
                 </style>
+                
                 <div class="navigation">
                     <div class="navigation-container">
                         <a href="#" data-section="cali">Cali</a>
@@ -44,11 +50,15 @@ export class Navigation extends HTMLElement {
                 </div>
             `;
             
+            // Event listeners para navegación por zonas
             this.shadowRoot.querySelectorAll('a').forEach((link: Element) => {
                 link.addEventListener('click', (e: Event) => {
                     e.preventDefault();
+                    
                     const target = e.target as HTMLElement;
                     const section = target.getAttribute('data-section');
+                    
+                    // Emite evento de navegación
                     this.dispatchEvent(new CustomEvent('navigate', { 
                         detail: section,
                         bubbles: true,

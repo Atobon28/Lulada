@@ -1,37 +1,21 @@
-
 async function getUsers() {
-    return fetch('/data/User.json')
-        .then((response) => {
-            return response.json();
-        })
-        .catch((error) => {
-            console.error("Error al hacer el fetch a la data:", error);
-        })
+  // FETCH: Hacemos una petición al servidor para obtener el archivo User.json
+  return fetch('/data/User.json')
+      
+      // SI LA PETICIÓN ES EXITOSA:
+      .then((response) => {
+          // Convertimos la respuesta a formato JSON (JavaScript Object Notation)
+          // JSON es como un formato de texto que contiene datos organizados
+          return response.json();
+      })
+      
+      // SI ALGO SALE MAL:
+      .catch((error) => {
+          // Mostramos el error en la consola del navegador para debug
+          console.error("Error al hacer el fetch a la data:", error);
+      })
 }
+
+//EXPORTAMOS la función para que otros archivos puedan usarla
 export default getUsers;
-
-
-
- 
-
-
-
-
-
-/*async function getUsers() {
-    const url = "../../Public/data/user.json";
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`info mal`);
-    }
-  
-      const json = await response.json();
-      console.log(json);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-}
-
-export { getUsers }; */
 

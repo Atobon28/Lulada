@@ -1,7 +1,9 @@
+// Botón de login personalizado
 class BotonLogin extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = /*html*/ `
                 <style>
@@ -20,13 +22,15 @@ class BotonLogin extends HTMLElement {
                 }
                 
                 .boton:hover {
-                    background-color:rgb(132, 134, 58);
+                    background-color: rgb(132, 134, 58);
                 }
                 </style>
+                
                 <button class="boton">Iniciar sesión</button>
             `;
             
             const button = this.shadowRoot.querySelector(".boton");
+            
             if (button) {
                 button.addEventListener("click", () => {
                     window.location.href = "/home"; 
@@ -37,6 +41,5 @@ class BotonLogin extends HTMLElement {
         }
     }
 }
-
 
 export default BotonLogin;

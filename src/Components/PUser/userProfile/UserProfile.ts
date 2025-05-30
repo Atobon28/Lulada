@@ -1,3 +1,4 @@
+// Componente personalizado para mostrar el perfil del usuario
 class UserSelftProfile extends HTMLElement {
     constructor() {
         super();
@@ -15,6 +16,7 @@ class UserSelftProfile extends HTMLElement {
                     color: #333;
                 }
 
+                /* Contenedor principal que controla los márgenes laterales */
                 .user-publication-Tittle {
                     margin-left: 5.8rem;
                     margin-right: 5.8rem;
@@ -24,6 +26,7 @@ class UserSelftProfile extends HTMLElement {
                     position: relative;
                 }
 
+                /* RESPONSIVE DESIGN: Tablets */
                 @media (max-width: 1024px) {
                     .user-publication-Tittle {
                         margin-left: 2rem;
@@ -36,6 +39,7 @@ class UserSelftProfile extends HTMLElement {
                     }
                 }
 
+                /* RESPONSIVE DESIGN: Móviles */
                 @media (max-width: 768px) {
                     .user-publication-Tittle {
                         margin-left: 1rem;
@@ -50,6 +54,7 @@ class UserSelftProfile extends HTMLElement {
                     }
                 }
 
+                /* RESPONSIVE DESIGN: Móviles muy pequeños */
                 @media (max-width: 480px) {
                     .user-publication-Tittle {
                         margin-left: 0.5rem;
@@ -64,11 +69,17 @@ class UserSelftProfile extends HTMLElement {
                 }
 
             </style>
+            
             <div class="user-publication-Tittle">
                 <div class="userTopCompleto">
+                    <!-- Componente que muestra la información del usuario -->
                     <user-info></user-info>
+                    
+                    <!-- Componente que muestra el botón de "Editar" perfil -->
                     <user-edit></user-edit>
                 </div>
+                
+                <!-- Título de la sección de publicaciones -->
                 <h1>Publicaciones</h1>
             </div>
             `;

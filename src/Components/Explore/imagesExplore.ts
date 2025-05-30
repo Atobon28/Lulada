@@ -1,3 +1,4 @@
+// Componente grid de exploración con imágenes y texto
 export class ImagesExplore extends HTMLElement {
     constructor() {
         super();
@@ -176,6 +177,7 @@ export class ImagesExplore extends HTMLElement {
     }
     
     updateActualImages() {
+        // Función preparada para futuras actualizaciones
     }
 }
 

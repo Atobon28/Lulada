@@ -1,33 +1,26 @@
-// antojar-boton.ts
-
-// Importamos el servicio que controla la aparición del popup
 import AntojarPopupService from './antojar-popup';
 
-// Definimos un nuevo componente personalizado llamado <lulada-antojar-boton>
+// Botón personalizado para abrir el popup de reseñas
 export class LuladaAntojarBoton extends HTMLElement {
-    // Creamos una propiedad para almacenar el shadow DOM
     shadowRoot: ShadowRoot | null;
 
     constructor() {
-        super(); // Llamamos al constructor de HTMLElement
-        // Creamos el shadow DOM en modo 'open' para poder acceder a él desde fuera si es necesario
+        super();
         this.shadowRoot = this.attachShadow({ mode: 'open' });
     }
 
-    // Este método se ejecuta cuando el elemento se añade al DOM
     connectedCallback() {
         if (this.shadowRoot) {
-            // Obtenemos los atributos personalizados del botón desde el HTML
-            const texto = this.getAttribute('texto') || 'Antojar'; // Texto que se mostrará en el botón
-            const color = this.getAttribute('color') || '#AAAB54'; // Color de fondo por defecto
-            const colorHover = this.getAttribute('color-hover') || 'rgb(132, 134, 58)'; // Color al pasar el mouse
+            const texto = this.getAttribute('texto') || 'Antojar';
+            const color = this.getAttribute('color') || '#AAAB54';
+            const colorHover = this.getAttribute('color-hover') || 'rgb(132, 134, 58)';
 
-            // Definimos el HTML y CSS del botón dentro del shadow DOM
             this.shadowRoot.innerHTML = `
                 <style>
                     :host {
-                        display: inline-block; /* Hace que el componente se comporte como un elemento en línea */
+                        display: inline-block;
                     }
+                    
                     .antojar-button {
                         padding: 8px 24px;
                         background-color: ${color};
@@ -40,42 +33,41 @@ export class LuladaAntojarBoton extends HTMLElement {
                         transition: background-color 0.2s ease;
                         display: flex;
                         align-items: center;
-                        gap: 8px; /* Espacio entre el ícono y el texto */
+                        gap: 8px;
                     }
+                    
                     .antojar-button:hover {
-                        background-color: ${colorHover}; /* Cambia el color al pasar el mouse */
+                        background-color: ${colorHover};
                     }
+                    
                     .icon {
                         width: 16px;
                         height: 16px;
-                        fill: white; /* Color del ícono */
+                        fill: white;
                     }
                 </style>
                 
                 <button class="antojar-button">
-                    <!-- Ícono en formato SVG (una estrella) -->
                     <svg class="icon" viewBox="0 0 24 24">
                         <path d="M12 2l1.46 4.38h4.75l-3.83 2.84 
                             1.46 4.38-3.84-2.84-3.84 2.84 
                             1.46-4.38-3.83-2.84h4.75z">
                         </path>
                     </svg>
-                    ${texto} <!-- Texto del botón -->
+                    ${texto}
                 </button>
             `;
 
-            // Seleccionamos el botón dentro del shadow DOM
             const button = this.shadowRoot.querySelector('.antojar-button');
+            
             if (button) {
-                // Añadimos un evento al botón: cuando se hace click, se muestra el popup
                 button.addEventListener('click', () => {
-                    const popupService = AntojarPopupService.getInstance(); // Obtenemos una instancia del servicio
-                    popupService.showPopup(); // Mostramos la ventana emergente
+                    const popupService = AntojarPopupService.getInstance(); 
+                    popupService.showPopup(); 
                 });
             }
         }
     }
 }
 
-// Exportamos el componente para poder usarlo en otros archivos
 export default LuladaAntojarBoton;

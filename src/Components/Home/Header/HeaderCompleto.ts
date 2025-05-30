@@ -1,3 +1,4 @@
+// Componente que alterna entre header normal y responsive
 class HeaderCompleto extends HTMLElement {
     constructor() {
         super();

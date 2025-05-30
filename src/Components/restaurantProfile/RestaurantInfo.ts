@@ -1,5 +1,7 @@
+// Importamos la función para obtener datos de usuarios
 import getUsers from "../../Services/UserServices";
 
+// Definimos la estructura de un objeto Usuario
 type User = {
     foto: string;
     nombreDeUsuario: string;
@@ -10,6 +12,7 @@ type User = {
     rol: string;
 }
 
+// Componente para mostrar información de restaurantes
 class restaurantInfo extends HTMLElement {
     constructor() {
         super();
@@ -18,7 +21,9 @@ class restaurantInfo extends HTMLElement {
 
     async connectedCallback() {
         if (this.shadowRoot) {
+            // Obtenemos la información de todos los usuarios
             const InformationResponse = await getUsers()
+            
             this.shadowRoot.innerHTML = /*html*/ `
             <style>
             .userTopCompleto {
@@ -27,7 +32,7 @@ class restaurantInfo extends HTMLElement {
                 border-radius: 0.9375rem;
                 font-family: 'Inter', sans-serif;
                 max-width: 90%;
-                margin: auto;                    
+                margin: auto;
                 margin-left: 5.8rem;
                 margin-right: 5.8rem;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -40,6 +45,7 @@ class restaurantInfo extends HTMLElement {
                 margin-left: 3rem;
             }
             
+            /* Contenedor principal que organiza foto e información */
             .userTop {
                 display: flex;
                 align-items: center;
@@ -132,6 +138,8 @@ class restaurantInfo extends HTMLElement {
                 margin-top: 0.5rem;
             }
 
+            /* RESPONSIVE DESIGN */
+            /* Tablets */
             @media (max-width: 1024px) {
                 .userTopCompleto {
                     margin-left: 2rem;
@@ -145,6 +153,7 @@ class restaurantInfo extends HTMLElement {
                 }
             }
             
+            /* Móviles */
             @media (max-width: 768px) {
                 .userTopCompleto {
                     margin-left: 1rem;
@@ -219,6 +228,7 @@ class restaurantInfo extends HTMLElement {
                 }
             }
 
+            /* Móviles muy pequeños */
             @media (max-width: 480px) {
                 .userTopCompleto {
                     margin: 0.5rem;
@@ -264,18 +274,29 @@ class restaurantInfo extends HTMLElement {
                 }
             }
             </style>            
+            
+            <!-- Contenedor principal del perfil del restaurante -->
             <div class="userTopCompleto">
+                
+                <!-- Filtramos usuarios para mostrar solo restaurantes -->
                 ${InformationResponse.filter((User: User) => User.rol === "restaurante").map((User: User) => /*html*/ `   
+                
                 <div class="userTop"> 
                     <div class="userTopFoto">
                         <img class="foto" src="${User.foto ?? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcQg-lr5__zRqY3mRg6erzAD9n4BGp3G8VfA&s'}">
                     </div>
+                    
                     <div class="userTopInfo">
                         <p class="nombreDeUsuario">${User.nombreDeUsuario ?? 'Nombre de usuario por defecto'}</p>
+                        
                         <p class="nombre">${User.nombre ?? "Nombre por defecto"}</p>
+                        
                         <hr>
+                        
                         <p class="descripcion">${User.descripcion ?? " "}</p>
+                        
                         <div class="additional-info">
+                            <!-- Sección de ubicación con icono -->
                             <div class="location">
                                 <svg class="action-icon location-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -284,11 +305,13 @@ class restaurantInfo extends HTMLElement {
                                 <p class="locationText">${User.locationText ?? "No se ha registrado una ubicacion aun"}</p>
                             </div>
         
+                        <!-- Sección del enlace al menú -->
                         <div class="link"> 
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><g fill="currentColor"><path d="M12.243 3.757a2 2 0 0 0-2.829 0L7.293 5.88L5.879 4.464L8 2.344a4 4 0 0 1 5.657 0l.707.706l-.09.09A4 4 0 0 1 13.658 8l-2.121 2.121l-1.415-1.414l2.122-2.121a2 2 0 0 0 0-2.829Zm-8.486 8.486a2 2 0 0 0 2.829 0l2.121-2.122l1.414 1.415L8 13.655a4 4 0 0 1-5.657 0l-.707-.706l.09-.09A4 4 0 0 1 2.342 8l2.121-2.121L5.88 7.293L3.757 9.414a2 2 0 0 0 0 2.829"/><path d="M10.828 6.586L9.414 5.172L5.172 9.414l1.414 1.414z"/></g></svg>
                             <a href="${User.menuLink}" class="MenuLink" target="_blank">${User.menuLink ?? 'Sin menú disponible'}</a>
                         </div>
         
+                        <!-- Calificación con estrellas -->
                         <div class="stars">
                             ${'★'.repeat(5)}
                         </div> 
@@ -297,6 +320,7 @@ class restaurantInfo extends HTMLElement {
             </div>
                 `) . join('')}
 
+            <!-- Título para la sección de etiquetados -->
             <div class="etiquetados">
                     <h2>Etiquetados</h2>
             </div>
@@ -305,4 +329,5 @@ class restaurantInfo extends HTMLElement {
         } 
     }
 }    
+
 export default restaurantInfo;

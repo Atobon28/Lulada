@@ -1,14 +1,15 @@
+// Interface para el evento de selección de ubicación
 interface LocationSelectEvent extends CustomEvent {
   detail: string;
 }
 
+// Header principal de la página de inicio
 class HeaderHome extends HTMLElement {
   shadowRoot: ShadowRoot;
   currentSelected: string = 'cali';
 
   constructor() {
     super();
-    
     this.shadowRoot = this.attachShadow({ mode: 'open' });
 
     this.shadowRoot.innerHTML = `
@@ -88,7 +89,6 @@ class HeaderHome extends HTMLElement {
               transform: scaleX(1);
             }
 
-            /* Responsive */
             @media (max-width: 900px) {
                 .header-container {
                     align-items: center;
@@ -129,6 +129,7 @@ class HeaderHome extends HTMLElement {
     this.addEventListeners();
   }
 
+  // Configurar eventos de click para enlaces de ubicación
   addEventListeners(): void {
     const locationLinks: NodeListOf<HTMLAnchorElement> = this.shadowRoot.querySelectorAll('.location-tags a');
     
@@ -140,29 +141,25 @@ class HeaderHome extends HTMLElement {
         const section: string | null = target.getAttribute('data-section');
         
         if (section) {
-          // Remover active del anterior
           const prevSelected = this.shadowRoot.querySelector(`.location-tags a[data-section="${this.currentSelected}"]`);
           if (prevSelected) {
             prevSelected.classList.remove('active');
           }
           
-          // Agregar active al nuevo
           this.currentSelected = section;
           target.classList.add('active');
           
-          // Disparar eventos para filtrado
+          // Disparar evento personalizado
           this.dispatchEvent(new CustomEvent<string>('location-select', { 
             detail: section,
             bubbles: true,
             composed: true
           }) as LocationSelectEvent);
 
-          // También disparar el evento que esperan los otros componentes
+          // Evento global para otros componentes
           document.dispatchEvent(new CustomEvent('location-filter-changed', {
             detail: section
           }));
-          
-          console.log('✅ Filtro de ubicación activado:', section);
         }
       });
     });

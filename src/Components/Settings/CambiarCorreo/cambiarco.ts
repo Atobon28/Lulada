@@ -1,3 +1,4 @@
+// Componente web personalizado para cambiar correo
 class Cambiarco extends HTMLElement {
   private email: string;
   
@@ -8,6 +9,7 @@ class Cambiarco extends HTMLElement {
     this.render();
   }
   
+  // Observa cambios en el atributo email
   static get observedAttributes() {
     return ['email'];
   }
@@ -23,6 +25,7 @@ class Cambiarco extends HTMLElement {
     this.setupEventListeners();
   }
   
+  // Dibuja todo el HTML y CSS del componente
   private render() {
     if (!this.shadowRoot) return;
     
@@ -74,7 +77,8 @@ class Cambiarco extends HTMLElement {
           color: #aaa;
           margin: 0 0 4px 0;
         }
-           .subtitle2 {
+        
+        .subtitle2 {
           font-size: 16px;
           margin: 0 0 4px 0;
         }
@@ -134,12 +138,14 @@ class Cambiarco extends HTMLElement {
     `;
   }
   
+  // Configura los eventos de los botones
   private setupEventListeners() {
     if (!this.shadowRoot) return;
     
     const backButton = this.shadowRoot.querySelector('#back-btn');
     if (backButton) {
       backButton.addEventListener('click', () => {
+        // Envía evento para volver
         this.dispatchEvent(new CustomEvent('back'));
       });
     }
@@ -150,6 +156,7 @@ class Cambiarco extends HTMLElement {
         const inputField = this.shadowRoot?.querySelector('#email-input') as HTMLInputElement;
         if (inputField && inputField.value) {
           const newEmail = inputField.value;
+          // Envía evento con el nuevo email
           this.dispatchEvent(new CustomEvent('save', { 
             detail: { newEmail } 
           }));

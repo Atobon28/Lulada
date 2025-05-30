@@ -1,143 +1,206 @@
-import { LuladaAntojar } from './antojar'; // Importamos el componente que se mostrará en el popup
+import { LuladaAntojar } from './antojar';
 
+// Servicio para manejar el popup de reseñas
 export class AntojarPopupService {
-    static instance: AntojarPopupService; // Propiedad estática para aplicar el patrón singleton
-    popupContainer: HTMLDivElement | null = null; // Contenedor del popup (fondo semitransparente)
-    antojarComponent: LuladaAntojar | null = null; // Instancia del componente personalizado que va dentro del popup
+    static instance: AntojarPopupService;
+    popupContainer: HTMLDivElement | null = null;
+    antojarComponent: LuladaAntojar | null = null;
 
     constructor() {
-        // Constructor vacío, solo se usa internamente desde getInstance()
+        // Constructor vacío
     }
 
-    // Método que retorna siempre la misma instancia del servicio
+    // Singleton - obtener única instancia
     public static getInstance(): AntojarPopupService {
         if (!AntojarPopupService.instance) {
-            AntojarPopupService.instance = new AntojarPopupService(); // Si no existe, la crea
+            AntojarPopupService.instance = new AntojarPopupService();
         }
-        return AntojarPopupService.instance; // Devuelve la instancia existente
+        return AntojarPopupService.instance;
     }
 
-    // Inicializa el contenedor del popup si no existe aún
+    // Preparar contenedor del popup
     public initialize(): void {
         if (!this.popupContainer) {
-            this.popupContainer = document.createElement('div'); // Creamos el div que actuará como fondo
-            this.popupContainer.className = 'antojar-popup-container'; // Le damos una clase para identificarlo
+            this.popupContainer = document.createElement('div');
+            this.popupContainer.className = 'antojar-popup-container';
+            
             this.popupContainer.style.cssText = `
                 position: fixed;
                 top: 0;
                 left: 0;
-                width: 100%;
-                height: 100%;
+                width: 100vw;
+                height: 100vh;
                 background-color: rgba(0, 0, 0, 0.5);
                 display: none;
                 justify-content: center;
                 align-items: center;
-                z-index: 1000;
+                z-index: 10000;
                 opacity: 0;
                 transition: opacity 0.3s ease;
-            `; // Estilos para cubrir toda la pantalla como fondo modal
+                padding: 20px;
+                box-sizing: border-box;
+                overflow-y: auto;
+            `;
 
-            document.body.appendChild(this.popupContainer); // Lo añadimos al body
+            document.body.appendChild(this.popupContainer);
 
-            // Si el usuario hace clic fuera del contenido (sobre el fondo), se cierra el popup
+            // Cerrar al hacer click fuera del formulario
             this.popupContainer.addEventListener('click', (e) => {
                 if (e.target === this.popupContainer) {
-                    this.hidePopup(); // Cierra el popup
+                    this.hidePopup();
                 }
             });
         }
     }
 
-    // Muestra el popup en pantalla
+    // Mostrar popup
     public showPopup(): void {
-        console.log("Mostrando popup de antojar");
-        this.initialize(); // Asegura que el contenedor exista
+        this.initialize();
 
-        // Verifica si el componente ya está registrado
         if (!customElements.get('lulada-antojar')) {
-            console.warn("El componente lulada-antojar no está registrado, intentando registrarlo ahora");
-
-            // Lo importa dinámicamente y lo registra si hace falta
             import('./antojar').then(module => {
                 if (!customElements.get('lulada-antojar')) {
                     customElements.define('lulada-antojar', module.LuladaAntojar);
                 }
-                this.createAndShowComponent(); // Luego lo muestra
+                this.createAndShowComponent();
+            }).catch(error => {
+                console.error("Error al cargar componente antojar:", error);
+                alert("Error al cargar el formulario de reseñas");
             });
         } else {
-            this.createAndShowComponent(); // Si ya está registrado, simplemente lo muestra
+            this.createAndShowComponent();
         }
     }
 
-    // Crea el componente antojar (si no existe) y lo muestra en pantalla
+    // Crear y mostrar el componente
     private createAndShowComponent(): void {
         if (!this.antojarComponent) {
-            console.log("Creando nuevo componente lulada-antojar");
-
             this.antojarComponent = document.createElement('lulada-antojar') as LuladaAntojar;
 
-            // Le damos algunos estilos básicos para posicionarlo
             this.antojarComponent.style.cssText = `
-                width: 95%;
-                max-width: 500px;
-                transform: translateY(20px); /* animación de entrada */
+                width: 100%;
+                max-width: 550px;
+                max-height: 90vh;
+                overflow-y: auto;
+                transform: translateY(20px);
                 transition: transform 0.3s ease;
+                margin: auto;
+                box-sizing: border-box;
             `;
 
-            // Escuchamos cuando el usuario cierra el componente
+            // Eventos del componente
             this.antojarComponent.addEventListener('antojar-cerrado', () => {
-                console.log("Evento antojar-cerrado recibido");
-                this.hidePopup(); // Oculta el popup
+                this.hidePopup();
             });
 
-            // Escuchamos si el usuario publica una reseña
             this.antojarComponent.addEventListener('resena-publicada', (e: Event) => {
                 const detail = (e as CustomEvent).detail;
-                console.log('Reseña publicada:', detail);
-                this.hidePopup(); // Oculta el popup después de publicar
+                
+                this.hidePopup();
+                this.showSuccessMessage();
+                
+                document.dispatchEvent(new CustomEvent('nueva-publicacion', {
+                    detail: detail,
+                    bubbles: true
+                }));
             });
 
-            // Finalmente añadimos el componente al contenedor
             if (this.popupContainer) {
                 this.popupContainer.appendChild(this.antojarComponent);
-                console.log("Componente añadido al contenedor");
             }
         }
 
-        // Mostramos el contenedor con una pequeña animación
+        // Mostrar con animación
         if (this.popupContainer) {
             this.popupContainer.style.display = 'flex';
+            
             setTimeout(() => {
                 if (this.popupContainer) {
-                    this.popupContainer.style.opacity = '1'; // Suavemente lo hacemos visible
+                    this.popupContainer.style.opacity = '1';
                 }
                 if (this.antojarComponent) {
-                    this.antojarComponent.style.transform = 'translateY(0)'; // Animación de entrada hacia arriba
+                    this.antojarComponent.style.transform = 'translateY(0)';
                 }
-            }, 10); // Pequeño delay para permitir el efecto CSS
+            }, 10);
         }
     }
 
-    // Oculta el popup con transición
+    // Ocultar popup
     public hidePopup(): void {
         if (this.popupContainer) {
-            this.popupContainer.style.opacity = '0'; // Lo hacemos invisible
+            this.popupContainer.style.opacity = '0';
+            
             if (this.antojarComponent) {
-                this.antojarComponent.style.transform = 'translateY(20px)'; // Animación de salida hacia abajo
+                this.antojarComponent.style.transform = 'translateY(20px)';
             }
 
-            // Después del tiempo de la transición, lo ocultamos del layout
             setTimeout(() => {
                 if (this.popupContainer) {
                     this.popupContainer.style.display = 'none';
                 }
-            }, 300); // Tiempo igual al de la transición CSS
+            }, 300);
         }
+    }
+
+    // Mensaje de éxito
+    private showSuccessMessage(): void {
+        const toast = document.createElement('div');
+        
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            z-index: 10001;
+            font-family: Arial, sans-serif;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        `;
+        
+        toast.textContent = '🎉 ¡Reseña publicada con éxito!';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 100);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 400);
+        }, 3000);
+    }
+
+    // Limpiar servicio
+    public cleanup(): void {
+        if (this.popupContainer && document.body.contains(this.popupContainer)) {
+            document.body.removeChild(this.popupContainer);
+        }
+        
+        this.popupContainer = null;
+        this.antojarComponent = null;
+    }
+
+    // Verificar si está visible
+    public isVisible(): boolean {
+        return this.popupContainer?.style.display === 'flex' || false;
     }
 }
 
-
-// Hacemos el servicio accesible globalmente si se necesita desde otras partes de la app
-window.AntojarPopupService = AntojarPopupService;
+// Disponible globalmente - SIN DECLARACIÓN DE TIPOS DUPLICADA
+if (typeof window !== 'undefined') {
+    window.AntojarPopupService = AntojarPopupService;
+}
 
 export default AntojarPopupService;

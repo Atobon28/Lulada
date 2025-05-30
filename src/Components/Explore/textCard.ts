@@ -1,4 +1,6 @@
+// Componente personalizado de tarjeta de texto
 export class TextCard extends HTMLElement {
+    
     static get observedAttributes() {
         return ['text', 'position-col', 'position-row', 'span-cols', 'span-rows'];
     }

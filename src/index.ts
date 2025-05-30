@@ -1,192 +1,271 @@
-import LuladaNotifications from './Pages/Notifications/Notifications';
-import NavigationBar from './Components/Home/Navbars/responsivebar';
+// =======================
+// DECLARACIONES GLOBALES
+// =======================
+export {};
 
-//Root Component
+import PublicationsService from './Services/PublicationsService';
+import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
+
+declare global {
+    interface Window {
+        debugSidebar?: () => void;
+        AntojarPopupService?: typeof AntojarPopupService;
+        LuladaServices?: {
+            publicationsService: ReturnType<typeof PublicationsService.getInstance>;
+            antojarService: ReturnType<typeof AntojarPopupService.getInstance>;
+        };
+    }
+}
+
+interface ComponentConstructor {
+    new (...args: unknown[]): HTMLElement;
+}
+
+// =======================
+// IMPORTS
+// =======================
+import './services-global';
+import { InteractionService } from './Services/flux/Interactionservice';
+
+// CORE
 import RootComponent from "./Components/Root/RootComponent";
-//Root component
-
-//app container
 import LoadPage from "./Components/LoadPages/LoadPage";
-//app container
 
-//home
-import Home from "./Pages/Home/home"
+// PÁGINAS
+import Home from "./Pages/Home/home";
+import LuladaExplore from "./Pages/Explore/explore";
+import PUser from "./Pages/PUser/puser";
+import RestaurantProfile from "./Pages/RestaurantProfile/RestaurantProfile";
+import Save from "./Pages/Save/Save";
+import LoginPage from "./Pages/LogIn/Login";
+import LuladaSettings from "./Pages/Settings/Settings";
+import LuladaNotifications from './Pages/Notifications/Notifications';
+import NewAccount from "./Pages/NewAccount/containernewaccount";
+import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
 
+// SETTINGS
+import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
+import NombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
+import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF";
+
+// NAVEGACIÓN
+import Navigation from "./Components/Home/navigation";
+import './Components/Home/Header/reponsiveheader';
+import NavigationBar from './Components/Home/Navbars/responsivebar';
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
+
+// HEADERS
+import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
 import HeaderHome from "./Components/Home/Header/Header";
 import Lulada from "./Components/Home/Header/logo";
+import HeaderExplorer from "./Components/Explore/exploreHeader";
+
+// PUBLICACIONES
 import Publication from "./Components/Home/posts/publications";
 import Review from "./Components/Home/posts/reviews";
 import ReviewsContainer from "./Components/Home/posts/reviewscontainer";
-import Navigation from "./Components/Home/navigation";
-import Suggestions from "./Components/Home/suggestions";
-//home
 
-//inicio de notifications
-import CardNotifications from "./Components/Nofications/CardNotifications";
-//fin de notifications
+// ANTOJAR
+import { LuladaAntojar } from './Components/Home/Antojar/antojar';
+import { LuladaAntojarBoton } from './Components/Home/Antojar/antojar-boton';
 
-//Inicio Explorer
-import HeaderExplorer from "./Components/Explore/exploreHeader";
+// EXPLORACIÓN
 import ExploreContainer from "./Components/Explore/explorecontainer";
 import ImagesExplore from "./Components/Explore/imagesExplore";
 import TextCard from "./Components/Explore/textCard";
-import Explore from "./Pages/Explore/explore";
-//Final explorer
 
-//puser
+// USUARIO
 import UserInfo from "./Components/PUser/userProfile/UserInfo";
 import UserSelftProfile from "./Components/PUser/userProfile/UserProfile";
 import UserEdit from "./Components/PUser/userProfile/EditButton";
-import PUser from "./Pages/PUser/puser";
-//final puser
-
-//restaurantprofile
+import EditProfileModal from "./Components/PUser/userProfile/EditProfileModal";
 import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
-import RestaurantProfile from "./Pages/RestaurantProfile/RestaurantProfile";
-//final restaurantprofile
 
-//Save
-import Save from "./Pages/Save/Save";
-//Final Save
+// OTROS
+import LuladaSuggestions from "./Components/Home/suggestions";
+import CardNotifications from "./Components/Nofications/CardNotifications";
 
-//Inicio Pagina Login
+// LOGIN
 import CajaDeTexto from "./Components/Login/CajaTexto";
 import BotonLogin from "./Components/Login/Boton";
 import LoginForm from "./Components/Login/CajaLogin";
-import LoginPage from "./Pages/LogIn/Login";
-//Cierre pagina Login
 
-//Inicio pagina settings
+// NEW ACCOUNT
+import BoxText from "./Components/Newaccount/boxtext";
+import ButtonNewAccount from "./Components/Newaccount/buttonNewAccount";
+
+// SETTINGS COMPONENTS
 import CajonTexto from "./Components/Settings/CajonTexto";
 import CajonList from "./Components/Settings/CajonList";
-import LuladaSettings from "./Pages/Settings/Settings";
-import CambiarCo from "./Components/Settings/CambiarCorreo/cambiarco";
+import CajonListInteractive from "./Components/Settings/CajonListInteractive";
 import CambiarNU from "./Components/Settings/CambiarNombre/cambiarNU";
+import Cambiarco from "./Components/Settings/CambiarCorreo/cambiarco";
 import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontra";
-import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF"
-import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
-import NombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
-//Cierre pagina settings
+import CambiarCorreoSimple from "./Components/Settings/CambiarCorreoSimple";
+import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
+import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
 
-//newaccount
-import BoxText from "./Components/Newaccount/boxtext";
-import NewAccount from "./Pages/NewAccount/containernewaccount";
-//cierre de newaccount
-
-//inicio de confirmRole
-import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
-//fin de confirmRole
-
-import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
-
-//inicio de antojar
-import { LuladaAntojar } from './Components/Home/Antojar/antojar';
-import { LuladaAntojarBoton } from './Components/Home/Antojar/antojar-boton';
-import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
-//Fin de antojar
-
-// IMPORTANTE: Inicializar y exponer el servicio inmediatamente
+// =======================
+// INICIALIZACIÓN DE SERVICIOS
+// =======================
+const publicationsService = PublicationsService.getInstance();
 const antojarService = AntojarPopupService.getInstance();
 antojarService.initialize();
-window.AntojarPopupService = AntojarPopupService;
 
-// Header completo (debe ir antes de otros headers)
-customElements.define('lulada-header-complete', HeaderCompleto);
+if (typeof window !== 'undefined') {
+    try {
+        window.AntojarPopupService = AntojarPopupService;
 
-//Root
-customElements.define('root-component', RootComponent);
-//fin Root
+        if (!window.LuladaServices) {
+            window.LuladaServices = {
+                publicationsService,
+                antojarService
+            };
+        }
 
-//app container
-customElements.define('load-pages', LoadPage);
-//fin app container
+        if (!window.debugSidebar) {
+            window.debugSidebar = () => {
+                const sidebar = document.querySelector('lulada-sidebar') as any;
+                if (sidebar?.debugNavigation) {
+                    sidebar.debugNavigation();
+                } else {
+                    console.log("🔍 Sidebar no encontrado o sin debugNavigation");
+                }
+            };
+        }
 
-//inicio home
-customElements.define('lulada-home', Home);
-customElements.define('lulada-header', HeaderHome);
-customElements.define('lulada-sidebar', LuladaSidebar);
-customElements.define('lulada-logo', Lulada);
-customElements.define('lulada-publication', Publication);
-customElements.define('lulada-review', Review);
-customElements.define('lulada-reviews-container', ReviewsContainer);
-customElements.define('lulada-navigation', Navigation);
-customElements.define('lulada-suggestions', Suggestions);
-//fin home
+    } catch (error) {
+        console.error('Error asignando servicios:', error);
+    }
+}
 
+// =======================
+// REGISTRO DE COMPONENTES
+// =======================
+function registerComponent(name: string, component: ComponentConstructor): boolean {
+    try {
+        if (!customElements.get(name)) {
+            customElements.define(name, component);
+        }
+        return true;
+    } catch (error) {
+        console.error(`Error registrando ${name}:`, error);
+        return false;
+    }
+}
 
-//inicio de barra de navegación responsiva
-customElements.define('lulada-responsive-bar', NavigationBar);
-//fin de barra de navegación responsiva
+// CORE
+registerComponent('root-component', RootComponent);
+registerComponent('load-pages', LoadPage);
 
-//Inicio Explorer
-customElements.define('header-explorer', HeaderExplorer);
-customElements.define('explore-container', ExploreContainer);
-customElements.define('images-explore', ImagesExplore);
-customElements.define('text-card', TextCard);
-customElements.define('lulada-explore', Explore);
-//Final explorer
+// HEADERS
+registerComponent('lulada-header-complete', HeaderCompleto);
+registerComponent('lulada-header', HeaderHome);
+registerComponent('lulada-logo', Lulada);
+registerComponent('header-explorer', HeaderExplorer);
 
-//puser
-customElements.define('user-info', UserInfo);
-customElements.define('puser-page', PUser);
-customElements.define('user-profile', UserSelftProfile);
-customElements.define('user-edit', UserEdit);
-//Final puser
+// NAVEGACIÓN
+registerComponent('lulada-navigation', Navigation);
+registerComponent('lulada-sidebar', LuladaSidebar);
 
-//restaurantprofile
-customElements.define('restaurant-info', restaurantInfo);
-customElements.define('restaurant-profile', RestaurantProfile);
-//Final restaurantprofile
+// PÁGINAS
+registerComponent('lulada-home', Home);
+registerComponent('lulada-explore', LuladaExplore);
+registerComponent('puser-page', PUser);
+registerComponent('restaurant-profile', RestaurantProfile);
+registerComponent('save-page', Save);
+registerComponent('login-page', LoginPage);
+registerComponent('lulada-settings', LuladaSettings);
+registerComponent('lulada-notifications', LuladaNotifications);
+registerComponent('register-new-account', NewAccount);
+registerComponent('confirm-role', ConfirmRole);
 
-//Save
-customElements.define('save-page', Save);
-//Final Save
+// SETTINGS
+registerComponent('lulada-cambiar-correo', CambiarCorreoF);
+registerComponent('lulada-cambiar-nombre', NombreUsuraio);
+registerComponent('lulada-cambiar-contraseña', CambiarContraseñaF);
 
-//Inicio pagina Login
-customElements.define("caja-de-texto", CajaDeTexto);
-customElements.define("boton-login", BotonLogin);
-customElements.define("login-form", LoginForm);
-customElements.define("login-page", LoginPage);
-//Cierre pagina Login   
+// PUBLICACIONES
+registerComponent('lulada-publication', Publication);
+registerComponent('lulada-review', Review);
+registerComponent('lulada-reviews-container', ReviewsContainer);
 
-//inicio pagina settings
-customElements.define("cajon-texto", CajonTexto);
-customElements.define("cajon-list", CajonList);
-customElements.define('lulada-settings', LuladaSettings);
-customElements.define('cambiar-correo', CambiarCo);
-customElements.define('cambiar-nombre', CambiarNU);
-customElements.define('cambiar-contraseña', CambiarContra);
-customElements.define('lulada-cambiar-contraseña', CambiarContraseñaF);
-customElements.define('lulada-cambiar-correo', CambiarCorreoF);
-customElements.define('lulada-cambiar-nombre', NombreUsuraio);
-//Cierre pagina settings
+// ANTOJAR
+registerComponent('lulada-antojar', LuladaAntojar);
+registerComponent('lulada-antojar-boton', LuladaAntojarBoton);
 
-//inicio de notifications
-customElements.define('lulada-card-notifications', CardNotifications);
-customElements.define('lulada-boxtext', BoxText)
-customElements.define('lulada-notifications', LuladaNotifications);
-//fin de notifications
+// EXPLORACIÓN
+registerComponent('explore-container', ExploreContainer);
+registerComponent('images-explore', ImagesExplore);
+registerComponent('text-card', TextCard);
 
-//inicio de newaccount
-customElements.define('register-new-account', NewAccount);
-//fin de newaccount
+// USUARIO
+registerComponent('user-info', UserInfo);
+registerComponent('user-profile', UserSelftProfile);
+registerComponent('user-edit', UserEdit);
+registerComponent('edit-profile-modal', EditProfileModal);
+registerComponent('restaurant-info', restaurantInfo);
 
-//inicio de confirmRole
-customElements.define('confirm-role', ConfirmRole);
-//fin de confirmRole
+// OTROS
+registerComponent('lulada-suggestions', LuladaSuggestions);
+registerComponent('lulada-card-notifications', CardNotifications);
 
+// LOGIN
+registerComponent("caja-de-texto", CajaDeTexto);
+registerComponent("boton-login", BotonLogin);
+registerComponent("login-form", LoginForm);
 
-// Inicializar el servicio cuando el DOM esté listo
+// NEW ACCOUNT
+registerComponent('lulada-boxtext', BoxText);
+registerComponent('button-new-account', ButtonNewAccount);
+
+// SETTINGS COMPONENTS
+registerComponent('cajon-texto', CajonTexto);
+registerComponent('cajon-list', CajonList);
+registerComponent('cajon-list-interactive', CajonListInteractive);
+registerComponent('cambiar-nombre-usuario', CambiarNU);
+registerComponent('cambiar-correo-electronico', Cambiarco);
+registerComponent('cambiar-contrasena', CambiarContra);
+registerComponent('cambiar-correo-simple', CambiarCorreoSimple);
+registerComponent('cambiar-nombre-simple', CambiarNombreSimple);
+registerComponent('cambiar-contrasena-simple', CambiarContrasenaSimple);
+
+// =======================
+// INICIALIZACIÓN FINAL
+// =======================
 document.addEventListener('DOMContentLoaded', () => {
-  // Inicializar el servicio de popup
-  AntojarPopupService.getInstance().initialize();
+    const interactionService = InteractionService.getInstance();
+    interactionService.loadInteractions();
+
+    antojarService.initialize();
 });
 
-// Debug temporal - eliminar después de verificar
-console.log('NavigationBar registrado:', customElements.get('lulada-responsive-bar'));
-console.log('HeaderCompleto registrado:', customElements.get('lulada-header-complete'));
-console.log('Home registrado:', customElements.get('lulada-home'));
+// =======================
+// EXPORTS
+// =======================
+export {
+    PublicationsService,
+    AntojarPopupService,
+    LuladaAntojar,
+    LuladaAntojarBoton,
+    Home,
+    LuladaExplore,
+    PUser,
+    RestaurantProfile,
+    Save,
+    LoginPage,
+    LuladaSettings,
+    LuladaNotifications,
+    NavigationBar,
+    HeaderCompleto,
+    LuladaSidebar,
+    Publication,
+    ReviewsContainer
+};
 
-// Exportar todo para uso en la aplicación
-export { LuladaAntojar, LuladaAntojarBoton, AntojarPopupService };
+export default {
+    Publication,
+    LuladaAntojar,
+    ReviewsContainer,
+    AntojarPopupService
+};
