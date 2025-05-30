@@ -1,5 +1,3 @@
-// src/index.ts - VERSIÓN CORREGIDA SIN REFERENCIAS ROTAS
-
 // ============================================================================
 // INTERFACES SIMPLES
 // ============================================================================
@@ -148,7 +146,7 @@ import ButtonNewAccount from "./Components/Newaccount/buttonNewAccount";
 // ============================================================================
 // INICIALIZACIÓN DE SERVICIOS
 // ============================================================================
-console.log('🚀 Inicializando servicios Lulada...');
+console.log(' Inicializando servicios Lulada...');
 
 const publicationsService = PublicationsService.getInstance();
 const antojarService = AntojarPopupService.getInstance();
@@ -167,13 +165,13 @@ if (typeof window !== 'undefined') {
             };
         }
         
-        console.log('✅ Servicios asignados a window correctamente');
+        console.log(' Servicios asignados a window correctamente');
     } catch (error) {
-        console.warn('⚠️ Error asignando servicios a window:', error);
+        console.warn(' Error asignando servicios a window:', error);
     }
 }
 
-console.log('✅ Servicios inicializados correctamente');
+console.log(' Servicios inicializados correctamente');
 
 // ============================================================================
 // FUNCIÓN PARA VERIFICAR Y REGISTRAR COMPONENTES
@@ -182,14 +180,14 @@ function registerComponent(name: string, component: ComponentConstructor): boole
     try {
         if (!customElements.get(name)) {
             customElements.define(name, component);
-            console.log(`✅ ${name}: Registrado correctamente`);
+            console.log(` ${name}: Registrado correctamente`);
             return true;
         } else {
-            console.log(`⚠️ ${name}: Ya estaba registrado`);
+            console.log(` ${name}: Ya estaba registrado`);
             return true;
         }
     } catch (error) {
-        console.error(`❌ ${name}: Error al registrar -`, error);
+        console.error(` ${name}: Error al registrar -`, error);
         return false;
     }
 }
@@ -207,13 +205,13 @@ document.addEventListener('DOMContentLoaded', () => {
         clearAll: () => interactionService.clearAll()
     };
     
-    console.log('✅ Sistema de interacciones listo');
+    console.log(' Sistema de interacciones listo');
 });
 
 // ============================================================================
 // REGISTRO DE COMPONENTES
 // ============================================================================
-console.log('📦 Registrando componentes...');
+console.log(' Registrando componentes...');
 
 // CORE - CRÍTICOS
 registerComponent('root-component', RootComponent);
@@ -291,13 +289,13 @@ registerComponent('cambiar-correo-simple', CambiarCorreoSimple);
 registerComponent('cambiar-nombre-simple', CambiarNombreSimple);
 registerComponent('cambiar-contrasena-simple', CambiarContrasenaSimple);
 
-console.log('✅ Registro de componentes completado');
+console.log(' Registro de componentes completado');
 
 // ============================================================================
 // VERIFICACIÓN DE COMPONENTES CRÍTICOS
 // ============================================================================
 function verifyComponents(): void {
-    console.log('🔍 Verificando componentes críticos...');
+    console.log(' Verificando componentes críticos...');
     
     const criticalComponents = [
         'root-component',
@@ -316,17 +314,17 @@ function verifyComponents(): void {
     criticalComponents.forEach((componentName: string) => {
         const isRegistered = !!customElements.get(componentName);
         if (isRegistered) {
-            console.log(`✅ ${componentName}: OK`);
+            console.log(` ${componentName}: OK`);
         } else {
-            console.error(`❌ ${componentName}: FALTA`);
+            console.error(` ${componentName}: FALTA`);
             allRegistered = false;
         }
     });
     
     if (allRegistered) {
-        console.log('🎉 Todos los componentes críticos registrados');
+        console.log(' Todos los componentes críticos registrados');
     } else {
-        console.error('❌ Faltan componentes críticos');
+        console.error(' Faltan componentes críticos');
     }
 }
 
@@ -334,7 +332,7 @@ function verifyComponents(): void {
 // INICIALIZACIÓN FINAL
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎯 DOM cargado - Inicializando Lulada...');
+    console.log(' DOM cargado - Inicializando Lulada...');
     
     // Verificar componentes
     verifyComponents();
@@ -342,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializar servicios
     AntojarPopupService.getInstance().initialize();
     
-    console.log('🎉 Lulada App iniciada correctamente');
+    console.log(' Lulada App iniciada correctamente');
 });
 
 // ============================================================================
@@ -372,9 +370,9 @@ if (typeof window !== 'undefined') {
             };
         }
         
-        console.log('🛠️ Debug básico disponible en window.LuladaDebug');
+        console.log(' Debug básico disponible en window.LuladaDebug');
     } catch (error) {
-        console.warn('⚠️ Debug no disponible:', error);
+        console.warn(' Debug no disponible:', error);
     }
 }
 
@@ -410,4 +408,4 @@ export default {
     AntojarPopupService
 };
 
-console.log('📦 Lulada Components Module cargado - VERSIÓN CORREGIDA');
+console.log(' Lulada Components Module cargado - VERSIÓN CORREGIDA');

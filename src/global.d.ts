@@ -1,5 +1,3 @@
-// global.d.ts - VERSIÓN LIMPIA SIN INTERFACES NO UTILIZADAS
-
 import { UserActions } from '../src/Services/flux/UserActions';
 import { UserStore } from '../src/Services/flux/UserStore';
 import PublicationsService from '../src/Services/PublicationsService';
