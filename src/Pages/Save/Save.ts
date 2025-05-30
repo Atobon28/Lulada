@@ -1,7 +1,25 @@
 // src/Pages/Save/Save.ts
 
+// Define interfaces for type safety
+interface SavedPublication {
+    id: string;
+    username: string;
+    text: string;
+    stars: number;
+    hasImage: boolean;
+    timestamp: number;
+}
+
+interface PublicationElement extends HTMLElement {
+    interactionService?: {
+        isLiked: (id: string) => boolean;
+        isBookmarked: (id: string) => boolean;
+    };
+    updateInteractionUI?: () => void;
+}
+
 class Save extends HTMLElement {
-    private savedPublications: any[] = [];
+    private savedPublications: SavedPublication[] = [];
 
     constructor() {
         super();
@@ -33,9 +51,12 @@ class Save extends HTMLElement {
         
         // Escuchar eventos de bookmark desde publicaciones esto es un evento personalizado
         document.addEventListener('publication-bookmarked', (e: Event) => {
-            const customEvent = e as CustomEvent;
-            console.log('Bookmark event detectado:', customEvent.detail);
-            //este el el tiempo para que se complete la operacion de guardado antes de atulizar
+            const customEvent = e as CustomEvent<{
+                username: string;
+                bookmarked: boolean;
+            }>;
+            console.log(' Bookmark event detectado:', customEvent.detail);
+            
             setTimeout(() => {
                 this.loadSavedPublications();
                 this.updateSavedContent();
@@ -60,9 +81,14 @@ class Save extends HTMLElement {
     }
 //lee las publicaciones guardad del localstorage
     private loadSavedPublications() {
-        //jsonparse lo utilizamos ya que el localstorage solo almacena strings entonce necesitamos convertirlo a array
-        this.savedPublications = JSON.parse(localStorage.getItem('lulada_saved_reviews') || '[]');
-        console.log('Publicaciones guardadas carga:', this.savedPublications.length);
+        try {
+            const saved = localStorage.getItem('lulada_saved_reviews');
+            this.savedPublications = saved ? JSON.parse(saved) as SavedPublication[] : [];
+            console.log('Publicaciones guardadas carga:', this.savedPublications.length);
+        } catch (error) {
+            console.error('Error loading saved publications:', error);
+            this.savedPublications = [];
+        }
     }
 
     render() {
@@ -346,7 +372,7 @@ class Save extends HTMLElement {
         if (!publications) return;
 
         publications.forEach((pub) => {
-            const publicationElement = pub as any;
+            const publicationElement = pub as PublicationElement;
             const publicationId = pub.getAttribute('data-publication-id');
             
             if (publicationId && publicationElement.interactionService) {
@@ -364,17 +390,21 @@ class Save extends HTMLElement {
             localStorage.removeItem('lulada_saved_reviews');
             
             // También actualizar bookmarks para que reflejen el cambio
-            const bookmarks = JSON.parse(localStorage.getItem('lulada_bookmarks') || '{}');
-            this.savedPublications.forEach(pub => {
-                delete bookmarks[pub.id];
-            });
-            localStorage.setItem('lulada_bookmarks', JSON.stringify(bookmarks));
+            try {
+                const bookmarks = JSON.parse(localStorage.getItem('lulada_bookmarks') || '{}') as Record<string, boolean>;
+                this.savedPublications.forEach(pub => {
+                    delete bookmarks[pub.id];
+                });
+                localStorage.setItem('lulada_bookmarks', JSON.stringify(bookmarks));
+            } catch (error) {
+                console.error('Error updating bookmarks:', error);
+            }
             
             // Recargar o renderiza
             this.loadSavedPublications();
             this.render();
             
-            console.log(' Todas las publicaciones guardadas eliminadas');
+            console.log('✨ Todas las publicaciones guardadas eliminadas');
         }
     }//este es un boton a ventana que te pide aseguarte de que lo quieres borrar
 
@@ -390,8 +420,11 @@ class Save extends HTMLElement {
             //Escuchar eventos de bookmark dentro de la página Save
             //Cuando una publicación se desmarca desde la página de guardados, actualiza la lista automáticamente.
             this.shadowRoot.addEventListener('publication-bookmarked', (e: Event) => {
-                const customEvent = e as CustomEvent;
-                const { bookmarked, username } = customEvent.detail;
+                const customEvent = e as CustomEvent<{
+                    bookmarked: boolean;
+                    username: string;
+                }>;
+                const { bookmarked } = customEvent.detail;
                 
                 if (!bookmarked) {
                     // Si se quita el bookmark desde Save, remover de la lista

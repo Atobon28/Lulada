@@ -1,50 +1,59 @@
-import { AppDispatcher,Action } from "./Dispacher";
+import { AppDispatcher, Action } from "./Dispacher";
 
 export interface InteractionState {
-    likes:{[publicationId:string]: boolean};
-    bookmarks:{[publicationId:string]: boolean};
+    likes: { [publicationId: string]: boolean };
+    bookmarks: { [publicationId: string]: boolean };
     isLoading: boolean;
     error: string | null;
 }
-type InteractionListener = (state:InteractionState) => void;
+
+type InteractionListener = (state: InteractionState) => void;
+
+// Define interfaces for action payloads
+interface ToggleInteractionPayload {
+    publicationId: string;
+}
 
 export class InteractionStore {
-    private _state:InteractionState={
+    private _state: InteractionState = {
         likes: {},
         bookmarks: {},
         isLoading: false,
         error: null
     };
-    private _listeners: InteractionListener[]=[];
-    private readonly STORAGE_KEY_LIKES ='lulada_likes';
-    private readonly STORAGE_KEY_BOOKMARKS ='lulada_bookmarks';
+    private _listeners: InteractionListener[] = [];
+    private readonly STORAGE_KEY_LIKES = 'lulada_likes';
+    private readonly STORAGE_KEY_BOOKMARKS = 'lulada_bookmarks';
 
-    constructor(){
+    constructor() {
         AppDispatcher.register(this._handleActions.bind(this));
         this._loadFromStorage();
     }
+
     getState(): InteractionState {
-        return {...this._state};
+        return { ...this._state };
     }
+
     private _loadFromStorage(): void {
         console.log('InteractionStore: Cargando datos de interacciones desde localStorage...');
         try {
             const likes = localStorage.getItem(this.STORAGE_KEY_LIKES);
             const bookmarks = localStorage.getItem(this.STORAGE_KEY_BOOKMARKS);
-            if(likes){
-                this._state.likes =JSON.parse(likes);
+            if (likes) {
+                this._state.likes = JSON.parse(likes) as { [key: string]: boolean };
                 console.log('likes cargados:', this._state.likes);
             }
-            if(bookmarks){
-                this._state.bookmarks =JSON.parse(bookmarks);
+            if (bookmarks) {
+                this._state.bookmarks = JSON.parse(bookmarks) as { [key: string]: boolean };
                 console.log('bookmarks cargados:', this._state.bookmarks);
             }
-        }catch (error){
+        } catch (error) {
             console.error('Error al cargar datos de interacciones:', error);
             this._state.error = 'Error al cargar datos de interacciones';
         }
     }
-     private _saveToStorage(): void {
+
+    private _saveToStorage(): void {
         try {
             localStorage.setItem(this.STORAGE_KEY_LIKES, JSON.stringify(this._state.likes));
             localStorage.setItem(this.STORAGE_KEY_BOOKMARKS, JSON.stringify(this._state.bookmarks));
@@ -54,42 +63,46 @@ export class InteractionStore {
             this._state.error = 'Error guardando interacciones';
         }
     }
+
     private _handleActions(action: Action): void {
         console.log('InteractionStore: Recibida accion:', action.type, action.payload);
 
-        switch(action.type) {
+        switch (action.type) {
             case 'TOGGLE_LIKE':
-            if(action.payload && typeof action.payload === 'object' && 'publicationId'in action.payload){
-                const {publicationId} = action.payload as any;
-                const wasLiked = this._state.likes[publicationId];
+                if (this.isToggleInteractionPayload(action.payload)) {
+                    const { publicationId } = action.payload;
+                    const wasLiked = this._state.likes[publicationId];
                     this._state.likes[publicationId] = !wasLiked;
 
-               console.log(`Like ${wasLiked ? 'removido' : 'agregado'} en publicación:`, publicationId);
+                    console.log(`Like ${wasLiked ? 'removido' : 'agregado'} en publicación:`, publicationId);
                     this._state.error = null;
                     this._saveToStorage();
                     this._emitChange();
-            }
-            break;
+                }
+                break;
+
             case 'TOGGLE_BOOKMARK':
-                if (action.payload && typeof action.payload === 'object' && 'publicationId' in action.payload) {
-                    const { publicationId } = action.payload as any;
+                if (this.isToggleInteractionPayload(action.payload)) {
+                    const { publicationId } = action.payload;
                     const wasBookmarked = this._state.bookmarks[publicationId];
                     this._state.bookmarks[publicationId] = !wasBookmarked;
-                    
+
                     console.log(`Bookmark ${wasBookmarked ? 'removido' : 'agregado'} en publicación:`, publicationId);
                     this._state.error = null;
                     this._saveToStorage();
                     this._emitChange();
                 }
                 break;
-                  case 'LOAD_INTERACTIONS':
+
+            case 'LOAD_INTERACTIONS':
                 this._loadFromStorage();
                 this._emitChange();
                 break;
-                case 'CLEAR_INTERACTIONS':
+
+            case 'CLEAR_INTERACTIONS':
                 console.log('Limpiando todas las interacciones...');
-                this._state = { 
-                    likes: {}, 
+                this._state = {
+                    likes: {},
                     bookmarks: {},
                     isLoading: false,
                     error: null
@@ -104,56 +117,73 @@ export class InteractionStore {
                 break;
         }
     }
-    private _emitChange():void{
-        console.log('InteractionStore:Emitiendo cambios a',this._listeners.length,'listeners');
+
+    // Type guard for action payload
+    private isToggleInteractionPayload(payload: unknown): payload is ToggleInteractionPayload {
+        return (
+            payload !== null &&
+            typeof payload === 'object' &&
+            'publicationId' in payload &&
+            typeof (payload as ToggleInteractionPayload).publicationId === 'string'
+        );
+    }
+
+    private _emitChange(): void {
+        console.log('InteractionStore: Emitiendo cambios a', this._listeners.length, 'listeners');
         console.log('Estado actual:', this._state);
 
-        for(const listener of this._listeners){
-            try{
+        for (const listener of this._listeners) {
+            try {
                 listener(this._state);
-            }catch(error){
-                console.error('Error en listener de InteractionStore:',error);
-
+            } catch (error) {
+                console.error('Error en listener de InteractionStore:', error);
             }
         }
     }
+
     isLiked(publicationId: string): boolean {
         return !!this._state.likes[publicationId];
     }
+
     isBookmarked(publicationId: string): boolean {
         return !!this._state.bookmarks[publicationId];
     }
+
     getLikePublications(): string[] {
-        return Object.keys(this._state.likes).filter(id=>this._state.likes[id]);
+        return Object.keys(this._state.likes).filter(id => this._state.likes[id]);
     }
+
     getBookmarkPublications(): string[] {
-        return Object.keys(this._state.bookmarks).filter(id=>this._state.bookmarks[id]);
+        return Object.keys(this._state.bookmarks).filter(id => this._state.bookmarks[id]);
     }
-    getStats(){
-        return{
+
+    getStats() {
+        return {
             totalLikes: Object.values(this._state.likes).filter(Boolean).length,
             totalBookmarks: Object.values(this._state.bookmarks).filter(Boolean).length,
             likedIds: this.getLikePublications(),
             bookmarkedIds: this.getBookmarkPublications()
         };
     }
-     subscribe(listener: InteractionListener): () => void {
+
+    subscribe(listener: InteractionListener): () => void {
         console.log('InteractionStore: Nuevo listener suscrito. Total:', this._listeners.length + 1);
         this._listeners.push(listener);
-        
+
         // Emitir estado inicial inmediatamente
         try {
             listener(this._state);
         } catch (error) {
             console.error('Error en listener inicial de InteractionStore:', error);
         }
-        
+
         // Return unsubscribe function
         return () => {
             this._listeners = this._listeners.filter(l => l !== listener);
             console.log('InteractionStore: Listener desuscrito. Total:', this._listeners.length);
         };
     }
+
     // Método para debugging
     debug(): void {
         console.log('InteractionStore Debug:');
@@ -166,7 +196,7 @@ export class InteractionStore {
 
 export const interactionStore = new InteractionStore();
 
-// Extiende la interfaz Window para incluir debugInteractionStore
+// Extend Window interface for debugging
 declare global {
     interface Window {
         debugInteractionStore?: () => void;
@@ -175,6 +205,5 @@ declare global {
 
 // Exponer para debugging en desarrollo
 if (typeof window !== 'undefined' && !window.debugInteractionStore) {
-    window.debugInteractionStore = () => interactionStore.debug();
+    window.debugInteractionStore = (): void => interactionStore.debug();
 }
-

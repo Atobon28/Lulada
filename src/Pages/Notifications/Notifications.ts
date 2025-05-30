@@ -178,12 +178,12 @@ export default class LuladaNotifications extends HTMLElement {
     }
 
     connectedCallback() {
-        console.log('🔗 LuladaNotifications conectado');
+        console.log(' LuladaNotifications conectado');
         this.setupResizeHandler();
     }
 
     disconnectedCallback() {
-        console.log('🔌 LuladaNotifications desconectado');
+        console.log(' LuladaNotifications desconectado');
         window.removeEventListener('resize', this.handleResize.bind(this));
     }
 

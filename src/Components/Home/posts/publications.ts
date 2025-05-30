@@ -1,5 +1,15 @@
 import { InteractionService } from './../../../Services/flux/Interactionservice';
 
+// Define interfaces for better type safety
+interface SavedPublication {
+    id: string;
+    username: string;
+    text: string;
+    stars: number;
+    hasImage: boolean;
+    timestamp: number;
+}
+
 export class Publication extends HTMLElement {
     liked: boolean = false;
     bookmarked: boolean = false;
@@ -237,7 +247,7 @@ export class Publication extends HTMLElement {
                         .like-icon.like{
                         animation:heartBeat 0.4s ease;
                         }
-                        ,boolmark-icon-bookmark{
+                        .bookmark-icon.bookmark{
                         animation:bookmarkBounce 0.3s ease
                         }
                         @keyframes heartBeat {
@@ -247,7 +257,7 @@ export class Publication extends HTMLElement {
                         100% {transform: scale(1);}
                         }
                         @keyframes bookmarkBounce {
-                        o% {transform: scale(1);}
+                        0% {transform: scale(1);}
                         50% {transform: scale(1.15);}
                         100% {transform: scale(1);}
                         }
@@ -275,10 +285,10 @@ export class Publication extends HTMLElement {
                             <svg class="action-icon like-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
-                            <span class="like-count" style=fontfont-size: 14px; font-weight: 600; color: red; display: none;">0</span>
+                            <span class="like-count" style="font-size: 14px; font-weight: 600; color: red; display: none;">0</span>
 
                           </div>
-                          <div tyle="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background-color 0.2s ease;" class="bookmark-group">
+                          <div style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background-color 0.2s ease;" class="bookmark-group">
                             <svg class="action-icon bookmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                             </svg>
@@ -576,9 +586,9 @@ private updateCounter(selector: string, count: number) {
 }
 private saveToSaveList() {
     //obtenemos la lista actual 
-    const saved = JSON.parse(localStorage.getItem('lulada_saved_reviews') || '[]');
+    const saved: SavedPublication[] = JSON.parse(localStorage.getItem('lulada_saved_reviews') || '[]');
 //creacion de objecto de publicacion
-    const publication={
+    const publication: SavedPublication = {
         id:this.publicationId,
         username:this.getAttribute('username') || '',
         text:this.getAttribute('text') || '',
@@ -586,7 +596,7 @@ private saveToSaveList() {
         hasImage: this.hasAttribute('has-image'),
         timestamp: Date.now()
     };
-    const exists =saved.find((p:any)=>p.id=== this.publicationId);
+    const exists = saved.find((p: SavedPublication) => p.id === this.publicationId);
     if(!exists){
         saved.unshift(publication);//añadeal inicio
         localStorage.setItem('lulada_saved_reviews',JSON.stringify(saved));
@@ -594,9 +604,9 @@ private saveToSaveList() {
 }
 private removeFromSavedList(){
     //obtener lista actual
-    const saved=JSON.parse(localStorage.getItem('lulada_saved_reviews')|| '[]');
+    const saved: SavedPublication[] = JSON.parse(localStorage.getItem('lulada_saved_reviews')|| '[]');
     //con este filtramos para que se quite la publicacion
-    const filtered =saved.filter((p: any) => p.id !== this.publicationId);
+    const filtered = saved.filter((p: SavedPublication) => p.id !== this.publicationId);
     //con este guardamos devuelta
     localStorage.setItem('lulada_saved_reviews', JSON.stringify(filtered));
 }//ES UN METODO QUE SIRVE PARA QUE SAVE.TS PUEDA ACTULICAR SU UI OSEA LA INTERFAZ

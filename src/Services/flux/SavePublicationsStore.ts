@@ -17,6 +17,11 @@ export interface SavedPublicationsState {
     error: string | null;
 }
 
+// Define interface for unsave action payload
+interface UnsavePublicationPayload {
+    publicationId: string;
+}
+
 type SavedPublicationsListener = (state: SavedPublicationsState) => void;
 
 export class SavedPublicationsStore {
@@ -42,7 +47,7 @@ export class SavedPublicationsStore {
         try {
             const saved = localStorage.getItem(this.STORAGE_KEY);
             if (saved) {
-                this._state.savedPublications = JSON.parse(saved);
+                this._state.savedPublications = JSON.parse(saved) as SavedPublication[];
                 console.log('Publicaciones guardadas cargadas:', this._state.savedPublications.length);
             }
         } catch (error) {
@@ -59,6 +64,16 @@ export class SavedPublicationsStore {
             console.error('Error guardando publicaciones:', error);
             this._state.error = 'Error guardando publicaciones';
         }
+    }
+
+    // Type guard for unsave payload
+    private isUnsavePayload(payload: unknown): payload is UnsavePublicationPayload {
+        return (
+            payload !== null &&
+            typeof payload === 'object' &&
+            'publicationId' in payload &&
+            typeof (payload as UnsavePublicationPayload).publicationId === 'string'
+        );
     }
 
     private _handleActions(action: Action): void {
@@ -81,8 +96,8 @@ export class SavedPublicationsStore {
                 break;
 
             case 'UNSAVE_PUBLICATION':
-                if (action.payload && typeof action.payload === 'object' && 'publicationId' in action.payload) {
-                    const { publicationId } = action.payload as any;
+                if (this.isUnsavePayload(action.payload)) {
+                    const { publicationId } = action.payload;
                     this._state.savedPublications = this._state.savedPublications.filter(p => p.id !== publicationId);
                     this._saveToStorage();
                     this._emitChange();

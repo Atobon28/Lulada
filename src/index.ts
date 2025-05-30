@@ -7,6 +7,33 @@ interface ComponentConstructor {
     new (...args: unknown[]): HTMLElement;
 }
 
+// Define interfaces for window extensions
+declare global {
+    interface Window {
+        AntojarPopupService?: { getInstance(): { initialize(): void; showPopup(): void; hidePopup?: (() => void) | undefined; }; } | undefined;
+        LuladaServices?: {
+            publicationsService: PublicationsService;
+            antojarService: AntojarPopupService;
+        };
+        LuladaDebug?: {
+            services: {
+                publications: PublicationsService;
+                antojar: AntojarPopupService;
+            };
+            components: {
+                registered: Array<{
+                    name: string;
+                    registered: boolean;
+                }>;
+            };
+        };
+        luladaDebug?: {
+            getStats: () => unknown;
+            clearAll: () => void;
+        };
+    }
+}
+
 // ============================================================================
 // SERVICIOS GLOBALES - Importar primero
 // ============================================================================
@@ -83,6 +110,7 @@ import TextCard from "./Components/Explore/textCard";
 import UserInfo from "./Components/PUser/userProfile/UserInfo";
 import UserSelftProfile from "./Components/PUser/userProfile/UserProfile";
 import UserEdit from "./Components/PUser/userProfile/EditButton";
+import EditProfileModal from "./Components/PUser/userProfile/EditProfileModal";
 import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
 
 // ============================================================================
@@ -165,6 +193,7 @@ function registerComponent(name: string, component: ComponentConstructor): boole
         return false;
     }
 }
+
 //interaciones de servicio
 import { InteractionService } from './Services/flux/Interactionservice';
 
@@ -172,8 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const interactionService = InteractionService.getInstance();
     interactionService.loadInteractions();
     
-    // Debug
-    (window as any).luladaDebug = {
+    // Debug - FIXED: Replace 'any' with proper type
+    window.luladaDebug = {
         getStats: () => interactionService.getStats(),
         clearAll: () => interactionService.clearAll()
     };
@@ -235,6 +264,7 @@ registerComponent('text-card', TextCard);
 registerComponent('user-info', UserInfo);
 registerComponent('user-profile', UserSelftProfile);
 registerComponent('user-edit', UserEdit);
+registerComponent('edit-profile-modal', EditProfileModal);
 registerComponent('restaurant-info', restaurantInfo);
 
 // OTROS - CORREGIDO

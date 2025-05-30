@@ -1,13 +1,13 @@
-import {Actions} from './Action';
-import {interactionStore} from './InteractionStore';
+import { Actions } from './Action';
+import { interactionStore, InteractionState } from './InteractionStore';
 
 export class InteractionService {
     private static instance: InteractionService;
 
-    private constructor(){}
+    private constructor() {}
 
-    public static getInstance(): InteractionService{
-        if (!InteractionService.instance){
+    public static getInstance(): InteractionService {
+        if (!InteractionService.instance) {
             InteractionService.instance = new InteractionService();
         }
         return InteractionService.instance;
@@ -39,8 +39,8 @@ export class InteractionService {
         return interactionStore.getBookmarkPublications(); // Corregido: era getBookmarkedPublications
     }
 
-    // Store subscription
-    public subscribe(callback: (state: any) => void): () => void {
+    // Store subscription - FIXED: Replace 'any' with proper type
+    public subscribe(callback: (state: InteractionState) => void): () => void {
         return interactionStore.subscribe(callback);
     }
 
