@@ -125,11 +125,11 @@ if (typeof window !== 'undefined') {
 
         if (!window.debugSidebar) {
             window.debugSidebar = () => {
-                const sidebar = document.querySelector('lulada-sidebar') as any;
+                const sidebar = document.querySelector('lulada-sidebar') as HTMLElement & { debugNavigation?: () => void };
                 if (sidebar?.debugNavigation) {
                     sidebar.debugNavigation();
                 } else {
-                    console.log("🔍 Sidebar no encontrado o sin debugNavigation");
+                    console.log("Sidebar no encontrado o sin debugNavigation");
                 }
             };
         }

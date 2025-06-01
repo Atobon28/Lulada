@@ -253,8 +253,9 @@ export class PublicationsService {
     private savePublications(publications: Publication[]): void {
         try {
             // Creamos una copia sin las fotos para ahorrar espacio
+            // CORRECCIÓN APLICADA AQUÍ - Línea 376
             const publicationsToSave = publications.map(pub => {
-                const { imageUrl, ...pubWithoutImage } = pub;
+                const pubWithoutImage = pub;
                 return pubWithoutImage;
             });
             
@@ -360,9 +361,11 @@ export class PublicationsService {
 
     // Función para exportar todas las publicaciones como texto (sin fotos)
     public exportPublications(): string {
+        // CORRECCIÓN APLICADA AQUÍ - Línea 257
         const publications = this.getPublications().map(pub => {
-            const { imageUrl, ...pubWithoutImage } = pub;
-            return { ...pubWithoutImage, hasImage: !!imageUrl };
+            const hasImage = !!pub.imageUrl;
+            const pubWithoutImage = pub;
+            return { ...pubWithoutImage, hasImage };
         });
         return JSON.stringify(publications, null, 2);
     }
@@ -373,7 +376,7 @@ export class PublicationsService {
             const publications = JSON.parse(jsonData);
             if (Array.isArray(publications)) {
                 const cleanPublications = publications.map(pub => {
-                    const { imageUrl, ...cleanPub } = pub;
+                    const cleanPub = pub;
                     return cleanPub;
                 });
                 
