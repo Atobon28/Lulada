@@ -100,17 +100,7 @@ export class CardNotifications extends HTMLElement {
                         display: flex;
                     }
                     
-                    .reviews-section {
-                        padding: 90px;
-                        background-color: white;
-                        flex-grow: 1;
-                    }
-                    
-                    .suggestions-section {
-                        width: 150px;
-                        padding: 12px 12px;
-                    }
-                    
+                   
                     .notification-card {
                         display: flex;
                         flex-direction: column;

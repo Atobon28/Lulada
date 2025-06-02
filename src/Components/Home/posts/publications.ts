@@ -403,40 +403,7 @@ export class Publication extends HTMLElement {
         const imageModal = this.shadowRoot?.querySelector('#image-modal') as HTMLElement;
         const closeModal = this.shadowRoot?.querySelector('#close-modal') as HTMLElement;
         
-        if (likeIcon) {
-            likeIcon.addEventListener('click', () => {
-                this.liked = !this.liked;
-                likeIcon.style.color = this.liked ? 'red' : '#666';
-                likeIcon.style.fill = this.liked ? 'red' : 'none';
-                
-                this.dispatchEvent(new CustomEvent('publication-liked', {
-                    bubbles: true,
-                    composed: true,
-                    detail: {
-                        username: this.getAttribute('username'),
-                        liked: this.liked
-                    }
-                }));
-            });
-        }
-
-        if (bookmarkIcon) {
-            bookmarkIcon.addEventListener('click', () => {
-                this.bookmarked = !this.bookmarked;
-                bookmarkIcon.style.color = this.bookmarked ? '#FFD700' : '#666';
-                bookmarkIcon.style.fill = this.bookmarked ? '#FFD700' : 'none';
-                
-                this.dispatchEvent(new CustomEvent('publication-bookmarked', {
-                    bubbles: true,
-                    composed: true,
-                    detail: {
-                        username: this.getAttribute('username'),
-                        bookmarked: this.bookmarked
-                    }
-                }));
-            });
-        }
-
+       
         // NUEVO: Event listeners para imágenes de usuario
         userImages?.forEach(img => {
             img.addEventListener('click', () => {
@@ -602,6 +569,7 @@ private saveToSaveList() {
         localStorage.setItem('lulada_saved_reviews',JSON.stringify(saved));
     }
 }
+
 private removeFromSavedList(){
     //obtener lista actual
     const saved: SavedPublication[] = JSON.parse(localStorage.getItem('lulada_saved_reviews')|| '[]');

@@ -1,11 +1,12 @@
 import { AppDispatcher, Action } from "./Dispacher";
-
+//guarda los likes para que no se pierdan
+//avisa a toda la app cuando algo cambia 
 export interface InteractionState {
     likes: { [publicationId: string]: boolean };
     bookmarks: { [publicationId: string]: boolean };
     isLoading: boolean;
     error: string | null;
-}
+}//libreria de interaciones
 
 type InteractionListener = (state: InteractionState) => void;
 
@@ -20,8 +21,9 @@ export class InteractionStore {
         bookmarks: {},
         isLoading: false,
         error: null
-    };
+    };//saber cuando cambia algo
     private _listeners: InteractionListener[] = [];
+    //guarda el archivo permanente
     private readonly STORAGE_KEY_LIKES = 'lulada_likes';
     private readonly STORAGE_KEY_BOOKMARKS = 'lulada_bookmarks';
 
@@ -33,7 +35,7 @@ export class InteractionStore {
     getState(): InteractionState {
         return { ...this._state };
     }
-
+//busca los like guardados y si los encuentra los carga y si no empieza en vacio
     private _loadFromStorage(): void {
         console.log('InteractionStore: Cargando datos de interacciones desde localStorage...');
         try {
@@ -63,7 +65,7 @@ export class InteractionStore {
             this._state.error = 'Error guardando interacciones';
         }
     }
-
+//escucha cuando al dice dale like cambia segun la orden y guarda cambios
     private _handleActions(action: Action): void {
         console.log('InteractionStore: Recibida accion:', action.type, action.payload);
 
@@ -127,7 +129,7 @@ export class InteractionStore {
             typeof (payload as ToggleInteractionPayload).publicationId === 'string'
         );
     }
-
+    //emite el cambio
     private _emitChange(): void {
         console.log('InteractionStore: Emitiendo cambios a', this._listeners.length, 'listeners');
         console.log('Estado actual:', this._state);
@@ -143,7 +145,7 @@ export class InteractionStore {
 
     isLiked(publicationId: string): boolean {
         return !!this._state.likes[publicationId];
-    }
+    }//prgunta si tiene like
 
     isBookmarked(publicationId: string): boolean {
         return !!this._state.bookmarks[publicationId];

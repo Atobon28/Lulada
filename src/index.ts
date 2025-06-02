@@ -196,6 +196,7 @@ function registerComponent(name: string, component: ComponentConstructor): boole
 
 //interaciones de servicio
 import { InteractionService } from './Services/flux/Interactionservice';
+import RegisterNewAccount from './Pages/NewAccount/containernewaccount';
 
 document.addEventListener('DOMContentLoaded', () => {
     const interactionService = InteractionService.getInstance();
@@ -238,7 +239,7 @@ registerComponent('save-page', Save);
 registerComponent('login-page', LoginPage);
 registerComponent('lulada-settings', LuladaSettings);
 registerComponent('lulada-notifications', LuladaNotifications);
-registerComponent('register-new-account', NewAccount);
+registerComponent('register-new-account', RegisterNewAccount);
 registerComponent('confirm-role', ConfirmRole);
 
 // PÁGINAS DE SETTINGS

@@ -135,14 +135,16 @@ export const Actions = {
 
     //toggle like en una publicacion
     toggleLike:(publicationId: string, username: string)=> {
+        //ver publicacion del usuario si interactua
         console.log('Actions: toggle like en publicación:', publicationId, 'por usuario:', username);
+       //se envia al dispatcher
         AppDispatcher.dispatch({
-            type: 'TOGGLE_LIKE',
-            payload: {
-                publicationId,
-                username,
-                timestamp: Date.now()
-            } as InteractionPayload
+            type: 'TOGGLE_LIKE',//tipo de accion que identificaque hacer
+            payload: {         //datos necesarios para la accion
+                publicationId,  //id de la publicacion
+                username,       //usuario que da like
+                timestamp: Date.now()  //momento exctacto(para ordenar cache)
+            } as InteractionPayload  //tipado de typescript
         });
     },
     //toggle del bookmark de una publicacion
@@ -163,14 +165,14 @@ export const Actions = {
         AppDispatcher.dispatch({
             type:'LOAD_INTERACTIONS',
             payload:{
-                timestamp:Date.now()
+                timestamp:Date.now() // no necesita mas datos
             }
         });
     },
     //limpiar todas las interacciones
     clearAllInteractions: ()=>{
         console.log('Actions:Limpiando todas las intaracciones');
-        AppDispatcher.dispatch({
+        AppDispatcher.dispatch({//restrea el estado
             type: 'CLEAR_INTERACTIONS',
             payload:{
                 timestamp: Date.now()

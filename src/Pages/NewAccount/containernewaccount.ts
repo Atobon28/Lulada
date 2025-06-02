@@ -327,44 +327,83 @@ class RegisterNewAccount extends HTMLElement {
               height: 16px;
               margin-right: 10px;
             }
-            /* Responsive styles */
-                @media (max-width: 900px) {
-                    /* MOSTRAR header responsive en móvil */
-                    .responsive-header {
-                        display: block !important;
-                    }
-                    
-                    /* OCULTAR logo de desktop en móvil */
-                    .desktop-logo {
-                        display: none !important;
-                    }
-                    
-                    .sidebar {
+            /* Barra de navegación responsiva - oculta en desktop */
+                    .responsive-nav-bar {
                         display: none;
-                    }
-                    
-                    .suggestions-section {
-                        display: none;
-                    }
-                    
-                    .responsive-bar {
-                        display: block;
-                    }
-                    
-                    .reviews-section {
-                        margin-left: 1rem;
-                        margin-right: 1rem;
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        background-color: white;
+                        z-index: 1000;
+                        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
                     }
 
-                    .saved-header {
+                    /* RESPONSIVE: Móvil */
+                    @media (max-width: 900px) {
+                        /* MOSTRAR header responsive en móvil */
+                        .responsive-header {
+                            display: block !important;
+                        }
+                        
+                        /* OCULTAR header normal en móvil */
+                        .header-wrapper {
+                            display: none !important;
+                        }
+                        
+                        /* Ocultar sidebar y suggestions en móvil */
+                        .sidebar {
+                            display: none !important;
+                        }
+                        .suggestions-section {
+                            display: none !important;
+                        }
+                        
+                        /* Mostrar barra de navegación inferior */
+                        .responsive-nav-bar {
+                            display: block !important;
+                        }
+                        
+                        /* Ajustar contenido para la barra inferior */
+                        .content {
+                            padding-bottom: 80px;
+                            width: 100%;
+                        }
+                        
+                        .reviews-section {
+                            padding: 15px;
+                        }
+                    }
+
+                    @media (max-width: 600px) {
+                        .reviews-section {
+                            padding: 10px;
+                        }
+                        
+                        .content {
+                            padding-bottom: 85px;
+                        }
+                    }
+
+                    /* Fallback si los componentes no cargan */
+                    .fallback-content {
+                        padding: 40px;
+                        text-align: center;
+                        background-color: white;
+                        border-radius: 10px;
+                        margin: 20px;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .fallback-content h1 {
+                        color: #AAAB54;
                         margin-bottom: 20px;
-                        padding: 15px;
                     }
 
-                    .saved-header h2 {
-                        font-size: 20px;
+                    .fallback-content p {
+                        color: #666;
+                        line-height: 1.6;
                     }
-                }
           }
         </style>
 
