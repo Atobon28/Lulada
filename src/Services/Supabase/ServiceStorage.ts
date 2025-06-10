@@ -1,0 +1,175 @@
+
+import { supabase } from "../Supabase/Supabaseconfig";
+
+export interface LuladaFile {
+  id: string;
+  name: string;
+  url: string;
+  type: "image" | "video" | "document";
+  size: number;
+  uploadedAt: Date;
+}
+
+export class LuladaStorageService {
+  private bucket = "imagespractice";
+
+  //SUBIR ARCHIVOS
+  
+  //Sube cualquier archivo (imagen, video o documento)
+   
+  async uploadFile(file: File, folder: string = "lulada"): Promise<LuladaFile | null> {
+    try {
+      // Validar archivo
+      if (!this.isValidFile(file)) {
+        throw new Error("Tipo de archivo no permitido");
+      }
+
+      // Generar nombre único
+      const timestamp = Date.now();
+      const extension = file.name.split(".").pop();
+      const fileName = `${timestamp}_${Math.random().toString(36).substring(7)}.${extension}`;
+      const filePath = `${folder}/${fileName}`;
+
+      // Subir a Supabase
+      const { error } = await supabase.storage
+        .from(this.bucket)
+        .upload(filePath, file);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Obtener URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from(this.bucket)
+        .getPublicUrl(filePath);
+
+      return {
+        id: `${timestamp}`,
+        name: file.name,
+        url: publicUrl,
+        type: this.getFileType(file),
+        size: file.size,
+        uploadedAt: new Date()
+      };
+
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      throw error;
+    }
+  }
+
+  //OBTIENES ARCHIVOS
+
+  //Obtiene todos los archivos de una carpeta
+  
+  async getFiles(folder: string = "lulada"): Promise<LuladaFile[]> {
+    try {
+      const { data, error } = await supabase.storage
+        .from(this.bucket)
+        .list(folder, {
+          limit: 100,
+          sortBy: { column: "created_at", order: "desc" }
+        });
+
+      if (error) throw error;
+
+      const files: LuladaFile[] = [];
+      
+      for (const file of data || []) {
+        if (file.name !== ".emptyFolderPlaceholder") {
+          const { data: { publicUrl } } = supabase.storage
+            .from(this.bucket)
+            .getPublicUrl(`${folder}/${file.name}`);
+
+          files.push({
+            id: file.name.split("_")[0] || file.name,
+            name: file.name,
+            url: publicUrl,
+            type: this.getFileTypeFromName(file.name),
+            size: file.metadata?.size || 0,
+            uploadedAt: new Date(file.created_at || Date.now())
+          });
+        }
+      }
+
+      return files;
+    } catch (error) {
+      console.error("Error getting files:", error);
+      return [];
+    }
+  }
+
+  // ELIMINAR ARCHIVOS 
+
+  //Elimina un archivo
+   
+  async deleteFile(filePath: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.storage
+        .from(this.bucket)
+        .remove([filePath]);
+
+      return !error;
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      return false;
+    }
+  }
+
+  // VALIDACIONES 
+
+  //Valida si un archivo es válido
+   
+  isValidFile(file: File): boolean {
+    const allowedTypes = [
+      // Imágenes
+      "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp",
+      // Videos
+      "video/mp4", "video/webm",
+      // Documentos
+      "application/pdf", "text/plain"
+    ];
+
+    const maxSize = 50 * 1024 * 1024; // 50MB
+
+    return allowedTypes.includes(file.type) && file.size <= maxSize;
+  }
+
+  // Obtiene el tipo de archivo
+   
+  private getFileType(file: File): "image" | "video" | "document" {
+    if (file.type.startsWith("image/")) return "image";
+    if (file.type.startsWith("video/")) return "video";
+    return "document";
+  }
+
+  // Obtiene el tipo por nombre de archivo
+   
+  private getFileTypeFromName(fileName: string): "image" | "video" | "document" {
+    const ext = fileName.split(".").pop()?.toLowerCase();
+    
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext || "")) return "image";
+    if (["mp4", "webm"].includes(ext || "")) return "video";
+    return "document";
+  }
+}
+
+// INSTANCIA Y FUNCIONES EXPORTADAS 
+
+export const luladaStorage = new LuladaStorageService();
+
+// Funciones simples para usar directamente
+export const uploadLuladaFile = async (file: File, folder?: string) => {
+  return await luladaStorage.uploadFile(file, folder);
+};
+
+export const getLuladaFiles = async (folder?: string) => {
+  return await luladaStorage.getFiles(folder);
+};
+
+export const deleteLuladaFile = async (filePath: string) => {
+  return await luladaStorage.deleteFile(filePath);
+};
+
+export default LuladaStorageService;

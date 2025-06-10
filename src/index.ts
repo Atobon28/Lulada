@@ -26,6 +26,12 @@ interface ComponentConstructor {
 // =======================
 import './services-global';
 import { InteractionService } from './Services/flux/Interactionservice';
+import { LuladaStorageService,luladaStorage} from './Services/Supabase/ServiceStorage';
+
+
+
+
+
 
 // CORE
 import RootComponent from "./Components/Root/RootComponent";
@@ -138,6 +144,7 @@ if (typeof window !== 'undefined') {
         console.error('Error asignando servicios:', error);
     }
 }
+
 
 // =======================
 // REGISTRO DE COMPONENTES
