@@ -1,6 +1,9 @@
 // Página de registro de nuevos usuarios
+import { registerUser } from '../../Services/firebase/Authservice';
+
 class RegisterNewAccount extends HTMLElement {
-  private selectedRole: string = '';
+  //Tiene una propiedad privada selectedRole para almacenar el tipo de cuenta seleccionado
+  private selectedRole: 'person' | 'restaurant' | '' = '';
 
   constructor() {
     super();
@@ -10,6 +13,7 @@ class RegisterNewAccount extends HTMLElement {
   connectedCallback() {
     this.render();
     this.setupEventListeners();
+    this.addInputListeners();
   }
 
   // Dibuja la página de registro
@@ -68,6 +72,33 @@ class RegisterNewAccount extends HTMLElement {
             width: 90%;
             margin-top: 10px;
             margin-bottom: 30px;
+          }
+
+          /* Estilos para los inputs personalizados */
+          .input-wrapper {
+            position: relative;
+            margin-bottom: 15px;
+          }
+
+          .custom-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+          }
+
+          .custom-input:focus {
+            outline: none;
+            border-color: #AAAB54;
+            box-shadow: 0 0 0 3px rgba(170, 171, 84, 0.1);
+          }
+
+          .custom-input::placeholder {
+            color: #999;
           }
 
           .role-selection {
@@ -169,6 +200,40 @@ class RegisterNewAccount extends HTMLElement {
             transform: none;
           }
 
+          /* Estilos para mensajes de feedback */
+          .message {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+          }
+
+          .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #e57373;
+          }
+
+          .success-message {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #81c784;
+          }
+
+          .loading {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+          }
+
+          .loading.show {
+            display: block;
+          }
+
           .line {
             width: 90%;
             height: 1px;
@@ -229,10 +294,18 @@ class RegisterNewAccount extends HTMLElement {
             <h2 id="title">Registrate</h2>
             
             <div class="container-input">
-              <lulada-boxtext placeholder="Nombre"></lulada-boxtext>
-              <lulada-boxtext placeholder="Apellido"></lulada-boxtext>
-              <lulada-boxtext placeholder="Correo Electronico"></lulada-boxtext>
-              <lulada-boxtext placeholder="Contraseña"></lulada-boxtext>
+              <div class="input-wrapper">
+                <input type="text" class="custom-input" id="firstName" placeholder="Nombre" required>
+              </div>
+              <div class="input-wrapper">
+                <input type="text" class="custom-input" id="lastName" placeholder="Apellido" required>
+              </div>
+              <div class="input-wrapper">
+                <input type="email" class="custom-input" id="email" placeholder="Correo Electrónico" required>
+              </div>
+              <div class="input-wrapper">
+                <input type="password" class="custom-input" id="password" placeholder="Contraseña" required>
+              </div>
             </div>
 
             <div class="role-selection">
@@ -253,6 +326,11 @@ class RegisterNewAccount extends HTMLElement {
             </div>
 
             <button class="continue-btn" id="continue-button" disabled>Continuar</button>
+            
+            <!-- Elementos de feedback -->
+            <div class="loading" id="loading">Registrando usuario...</div>
+            <div class="message error-message" id="error-message"></div>
+            <div class="message success-message" id="success-message"></div>
             
             <div class="line"></div>
             
@@ -277,7 +355,7 @@ class RegisterNewAccount extends HTMLElement {
 
     // Evento para selección de "Persona"
     personCheckbox?.addEventListener('change', () => {
-      if (personCheckbox.checked) {
+      if (personCheckbox.checked) {//Implementa selección exclusiva (solo un rol puede estar seleccionado)
         restaurantCheckbox.checked = false;
         this.selectedRole = 'person';
         personCheckbox.closest('.option-label')?.classList.add('selected');
@@ -303,33 +381,156 @@ class RegisterNewAccount extends HTMLElement {
       this.updateContinueButton();
     });
 
-    continueButton?.addEventListener('click', () => {
-      this.handleContinue();
+    // Manejar envío del formulario
+    continueButton?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await this.handleRegister();
     });
 
+    // Botón para ir al login
     loginButton?.addEventListener('click', () => {
       window.location.href = '/login';
     });
   }
-
-  // Habilita/deshabilita el botón "Continuar"
+//Escucha cambios en todos los inputs
+//Llama a updateContinueButton para validar el formulario
+  addInputListeners() {
+    if (!this.shadowRoot) return;
+    
+    // Esperar a que los elementos estén renderizados
+    setTimeout(() => {
+      const inputs = this.shadowRoot?.querySelectorAll('.custom-input');
+      inputs?.forEach(input => {
+        input.addEventListener('input', () => this.updateContinueButton());
+      });
+    }, 100);
+  }
+//Valida en tiempo real que todos los campos estén llenos
+//Habilita/deshabilita el botón de continuar según la validación
   updateContinueButton() {
-    const continueButton = this.shadowRoot?.getElementById('continue-button') as HTMLButtonElement;
+    if (!this.shadowRoot) return;
+    
+    const continueButton = this.shadowRoot.getElementById('continue-button') as HTMLButtonElement;
     if (!continueButton) return;
-    continueButton.disabled = !this.selectedRole;
+    
+    const firstName = (this.shadowRoot.getElementById('firstName') as HTMLInputElement)?.value?.trim();
+    const lastName = (this.shadowRoot.getElementById('lastName') as HTMLInputElement)?.value?.trim();
+    const email = (this.shadowRoot.getElementById('email') as HTMLInputElement)?.value?.trim();
+    const password = (this.shadowRoot.getElementById('password') as HTMLInputElement)?.value?.trim();
+    
+    const allFieldsFilled = firstName && lastName && email && password && this.selectedRole;
+    continueButton.disabled = !allFieldsFilled;
   }
 
-  // Maneja el click en "Continuar"
-  handleContinue() {
-    if (!this.selectedRole) {
-      alert('Por favor, selecciona un tipo de cuenta.');
+  async handleRegister() {
+    if (!this.shadowRoot) return;
+
+    // Obtener elementos del DOM
+    const firstNameInput = this.shadowRoot.getElementById('firstName') as HTMLInputElement;
+    const lastNameInput = this.shadowRoot.getElementById('lastName') as HTMLInputElement;
+    const emailInput = this.shadowRoot.getElementById('email') as HTMLInputElement;
+    const passwordInput = this.shadowRoot.getElementById('password') as HTMLInputElement;
+    const continueButton = this.shadowRoot.getElementById('continue-button') as HTMLButtonElement;
+    const errorMessage = this.shadowRoot.getElementById('error-message') as HTMLElement;
+    const successMessage = this.shadowRoot.getElementById('success-message') as HTMLElement;
+    const loading = this.shadowRoot.getElementById('loading') as HTMLElement;
+
+    // Verificar que todos los elementos existan
+    if (!firstNameInput || !lastNameInput || !emailInput || !passwordInput) {
+      console.error('No se encontraron todos los elementos del formulario');
       return;
     }
 
-    const roleText = this.selectedRole === 'person' ? 'Persona' : 'Restaurante';
-    alert(`¡Registro exitoso! Tu cuenta como ${roleText} ha sido creada.`);
-    window.location.href = '/home';
+    // Obtener valores
+    const firstName = firstNameInput.value.trim();
+    const lastName = lastNameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    // Validaciones
+    if (!firstName || !lastName || !email || !password || !this.selectedRole) {
+      this.showError('Por favor, completa todos los campos y selecciona un tipo de cuenta', errorMessage);
+      return;
+    }
+
+    if (password.length < 6) {
+      this.showError('La contraseña debe tener al menos 6 caracteres', errorMessage);
+      return;
+    }
+
+    // Mostrar loading
+    continueButton.disabled = true;
+    loading.classList.add('show');
+    this.hideMessages();
+
+    try {
+      console.log('Iniciando registro...', { email, firstName, lastName, userType: this.selectedRole });
+      
+      // LLAMAR AL SERVICIO DE FIREBASE
+      const response = await registerUser(email, password, firstName, lastName, this.selectedRole);
+      
+      if (response.success) {
+        this.showSuccess('¡Registro exitoso! Redirigiendo...', successMessage);
+        
+        // Limpiar formulario
+        this.clearForm();
+        
+        // Redirigir después de 2 segundos
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else {
+        this.showError(response.error || 'Error al registrar usuario', errorMessage);
+      }
+    } catch (error) {
+      console.error('Error inesperado:', error);
+      this.showError('Error inesperado. Intenta nuevamente', errorMessage);
+    } finally {
+      continueButton.disabled = false;
+      loading.classList.remove('show');
+    }
+  }
+
+  private showError(message: string, errorElement: HTMLElement) {
+    if (errorElement) {
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    }
+  }
+
+  private showSuccess(message: string, successElement: HTMLElement) {
+    if (successElement) {
+      successElement.textContent = message;
+      successElement.style.display = 'block';
+    }
+  }
+
+  private hideMessages() {
+    const errorMessage = this.shadowRoot?.getElementById('error-message') as HTMLElement;
+    const successMessage = this.shadowRoot?.getElementById('success-message') as HTMLElement;
+    
+    if (errorMessage) errorMessage.style.display = 'none';
+    if (successMessage) successMessage.style.display = 'none';
+  }
+
+  private clearForm() {
+    if (!this.shadowRoot) return;
+    
+    const inputs = this.shadowRoot.querySelectorAll('.custom-input') as NodeListOf<HTMLInputElement>;
+    inputs.forEach(input => input.value = '');
+    
+    const checkboxes = this.shadowRoot.querySelectorAll('.checkbox-input') as NodeListOf<HTMLInputElement>;
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+    
+    const labels = this.shadowRoot.querySelectorAll('.option-label');
+    labels.forEach(label => label.classList.remove('selected'));
+    
+    this.selectedRole = '';
+    this.updateContinueButton();
   }
 }
+
+// Definir el custom element
+customElements.define('register-new-account', RegisterNewAccount);
 
 export default RegisterNewAccount;

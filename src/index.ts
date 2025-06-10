@@ -219,6 +219,7 @@ registerComponent("login-form", LoginForm);
 registerComponent('lulada-boxtext', BoxText);
 registerComponent('button-new-account', ButtonNewAccount);
 
+
 // SETTINGS COMPONENTS
 registerComponent('cajon-texto', CajonTexto);
 registerComponent('cajon-list', CajonList);
