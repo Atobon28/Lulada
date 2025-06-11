@@ -38,6 +38,7 @@
     "webpack-dev-server": "^5.2.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
     "firebase": "^11.8.1"
   }
 }

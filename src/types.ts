@@ -32,3 +32,12 @@ export interface AntojarServiceType {
 }
 
 export {};
+export type UserType ={
+    id:string;
+    username:string;
+    email:string;
+    createdAt:string;
+};
+export type PostType={
+    
+}

@@ -26,6 +26,12 @@ interface ComponentConstructor {
 // =======================
 import './services-global';
 import { InteractionService } from './Services/flux/Interactionservice';
+import { LuladaStorageService,luladaStorage} from './Services/Supabase/ServiceStorage';
+
+
+
+
+
 
 // CORE
 import RootComponent from "./Components/Root/RootComponent";
@@ -139,6 +145,7 @@ if (typeof window !== 'undefined') {
     }
 }
 
+
 // =======================
 // REGISTRO DE COMPONENTES
 // =======================
@@ -218,6 +225,7 @@ registerComponent("login-form", LoginForm);
 // NEW ACCOUNT
 registerComponent('lulada-boxtext', BoxText);
 registerComponent('button-new-account', ButtonNewAccount);
+
 
 // SETTINGS COMPONENTS
 registerComponent('cajon-texto', CajonTexto);
