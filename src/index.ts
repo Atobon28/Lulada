@@ -14,6 +14,19 @@ declare global {
             publicationsService: ReturnType<typeof PublicationsService.getInstance>;
             antojarService: ReturnType<typeof AntojarPopupService.getInstance>;
         };
+        LuladaFirebase?: {
+            userService: any;
+        };
+        LuladaFirebasePublications?: {
+            service: any;
+        };
+        debugFirebaseAuth?: () => void;
+        debugFirebasePublications?: () => void;
+        debugAuthState?: () => void;
+        forceAuthRefresh?: () => void;
+        createTestPublication?: () => Promise<void>;
+        checkLuladaServices?: () => void;
+        debugAllLuladaServices?: () => void;
     }
 }
 
@@ -27,11 +40,6 @@ interface ComponentConstructor {
 import './services-global';
 import { InteractionService } from './Services/flux/Interactionservice';
 import { LuladaStorageService,luladaStorage} from './Services/Supabase/ServiceStorage';
-
-
-
-
-
 
 // CORE
 import RootComponent from "./Components/Root/RootComponent";
@@ -145,7 +153,6 @@ if (typeof window !== 'undefined') {
     }
 }
 
-
 // =======================
 // REGISTRO DE COMPONENTES
 // =======================
@@ -226,7 +233,6 @@ registerComponent("login-form", LoginForm);
 registerComponent('lulada-boxtext', BoxText);
 registerComponent('button-new-account', ButtonNewAccount);
 
-
 // SETTINGS COMPONENTS
 registerComponent('cajon-texto', CajonTexto);
 registerComponent('cajon-list', CajonList);
@@ -239,6 +245,188 @@ registerComponent('cambiar-nombre-simple', CambiarNombreSimple);
 registerComponent('cambiar-contrasena-simple', CambiarContrasenaSimple);
 
 // =======================
+// FIREBASE INTEGRATION (Opcional)
+// =======================
+const initializeFirebaseIfAvailable = async (): Promise<void> => {
+    try {
+        const { FirebaseUserService } = await import('./Services/firebase/FirebaseUserService');
+        const firebaseUserService = FirebaseUserService.getInstance();
+        
+        // Agregar al objeto global para debug
+        if (typeof window !== 'undefined') {
+            const globalWindow = window as typeof window & {
+                LuladaFirebase?: {
+                    userService: typeof firebaseUserService;
+                };
+                debugFirebaseAuth?: () => void;
+                debugAuthState?: () => void;
+                forceAuthRefresh?: () => void;
+            };
+
+            if (!globalWindow.LuladaFirebase) {
+                globalWindow.LuladaFirebase = {
+                    userService: firebaseUserService
+                };
+            }
+
+            // Funciones de debug para Firebase
+            if (!globalWindow.debugFirebaseAuth) {
+                globalWindow.debugFirebaseAuth = () => {
+                    firebaseUserService.debugInfo();
+                };
+            }
+
+            if (!globalWindow.debugAuthState) {
+                globalWindow.debugAuthState = () => {
+                    console.log('🔥 Estado actual:', firebaseUserService.getAuthState());
+                    console.log('🔥 Usuario actual:', firebaseUserService.getCurrentUser());
+                    console.log('🔥 ¿Autenticado?:', firebaseUserService.isAuthenticated());
+                };
+            }
+
+            if (!globalWindow.forceAuthRefresh) {
+                globalWindow.forceAuthRefresh = () => {
+                    firebaseUserService.refreshAuthState();
+                    console.log('🔥 Estado de auth refrescado');
+                };
+            }
+        }
+
+        console.log('🔥 Firebase User Service inicializado');
+        console.log('🔥 Estado de autenticación:', firebaseUserService.isAuthenticated());
+        
+    } catch (error) {
+        // Firebase no disponible, continuar sin él
+        console.log('Firebase no disponible, la app funcionará sin autenticación');
+    }
+};
+
+// =======================
+// FIREBASE PUBLICATIONS INTEGRATION
+// =======================
+const initializeFirebasePublications = async (): Promise<void> => {
+    try {
+        const { FirebasePublicationsService } = await import('./Services/firebase/FirebasePublicationsService');
+        const publicationsService = FirebasePublicationsService.getInstance();
+        
+        // Agregar al objeto global para debug
+        if (typeof window !== 'undefined') {
+            const globalWindow = window as typeof window & {
+                LuladaFirebasePublications?: {
+                    service: typeof publicationsService;
+                };
+                debugFirebasePublications?: () => void;
+                createTestPublication?: () => Promise<void>;
+            };
+
+            if (!globalWindow.LuladaFirebasePublications) {
+                globalWindow.LuladaFirebasePublications = {
+                    service: publicationsService
+                };
+            }
+
+            // Función de debug para publicaciones
+            if (!globalWindow.debugFirebasePublications) {
+                globalWindow.debugFirebasePublications = () => {
+                    const stats = publicationsService.getStats();
+                    console.log('🔥 Firebase Publications Debug:');
+                    console.log('- Total publicaciones:', stats.total);
+                    console.log('- Por ubicación:', stats.byLocation);
+                    console.log('- Top restaurantes:', stats.topRestaurants);
+                };
+            }
+
+            // Función para crear publicación de prueba (solo desarrollo)
+            if (!globalWindow.createTestPublication) {
+                globalWindow.createTestPublication = async () => {
+                    try {
+                        const { FirebaseUserService } = await import('./Services/firebase/FirebaseUserService');
+                        const userService = FirebaseUserService.getInstance();
+                        const authState = userService.getAuthState();
+                        
+                        if (!authState.isAuthenticated || !authState.user) {
+                            console.log('❌ Debes estar autenticado para crear una publicación de prueba');
+                            return;
+                        }
+
+                        const testPublication = {
+                            text: 'Esta es una publicación de prueba desde la consola del navegador. ¡El sistema Firebase está funcionando!',
+                            stars: 5,
+                            restaurant: 'Restaurante de Prueba',
+                            location: 'centro' as const
+                        };
+
+                        const publicationId = await publicationsService.createPublication(testPublication, authState.user);
+                        
+                        if (publicationId) {
+                            console.log('✅ Publicación de prueba creada con ID:', publicationId);
+                        } else {
+                            console.log('❌ Error creando publicación de prueba');
+                        }
+                    } catch (error) {
+                        console.error('Error en publicación de prueba:', error);
+                    }
+                };
+            }
+        }
+
+        console.log('🔥 Firebase Publications Service inicializado');
+        
+    } catch (error) {
+        console.log('⚠️ Firebase Publications no disponible:', error);
+    }
+};
+
+// =======================
+// VERIFICACIÓN SUPABASE (SIMPLIFICADA)
+// =======================
+const verifySupabaseConnection = async (): Promise<void> => {
+    try {
+        // Importar dinámicamente para evitar errores si no está instalado
+        const { supabase } = await import('./Services/Supabase/Supabaseconfig');
+        
+        console.log('🔍 Verificando Supabase...');
+        
+        // Test básico de conexión
+        const { data, error } = await supabase
+            .from('test')
+            .select('*')
+            .limit(1);
+            
+        if (error && error.code !== 'PGRST116') {
+            throw error;
+        }
+        
+        console.log('✅ Supabase está funcionando correctamente');
+        
+        // Agregar función global para debug
+        if (typeof window !== 'undefined') {
+            (window as any).debugSupabase = async () => {
+                console.log('📊 Estado de Supabase:');
+                console.log('- Cliente:', !!supabase);
+                console.log('- URL:', supabase ? 'Configurado' : 'No configurado');
+                
+                try {
+                    const { data, error } = await supabase
+                        .from('test')
+                        .select('*')
+                        .limit(1);
+                    
+                    console.log('- Conexión:', error ? 'Error' : 'OK');
+                    if (error) console.log('- Error:', error.message);
+                } catch (e) {
+                    console.log('- Error de conexión:', e);
+                }
+            };
+        }
+        
+    } catch (error) {
+        console.log('⚠️ Supabase no disponible:', error);
+        console.log('📝 La aplicación funcionará sin almacenamiento en la nube');
+    }
+};
+
+// =======================
 // INICIALIZACIÓN FINAL
 // =======================
 document.addEventListener('DOMContentLoaded', () => {
@@ -246,7 +434,167 @@ document.addEventListener('DOMContentLoaded', () => {
     interactionService.loadInteractions();
 
     antojarService.initialize();
+    
+    // Inicializar Firebase Auth (opcional)
+    initializeFirebaseIfAvailable();
+    
+    // Inicializar Firebase Publications (opcional)
+    initializeFirebasePublications();
+    
+    // Verificar Supabase (opcional)
+    verifySupabaseConnection();
 });
+
+// =======================
+// LISTENER SILENCIOSO PARA AUTH CHANGES
+// =======================
+document.addEventListener('auth-state-changed', (event) => {
+    const authEvent = event as CustomEvent;
+    const authState = authEvent.detail;
+    
+    // Log silencioso para debug
+    if (authState.isAuthenticated) {
+        console.log('✅ Usuario autenticado silenciosamente:', authState.user?.email);
+    } else if (!authState.isLoading) {
+        console.log('❌ Usuario no autenticado');
+    }
+});
+
+// =======================
+// LISTENER PARA NUEVAS PUBLICACIONES
+// =======================
+document.addEventListener('nueva-publicacion-firebase', (event) => {
+    const publicationEvent = event as CustomEvent;
+    const { publicationId, userId } = publicationEvent.detail;
+    
+    console.log('📱 Nueva publicación Firebase creada:', { publicationId, userId });
+    
+    // Mostrar notificación global
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #4285f4, #34a853);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 10001;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+        animation: slideDown 0.3s ease;
+    `;
+    
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse 2s infinite;"></div>
+            <span>Nueva publicación en el feed</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease forwards';
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+});
+
+// =======================
+// FUNCIÓN GLOBAL DE ESTADO
+// =======================
+if (typeof window !== 'undefined') {
+    window.checkLuladaServices = () => {
+        console.log('🔍 Estado completo de servicios Lulada:');
+        console.log('📦 Publications (Local):', !!window.LuladaServices?.publicationsService);
+        console.log('📝 Antojar:', !!window.LuladaServices?.antojarService);
+        console.log('🔥 Firebase Auth:', !!window.LuladaFirebase?.userService);
+        console.log('🔥 Firebase Publications:', !!window.LuladaFirebasePublications?.service);
+        console.log('☁️ Supabase:', typeof (window as any).debugSupabase === 'function');
+        
+        // Test rápido de cada servicio
+        if (window.LuladaServices?.publicationsService) {
+            const stats = window.LuladaServices.publicationsService.getStats();
+            console.log('📊 Publicaciones locales:', stats.total);
+        }
+        
+        if (window.LuladaFirebase?.userService) {
+            const authState = window.LuladaFirebase.userService.getAuthState();
+            console.log('👤 Usuario autenticado:', authState.isAuthenticated);
+            if (authState.isAuthenticated) {
+                console.log('👤 Usuario:', authState.user?.displayName || authState.user?.email);
+            }
+        }
+
+        if (window.LuladaFirebasePublications?.service) {
+            const stats = window.LuladaFirebasePublications.service.getStats();
+            console.log('🔥 Publicaciones Firebase:', stats.total);
+            console.log('🔥 Top restaurantes:', stats.topRestaurants.slice(0, 3));
+        }
+    };
+
+    // Función para debug completo
+    window.debugAllLuladaServices = () => {
+        console.log('🚀 === DEBUG COMPLETO LULADA ===');
+        
+        // Firebase Auth
+        if (window.debugFirebaseAuth) {
+            console.log('\n🔥 FIREBASE AUTH:');
+            window.debugFirebaseAuth();
+        }
+        
+        // Firebase Publications
+        if (window.debugFirebasePublications) {
+            console.log('\n🔥 FIREBASE PUBLICATIONS:');
+            window.debugFirebasePublications();
+        }
+        
+        // Supabase
+        if ((window as any).debugSupabase) {
+            console.log('\n☁️ SUPABASE:');
+            (window as any).debugSupabase();
+        }
+        
+        // Estado general
+        console.log('\n📊 RESUMEN:');
+        window.checkLuladaServices?.();
+        
+        console.log('\n🎯 COMANDOS DISPONIBLES:');
+        console.log('- window.debugFirebaseAuth()');
+        console.log('- window.debugFirebasePublications()');
+        console.log('- window.createTestPublication() (si estás autenticado)');
+        console.log('- window.checkLuladaServices()');
+        console.log('- window.debugAllLuladaServices()');
+        
+        console.log('\n=== FIN DEBUG ===');
+    };
+}
+
+// Agregar estilos para animaciones de toast
+if (typeof document !== 'undefined') {
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 0); opacity: 1; }
+            to { transform: translate(-50%, -100%); opacity: 0; }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 // =======================
 // EXPORTS

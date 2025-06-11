@@ -1,15 +1,20 @@
-import PublicationsService from '../../../Services/PublicationsService';
+import { FirebasePublicationsService, CreatePublicationData } from '../../../Services/firebase/FirebasePublicationsService';
+import { FirebaseUserService } from '../../../Services/firebase/FirebaseUserService';
 
-// Popup para crear reseñas
 export class LuladaAntojar extends HTMLElement {
     shadow: ShadowRoot;
     selectedStars: number = 0;
     selectedZone: string = "";
     selectedPhoto: string | undefined = undefined;
+    
+    private firebasePublications: FirebasePublicationsService;
+    private firebaseUser: FirebaseUserService;
 
     constructor() {
         super();
         this.shadow = this.attachShadow({ mode: 'open' });
+        this.firebasePublications = FirebasePublicationsService.getInstance();
+        this.firebaseUser = FirebaseUserService.getInstance();
     }
 
     connectedCallback() {
@@ -74,11 +79,46 @@ export class LuladaAntojar extends HTMLElement {
                     border-radius: 50%;
                     margin-right: 12px;
                     object-fit: cover;
+                    border: 2px solid #AAAB54;
                 }
                 .header-text {
                     font-size: 18px;
                     color: #999;
                     font-weight: normal;
+                }
+                .user-info {
+                    display: flex;
+                    flex-direction: column;
+                }
+                .user-name {
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #333;
+                }
+                .auth-status {
+                    font-size: 11px;
+                    color: #22c55e;
+                    font-weight: 500;
+                }
+
+                .restaurant-input {
+                    width: 100%;
+                    padding: 12px 16px;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    margin-bottom: 16px;
+                    box-sizing: border-box;
+                    outline: none;
+                    transition: border-color 0.2s ease;
+                }
+
+                .restaurant-input:focus {
+                    border-color: #AAAB54;
+                }
+
+                .restaurant-input::placeholder {
+                    color: #999;
                 }
 
                 textarea {
@@ -295,7 +335,7 @@ export class LuladaAntojar extends HTMLElement {
                     }
                 }
                 
-                .publish-button:hover {
+                .publish-button:hover:not(:disabled) {
                     transform: scale(1.05);
                     background-color: rgb(132, 134, 58);
                 }
@@ -331,6 +371,42 @@ export class LuladaAntojar extends HTMLElement {
                         justify-content: center;
                     }
                 }
+
+                .auth-warning {
+                    background: linear-gradient(135deg, #f59e0b, #d97706);
+                    color: white;
+                    padding: 12px 16px;
+                    border-radius: 8px;
+                    margin-bottom: 16px;
+                    font-size: 14px;
+                    text-align: center;
+                }
+
+                .loading {
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    color: #666;
+                }
+
+                .loading.visible {
+                    display: flex;
+                }
+
+                .loading-spinner {
+                    width: 16px;
+                    height: 16px;
+                    border: 2px solid #f3f3f3;
+                    border-top: 2px solid #AAAB54;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
             </style>
             
             <div class="popup">
@@ -343,8 +419,25 @@ export class LuladaAntojar extends HTMLElement {
                         alt="Profile" 
                         class="profile-pic"
                     >
-                    <div class="header-text">¿Qué probaste?</div>
+                    <div>
+                        <div id="user-info" class="user-info">
+                            <div class="user-name">Usuario</div>
+                            <div class="auth-status" id="auth-status"></div>
+                        </div>
+                    </div>
                 </div>
+
+                <div id="auth-warning" class="auth-warning" style="display: none;">
+                    ⚠️ Inicia sesión para que tu reseña aparezca con tu nombre real
+                </div>
+                
+                <input 
+                    type="text" 
+                    id="restaurant-input"
+                    class="restaurant-input"
+                    placeholder="¿En qué restaurante comiste?"
+                    maxlength="100"
+                >
                 
                 <textarea placeholder="Cuéntanos tu experiencia..."></textarea>
                 
@@ -387,18 +480,47 @@ export class LuladaAntojar extends HTMLElement {
                         <span class="star-outline" data-value="5">☆</span>
                     </div>
                     
-                    <button id="publicar" class="publish-button">Publicar</button>
+                    <button id="publicar" class="publish-button">
+                        <span class="button-text">Publicar</span>
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <span>Publicando...</span>
+                        </div>
+                    </button>
                 </div>
             </div>
         `;
 
-        this.updateProfilePicture();
+        this.updateUserInfo();
+    }
+
+    private async updateUserInfo(): Promise<void> {
+        const authState = this.firebaseUser.getAuthState();
+        const profilePic = this.shadow.querySelector('#profile-pic') as HTMLImageElement;
+        const userInfo = this.shadow.querySelector('#user-info .user-name');
+        const authStatus = this.shadow.querySelector('#auth-status');
+        const authWarning = this.shadow.querySelector('#auth-warning') as HTMLElement;
+
+        if (authState.isAuthenticated && authState.user) {
+            // Usuario autenticado
+            profilePic.src = authState.user.photoURL || 'https://randomuser.me/api/portraits/women/44.jpg';
+            if (userInfo) userInfo.textContent = authState.user.displayName || 'Usuario';
+            if (authStatus) authStatus.textContent = '✓ Verificado con Firebase';
+            authWarning.style.display = 'none';
+        } else {
+            // Usuario no autenticado
+            profilePic.src = 'https://randomuser.me/api/portraits/women/44.jpg';
+            if (userInfo) userInfo.textContent = 'Usuario Anónimo';
+            if (authStatus) authStatus.textContent = 'No verificado';
+            authWarning.style.display = 'block';
+        }
     }
 
     setupEvents() {
         const cerrar = this.shadow.querySelector('#cerrar');
         const publicar = this.shadow.querySelector('#publicar');
         const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
+        const restaurantInput = this.shadow.querySelector('#restaurant-input') as HTMLInputElement;
         const estrellas = this.shadow.querySelectorAll('.star-outline');
         const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
         
@@ -416,50 +538,12 @@ export class LuladaAntojar extends HTMLElement {
 
         // Evento publicar
         if (publicar) {
-            publicar.addEventListener('click', () => {
-                const texto = textarea.value.trim();
-                
-                if (texto && this.selectedStars > 0 && this.selectedZone) {
-                    const nuevaPublicacion = {
-                        username: "Usuario" + Math.floor(Math.random() * 1000),
-                        text: texto,
-                        stars: this.selectedStars,
-                        location: this.selectedZone,
-                        hasImage: !!this.selectedPhoto,
-                        timestamp: Date.now(),
-                        imageUrl: this.selectedPhoto
-                    };
-
-                    try {
-                        const publicationsService = PublicationsService.getInstance();
-                        publicationsService.addPublication(nuevaPublicacion);
-                        
-                        this.resetComponentState();
-                        this.dispatchEvent(new CustomEvent('antojar-cerrado', { bubbles: true, composed: true }));
-                        this.showSuccessMessage();
-                        
-                    } catch (error) {
-                        console.error("Error al publicar:", error);
-                        const publicaciones = JSON.parse(sessionStorage.getItem('publicaciones') || '[]');
-                        publicaciones.unshift(nuevaPublicacion);
-                        sessionStorage.setItem('publicaciones', JSON.stringify(nuevaPublicacion));
-                        
-                        this.dispatchEvent(new CustomEvent('resena-publicada', {
-                            detail: nuevaPublicacion,
-                            bubbles: true,
-                            composed: true
-                        }));
-
-                        this.resetComponentState();
-                        alert('¡Publicación creada exitosamente!');
-                    }
-                } else {
-                    alert('Por favor completa todos los campos: texto, calificación y zona.');
-                }
+            publicar.addEventListener('click', async () => {
+                await this.handlePublish(textarea, restaurantInput);
             });
         }
 
-        // Evento selector de zona
+        // Eventos para otros controles
         if (zoneSelect) {
             zoneSelect.addEventListener('change', () => {
                 this.selectedZone = zoneSelect.value;
@@ -467,7 +551,6 @@ export class LuladaAntojar extends HTMLElement {
             });
         }
 
-        // Eventos para fotos
         if (photoIcon) {
             photoIcon.addEventListener('click', () => {
                 fileInput?.click();
@@ -490,7 +573,6 @@ export class LuladaAntojar extends HTMLElement {
             });
         }
 
-        // Eventos para estrellas
         estrellas.forEach((estrella) => {
             estrella.addEventListener('click', (e) => {
                 const target = e.target as HTMLElement;
@@ -512,15 +594,177 @@ export class LuladaAntojar extends HTMLElement {
             });
         });
 
-        // Evento textarea
         if (textarea) {
             textarea.addEventListener('input', () => {
                 this.updatePublishButton();
             });
         }
+
+        if (restaurantInput) {
+            restaurantInput.addEventListener('input', () => {
+                this.updatePublishButton();
+            });
+        }
     }
 
-    // Manejar selección de foto
+    private async handlePublish(textarea: HTMLTextAreaElement, restaurantInput: HTMLInputElement): Promise<void> {
+        const texto = textarea.value.trim();
+        const restaurant = restaurantInput.value.trim();
+        
+        if (!texto || !restaurant || this.selectedStars === 0 || !this.selectedZone) {
+            alert('Por favor completa todos los campos: restaurante, texto, calificación y zona.');
+            return;
+        }
+
+        const authState = this.firebaseUser.getAuthState();
+        
+        if (!authState.isAuthenticated || !authState.user) {
+            const proceed = confirm('No has iniciado sesión. Tu reseña se publicará como usuario anónimo. ¿Continuar?');
+            if (!proceed) return;
+        }
+
+        this.setPublishingState(true);
+
+        try {
+            const publicationData: CreatePublicationData = {
+                text: texto,
+                stars: this.selectedStars,
+                restaurant: restaurant,
+                location: this.selectedZone as 'centro' | 'norte' | 'sur' | 'oeste',
+                imageUrl: this.selectedPhoto
+            };
+
+            const currentUser = authState.user || {
+                uid: `anonymous_${Date.now()}`,
+                displayName: 'Usuario Anónimo',
+                email: null,
+                photoURL: null
+            };
+
+            const publicationId = await this.firebasePublications.createPublication(publicationData, currentUser);
+
+            if (publicationId) {
+                this.showSuccessMessage(true);
+                this.resetComponentState();
+                this.dispatchEvent(new CustomEvent('antojar-cerrado', { bubbles: true, composed: true }));
+                
+                // Disparar evento global
+                document.dispatchEvent(new CustomEvent('nueva-publicacion-firebase', {
+                    detail: { publicationId, userId: currentUser.uid }
+                }));
+            } else {
+                throw new Error('No se pudo crear la publicación');
+            }
+
+        } catch (error) {
+            console.error('Error publicando en Firebase:', error);
+            this.showErrorMessage();
+        } finally {
+            this.setPublishingState(false);
+        }
+    }
+
+    private setPublishingState(isPublishing: boolean): void {
+        const button = this.shadow.querySelector('#publicar') as HTMLButtonElement;
+        const buttonText = button.querySelector('.button-text') as HTMLElement;
+        const loading = button.querySelector('.loading') as HTMLElement;
+
+        if (isPublishing) {
+            button.disabled = true;
+            buttonText.style.display = 'none';
+            loading.classList.add('visible');
+        } else {
+            button.disabled = false;
+            buttonText.style.display = 'inline';
+            loading.classList.remove('visible');
+        }
+    }
+
+    private showSuccessMessage(isFirebase = false): void {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            z-index: 10001;
+            font-family: Arial, sans-serif;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        `;
+        
+        toast.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">${isFirebase ? '🔥' : '🎉'}</span>
+                <span>¡Reseña publicada ${isFirebase ? 'en Firebase' : 'exitosamente'}!</span>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 100);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 400);
+        }, 4000);
+    }
+
+    private showErrorMessage(): void {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            z-index: 10001;
+            font-family: Arial, sans-serif;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.4s ease;
+        `;
+        
+        toast.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">❌</span>
+                <span>Error al publicar. Intenta de nuevo.</span>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 100);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 400);
+        }, 4000);
+    }
+
+    // Resto de métodos (sin cambios)
     handlePhotoSelection(file: File) {
         if (!file.type.startsWith('image/')) {
             alert('Por favor selecciona un archivo de imagen válido.');
@@ -550,7 +794,6 @@ export class LuladaAntojar extends HTMLElement {
         reader.readAsDataURL(file);
     }
 
-    // Mostrar vista previa de foto
     showPhotoPreview(base64: string) {
         const photoContainer = this.shadow.querySelector('#photo-container') as HTMLElement;
         const photoPreview = this.shadow.querySelector('#photo-preview') as HTMLImageElement;
@@ -561,7 +804,6 @@ export class LuladaAntojar extends HTMLElement {
         }
     }
 
-    // Quitar foto
     removePhoto() {
         this.selectedPhoto = undefined;
         
@@ -580,7 +822,6 @@ export class LuladaAntojar extends HTMLElement {
         this.updatePublishButton();
     }
 
-    // Actualizar ícono de foto
     updatePhotoIcon(hasPhoto: boolean) {
         const photoIcon = this.shadow.querySelector('#photo-icon');
         if (photoIcon) {
@@ -592,73 +833,33 @@ export class LuladaAntojar extends HTMLElement {
         }
     }
 
-    // Mostrar mensaje de éxito
-    showSuccessMessage() {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #16a34a;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            z-index: 10000;
-            font-family: Arial, sans-serif;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        `;
-        toast.textContent = this.selectedPhoto ? '🎉📸 ¡Reseña con foto publicada!' : '🎉 ¡Reseña publicada con éxito!';
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.transform = 'translateX(0)';
-        }, 10);
-        
-        setTimeout(() => {
-            toast.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                }
-            }, 300);
-        }, 3000);
-    }
-
-    // Actualizar botón de publicar
     updatePublishButton() {
         const publicar = this.shadow.querySelector('#publicar') as HTMLButtonElement;
         const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
+        const restaurantInput = this.shadow.querySelector('#restaurant-input') as HTMLInputElement;
         
-        if (publicar && textarea) {
+        if (publicar && textarea && restaurantInput) {
             const hasText = textarea.value.trim().length > 0;
+            const hasRestaurant = restaurantInput.value.trim().length > 0;
             const hasStars = this.selectedStars > 0;
             const hasZone = this.selectedZone !== "";
             
-            publicar.disabled = !(hasText && hasStars && hasZone);
+            publicar.disabled = !(hasText && hasRestaurant && hasStars && hasZone);
         }
     }
 
-    // Actualizar foto de perfil aleatoria
-    updateProfilePicture() {
-        const profilePic = this.shadow.querySelector('#profile-pic') as HTMLImageElement;
-        if (profilePic) {
-            const gender = Math.random() > 0.5 ? 'men' : 'women';
-            const randomId = Math.floor(Math.random() * 100);
-            profilePic.src = `https://randomuser.me/api/portraits/thumb/${gender}/${randomId}.jpg`;
-        }
-    }
-
-    // Limpiar formulario
     resetComponentState() {
         const textarea = this.shadow.querySelector('textarea') as HTMLTextAreaElement;
+        const restaurantInput = this.shadow.querySelector('#restaurant-input') as HTMLInputElement;
         const estrellas = this.shadow.querySelectorAll('.star-outline');
         const zoneSelect = this.shadow.querySelector('#zone-select') as HTMLSelectElement;
 
         if (textarea) {
             textarea.value = '';
+        }
+
+        if (restaurantInput) {
+            restaurantInput.value = '';
         }
 
         this.selectedStars = 0;
@@ -673,12 +874,10 @@ export class LuladaAntojar extends HTMLElement {
         }
 
         this.removePhoto();
-        this.updateProfilePicture();
         this.updatePublishButton();
     }
 }
 
-// Registrar componente
 if (!customElements.get('lulada-antojar')) {
     customElements.define('lulada-antojar', LuladaAntojar);
 }

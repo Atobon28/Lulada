@@ -1,49 +1,133 @@
 import { userStore, UserState } from "../../../Services/flux/UserStore";
 import { UserData } from "../../../Services/flux/UserActions";
 
-// Definimos las funciones públicas del componente
+// Interfaces para Firebase (solo si está disponible)
+interface FirebaseUserProfile {
+    uid: string;
+    email: string;
+    displayName: string | null;
+    photoURL: string | null;
+    isVerified: boolean;
+}
+
+interface AuthState {
+    isAuthenticated: boolean;
+    user: FirebaseUserProfile | null;
+    isLoading: boolean;
+    error: string | null;
+}
+
 interface UserInfoElement extends HTMLElement {
     forceUpdate(): void;
     debugInfo(): void;
 }
 
-// URL de la foto fija para todos los usuarios
 const FIXED_PROFILE_PHOTO = "https://randomuser.me/api/portraits/women/44.jpg";
 
-// Componente personalizado para mostrar información del usuario
 class UserInfo extends HTMLElement implements UserInfoElement {
-    
     private currentUser: UserData | null = null;
     private storeListener = this.handleStoreChange.bind(this);
     private _isConnected = false;
+    
+    // Firebase integration (opcional)
+    private firebaseService?: unknown;
+    private firebaseUnsubscribe?: () => void;
+    private authState: AuthState | null = null;
 
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
     }
 
-    connectedCallback() {
+    connectedCallback(): void {
         this._isConnected = true;
         
-        // Nos suscribimos para recibir notificaciones de cambios en los datos del usuario
         userStore.subscribe(this.storeListener);
         
-        // Obtenemos los datos iniciales del usuario
+        // Intentar inicializar Firebase si está disponible
+        this.initializeFirebaseIfAvailable();
+        
         setTimeout(() => {
             const initialState = userStore.getState();
             this.handleStoreChange(initialState);
         }, 100);
     }
 
-    disconnectedCallback() {
+    disconnectedCallback(): void {
         this._isConnected = false;
         
         if (userStore) {
             userStore.unsubscribe(this.storeListener);
         }
+        
+        if (this.firebaseUnsubscribe) {
+            this.firebaseUnsubscribe();
+        }
     }
 
-    // Se ejecuta cuando cambian los datos del usuario
+    private async initializeFirebaseIfAvailable(): Promise<void> {
+        try {
+            const { FirebaseUserService } = await import('../../../Services/firebase/FirebaseUserService');
+            this.firebaseService = FirebaseUserService.getInstance();
+            
+            // Type assertion para acceder a los métodos
+            const service = this.firebaseService as {
+                subscribe: (callback: (state: AuthState) => void) => () => void;
+            };
+            
+            this.firebaseUnsubscribe = service.subscribe(this.handleFirebaseAuthChange.bind(this));
+        } catch (error) {
+            // Firebase no disponible, continuar solo con Flux
+            console.log('Firebase no disponible, usando solo sistema Flux');
+        }
+    }
+
+    private handleFirebaseAuthChange(authState: AuthState): void {
+        this.authState = authState;
+        
+        // Si hay usuario de Firebase y no hay usuario en Flux, sincronizar
+        if (authState.isAuthenticated && authState.user && !this.currentUser) {
+            this.syncFirebaseToFlux(authState.user);
+        }
+        
+        this.render();
+    }
+
+    private syncFirebaseToFlux(firebaseUser: FirebaseUserProfile): void {
+        // Crear datos compatibles con Flux desde Firebase
+        const fluxUserData: UserData = {
+            foto: firebaseUser.photoURL || FIXED_PROFILE_PHOTO,
+            nombreDeUsuario: this.generateUsername(firebaseUser.displayName, firebaseUser.email),
+            nombre: firebaseUser.displayName || this.extractNameFromEmail(firebaseUser.email),
+            descripcion: `Usuario verificado ${firebaseUser.isVerified ? '✓' : ''}`.trim(),
+            rol: "persona"
+        };
+
+        // Importar dinámicamente UserActions solo si es necesario
+        import('../../../Services/flux/UserActions')
+            .then(({ UserActions }) => {
+                UserActions.loadUserData(fluxUserData);
+            })
+            .catch(() => {
+                console.log('No se pudo sincronizar con UserActions');
+            });
+    }
+
+    private generateUsername(displayName: string | null, email: string): string {
+        if (displayName) {
+            const cleaned = displayName.replace(/\s+/g, '').toLowerCase();
+            return `@${cleaned}`;
+        }
+        
+        const emailName = email.split('@')[0];
+        return `@${emailName}`;
+    }
+
+    private extractNameFromEmail(email: string): string {
+        const name = email.split('@')[0];
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
     private handleStoreChange(state: UserState): void {
         if (!this._isConnected) {
             return;
@@ -51,7 +135,6 @@ class UserInfo extends HTMLElement implements UserInfoElement {
 
         const newUser = state.currentUser;
         
-        // Comparamos si realmente hubo cambios
         const userChanged = !this.currentUser || 
                           !newUser || 
                           JSON.stringify(this.currentUser) !== JSON.stringify(newUser);
@@ -60,7 +143,6 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             this.currentUser = newUser ? { ...newUser } : null;
             this.render();
             
-            // También actualizamos elementos específicos
             setTimeout(() => {
                 if (newUser) {
                     this.updateDOMDirectly(newUser);
@@ -69,7 +151,6 @@ class UserInfo extends HTMLElement implements UserInfoElement {
         }
     }
 
-    // Actualiza elementos específicos sin redibujar todo
     private updateDOMDirectly(user: UserData): void {
         if (!this.shadowRoot || !this._isConnected) return;
         
@@ -97,11 +178,9 @@ class UserInfo extends HTMLElement implements UserInfoElement {
         }
     }
 
-    // Función principal para dibujar el componente
     private render(): void {
         if (!this.shadowRoot || !this._isConnected) return;
 
-        // Si no hay datos del usuario, mostramos pantalla de carga
         if (!this.currentUser) {
             this.shadowRoot.innerHTML = `
                 <style>
@@ -136,8 +215,10 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             return;
         }
 
-        // Dibujamos el perfil completo
-        this.shadowRoot.innerHTML = /*html*/ `
+        // Determinar si mostrar indicador de Firebase
+        const isFirebaseUser = this.authState?.isAuthenticated && this.authState.user;
+
+        this.shadowRoot.innerHTML = `
             <style>
                 .userTopCompleto {
                     background-color: #ffffff;
@@ -148,11 +229,36 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     margin: auto;
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                     transition: all 0.3s ease;
+                    position: relative;
                 }
 
                 .userTopCompleto:hover {
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                     transform: translateY(-2px);
+                }
+
+                /* Indicador de Firebase */
+                .firebase-badge {
+                    position: absolute;
+                    top: 10px;
+                    right: 15px;
+                    background: linear-gradient(135deg, #4285f4, #34a853);
+                    color: white;
+                    padding: 3px 8px;
+                    border-radius: 12px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    display: ${isFirebaseUser ? 'flex' : 'none'};
+                    align-items: center;
+                    gap: 4px;
+                    box-shadow: 0 2px 4px rgba(66, 133, 244, 0.3);
+                }
+
+                .firebase-icon {
+                    width: 8px;
+                    height: 8px;
+                    background: white;
+                    border-radius: 50%;
                 }
 
                 .etiquetados {
@@ -176,7 +282,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     height: 13.4375rem;
                     object-fit: cover;
                     transition: transform 0.3s ease;
-                    border: 3px solid #AAAB54;
+                    border: 3px solid ${isFirebaseUser ? '#4285f4' : '#AAAB54'};
                 }
                 
                 .userTopFoto img:hover {
@@ -189,7 +295,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                 
                 .nombreDeUsuario {
                     font-size: 1.25rem;
-                    color: #AAAB54;
+                    color: ${isFirebaseUser ? '#4285f4' : '#AAAB54'};
                     font-weight: bold;
                     margin-top: 0.8rem;
                     margin-bottom: 0.8rem;
@@ -227,8 +333,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     margin-top: 0.05rem;
                 }
 
-                /* RESPONSIVE DESIGN */
-                /* Tablets */
+                /* Responsive Design */
                 @media (max-width: 1024px) {
                     .userTopCompleto {
                         max-width: 95%;
@@ -239,9 +344,15 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                         width: 12rem;
                         height: 12rem;
                     }
+
+                    .firebase-badge {
+                        top: 8px;
+                        right: 12px;
+                        font-size: 9px;
+                        padding: 2px 6px;
+                    }
                 }
                 
-                /* Móviles */
                 @media (max-width: 768px) {
                     .userTopCompleto {
                         max-width: 100%;
@@ -283,9 +394,15 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                         margin: 0.3rem 0;
                         text-align: center;
                     }
+
+                    .firebase-badge {
+                        top: 5px;
+                        right: 8px;
+                        font-size: 8px;
+                        padding: 2px 5px;
+                    }
                 }
 
-                /* Móviles muy pequeños */
                 @media (max-width: 480px) {
                     .userTopCompleto {
                         margin: 0.25rem;
@@ -316,14 +433,19 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             </style>            
             
             <div class="userTopCompleto">
+                ${isFirebaseUser ? `
+                    <div class="firebase-badge">
+                        <div class="firebase-icon"></div>
+                        Verificado
+                    </div>
+                ` : ''}
                 ${this.renderUsuario(this.currentUser)}
             </div>
         `;
     }
 
-    // Genera el HTML del usuario con sus datos
     private renderUsuario(user: UserData): string {
-        return /*html*/ `
+        return `
             <div class="userTop"> 
                 <div class="userTopFoto">
                     <img class="foto" 
@@ -347,17 +469,16 @@ class UserInfo extends HTMLElement implements UserInfoElement {
         `;
     }
 
-    // Función para forzar actualización manual
     public forceUpdate(): void {
         const currentState = userStore.getState();
         this.handleStoreChange(currentState);
     }
 
-    // Función para debugging
     public debugInfo(): void {
         console.log('UserInfo: === INFORMACIÓN DE DEBUG ===');
         console.log('- Usuario actual guardado:', this.currentUser);
         console.log('- Estado completo del store:', userStore.getState());
+        console.log('- Estado de Firebase:', this.authState);
         console.log('- Shadow DOM existe:', !!this.shadowRoot);
         console.log('- Componente conectado:', this._isConnected);
         
