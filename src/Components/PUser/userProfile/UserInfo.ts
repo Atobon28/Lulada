@@ -1,3 +1,4 @@
+// src/Components/PUser/userProfile/UserInfo.ts - CORREGIDO
 import { userStore, UserState } from "../../../Services/flux/UserStore";
 import { UserData } from "../../../Services/flux/UserActions";
 
@@ -76,8 +77,8 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             };
             
             this.firebaseUnsubscribe = service.subscribe(this.handleFirebaseAuthChange.bind(this));
-        } catch (error) {
-            // Firebase no disponible, continuar solo con Flux
+        } catch {
+            // ✅ CORREGIDO: Sin usar variable error
             console.log('Firebase no disponible, usando solo sistema Flux');
         }
     }

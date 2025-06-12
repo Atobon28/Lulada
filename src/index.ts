@@ -5,21 +5,28 @@ export {};
 
 import PublicationsService from './Services/PublicationsService';
 import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
+import { FirebaseUserService } from './Services/firebase/FirebaseUserService';
+import { FirebasePublicationsService } from './Services/firebase/FirebasePublicationsService';
+
+// Interfaces para tipificar servicios globales
+interface LuladaFirebaseService {
+    userService: FirebaseUserService;
+}
+
+interface LuladaFirebasePublicationsService {
+    service: FirebasePublicationsService;
+}
 
 declare global {
     interface Window {
         debugSidebar?: () => void;
         AntojarPopupService?: typeof AntojarPopupService;
         LuladaServices?: {
-            publicationsService: ReturnType<typeof PublicationsService.getInstance>;
-            antojarService: ReturnType<typeof AntojarPopupService.getInstance>;
+            publicationsService: PublicationsService;
+            antojarService: AntojarPopupService;
         };
-        LuladaFirebase?: {
-            userService: any;
-        };
-        LuladaFirebasePublications?: {
-            service: any;
-        };
+        LuladaFirebase?: LuladaFirebaseService;
+        LuladaFirebasePublications?: LuladaFirebasePublicationsService;
         debugFirebaseAuth?: () => void;
         debugFirebasePublications?: () => void;
         debugAuthState?: () => void;
@@ -27,6 +34,7 @@ declare global {
         createTestPublication?: () => Promise<void>;
         checkLuladaServices?: () => void;
         debugAllLuladaServices?: () => void;
+        debugSupabase?: () => Promise<void>;
     }
 }
 
@@ -34,12 +42,30 @@ interface ComponentConstructor {
     new (...args: unknown[]): HTMLElement;
 }
 
+interface SidebarElement extends HTMLElement {
+    debugNavigation?: () => void;
+}
+
+interface AuthState {
+    isAuthenticated: boolean;
+    user?: {
+        email?: string;
+        displayName?: string | null;
+        uid: string;
+    } | null;
+    isLoading?: boolean;
+}
+
+interface PublicationDetail {
+    publicationId: string;
+    userId: string;
+}
+
 // =======================
 // IMPORTS
 // =======================
 import './services-global';
 import { InteractionService } from './Services/flux/Interactionservice';
-import { LuladaStorageService,luladaStorage} from './Services/Supabase/ServiceStorage';
 
 // CORE
 import RootComponent from "./Components/Root/RootComponent";
@@ -139,7 +165,7 @@ if (typeof window !== 'undefined') {
 
         if (!window.debugSidebar) {
             window.debugSidebar = () => {
-                const sidebar = document.querySelector('lulada-sidebar') as HTMLElement & { debugNavigation?: () => void };
+                const sidebar = document.querySelector('lulada-sidebar') as SidebarElement | null;
                 if (sidebar?.debugNavigation) {
                     sidebar.debugNavigation();
                 } else {
@@ -148,8 +174,8 @@ if (typeof window !== 'undefined') {
             };
         }
 
-    } catch (error) {
-        console.error('Error asignando servicios:', error);
+    } catch {
+        console.error('Error asignando servicios');
     }
 }
 
@@ -162,8 +188,8 @@ function registerComponent(name: string, component: ComponentConstructor): boole
             customElements.define(name, component);
         }
         return true;
-    } catch (error) {
-        console.error(`Error registrando ${name}:`, error);
+    } catch {
+        console.error(`Error registrando ${name}`);
         return false;
     }
 }
@@ -254,38 +280,29 @@ const initializeFirebaseIfAvailable = async (): Promise<void> => {
         
         // Agregar al objeto global para debug
         if (typeof window !== 'undefined') {
-            const globalWindow = window as typeof window & {
-                LuladaFirebase?: {
-                    userService: typeof firebaseUserService;
-                };
-                debugFirebaseAuth?: () => void;
-                debugAuthState?: () => void;
-                forceAuthRefresh?: () => void;
-            };
-
-            if (!globalWindow.LuladaFirebase) {
-                globalWindow.LuladaFirebase = {
+            if (!window.LuladaFirebase) {
+                window.LuladaFirebase = {
                     userService: firebaseUserService
                 };
             }
 
             // Funciones de debug para Firebase
-            if (!globalWindow.debugFirebaseAuth) {
-                globalWindow.debugFirebaseAuth = () => {
+            if (!window.debugFirebaseAuth) {
+                window.debugFirebaseAuth = () => {
                     firebaseUserService.debugInfo();
                 };
             }
 
-            if (!globalWindow.debugAuthState) {
-                globalWindow.debugAuthState = () => {
+            if (!window.debugAuthState) {
+                window.debugAuthState = () => {
                     console.log('🔥 Estado actual:', firebaseUserService.getAuthState());
                     console.log('🔥 Usuario actual:', firebaseUserService.getCurrentUser());
                     console.log('🔥 ¿Autenticado?:', firebaseUserService.isAuthenticated());
                 };
             }
 
-            if (!globalWindow.forceAuthRefresh) {
-                globalWindow.forceAuthRefresh = () => {
+            if (!window.forceAuthRefresh) {
+                window.forceAuthRefresh = () => {
                     firebaseUserService.refreshAuthState();
                     console.log('🔥 Estado de auth refrescado');
                 };
@@ -295,7 +312,7 @@ const initializeFirebaseIfAvailable = async (): Promise<void> => {
         console.log('🔥 Firebase User Service inicializado');
         console.log('🔥 Estado de autenticación:', firebaseUserService.isAuthenticated());
         
-    } catch (error) {
+    } catch {
         // Firebase no disponible, continuar sin él
         console.log('Firebase no disponible, la app funcionará sin autenticación');
     }
@@ -311,23 +328,15 @@ const initializeFirebasePublications = async (): Promise<void> => {
         
         // Agregar al objeto global para debug
         if (typeof window !== 'undefined') {
-            const globalWindow = window as typeof window & {
-                LuladaFirebasePublications?: {
-                    service: typeof publicationsService;
-                };
-                debugFirebasePublications?: () => void;
-                createTestPublication?: () => Promise<void>;
-            };
-
-            if (!globalWindow.LuladaFirebasePublications) {
-                globalWindow.LuladaFirebasePublications = {
+            if (!window.LuladaFirebasePublications) {
+                window.LuladaFirebasePublications = {
                     service: publicationsService
                 };
             }
 
             // Función de debug para publicaciones
-            if (!globalWindow.debugFirebasePublications) {
-                globalWindow.debugFirebasePublications = () => {
+            if (!window.debugFirebasePublications) {
+                window.debugFirebasePublications = () => {
                     const stats = publicationsService.getStats();
                     console.log('🔥 Firebase Publications Debug:');
                     console.log('- Total publicaciones:', stats.total);
@@ -337,8 +346,8 @@ const initializeFirebasePublications = async (): Promise<void> => {
             }
 
             // Función para crear publicación de prueba (solo desarrollo)
-            if (!globalWindow.createTestPublication) {
-                globalWindow.createTestPublication = async () => {
+            if (!window.createTestPublication) {
+                window.createTestPublication = async () => {
                     try {
                         const { FirebaseUserService } = await import('./Services/firebase/FirebaseUserService');
                         const userService = FirebaseUserService.getInstance();
@@ -363,8 +372,8 @@ const initializeFirebasePublications = async (): Promise<void> => {
                         } else {
                             console.log('❌ Error creando publicación de prueba');
                         }
-                    } catch (error) {
-                        console.error('Error en publicación de prueba:', error);
+                    } catch {
+                        console.error('Error en publicación de prueba');
                     }
                 };
             }
@@ -372,8 +381,8 @@ const initializeFirebasePublications = async (): Promise<void> => {
 
         console.log('🔥 Firebase Publications Service inicializado');
         
-    } catch (error) {
-        console.log('⚠️ Firebase Publications no disponible:', error);
+    } catch {
+        console.log('⚠️ Firebase Publications no disponible');
     }
 };
 
@@ -383,12 +392,24 @@ const initializeFirebasePublications = async (): Promise<void> => {
 const verifySupabaseConnection = async (): Promise<void> => {
     try {
         // Importar dinámicamente para evitar errores si no está instalado
-        const { supabase } = await import('./Services/Supabase/Supabaseconfig');
+        const supabaseModule = await import('./Services/Supabase/Supabaseconfig');
+        
+        // Type guard para verificar que el módulo tiene la estructura esperada
+        if (!supabaseModule || typeof supabaseModule !== 'object' || !('supabase' in supabaseModule)) {
+            throw new Error('Módulo de Supabase no tiene la estructura esperada');
+        }
+        
+        const { supabase } = supabaseModule;
+        
+        // Verificar que supabase tiene los métodos esperados
+        if (!supabase || typeof supabase.from !== 'function') {
+            throw new Error('Cliente de Supabase no válido');
+        }
         
         console.log('🔍 Verificando Supabase...');
         
         // Test básico de conexión
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('test')
             .select('*')
             .limit(1);
@@ -401,30 +422,66 @@ const verifySupabaseConnection = async (): Promise<void> => {
         
         // Agregar función global para debug
         if (typeof window !== 'undefined') {
-            (window as any).debugSupabase = async () => {
+            window.debugSupabase = async () => {
                 console.log('📊 Estado de Supabase:');
                 console.log('- Cliente:', !!supabase);
                 console.log('- URL:', supabase ? 'Configurado' : 'No configurado');
                 
                 try {
-                    const { data, error } = await supabase
+                    const { error } = await supabase
                         .from('test')
                         .select('*')
                         .limit(1);
                     
                     console.log('- Conexión:', error ? 'Error' : 'OK');
                     if (error) console.log('- Error:', error.message);
-                } catch (e) {
-                    console.log('- Error de conexión:', e);
+                } catch {
+                    console.log('- Error de conexión');
                 }
             };
         }
         
-    } catch (error) {
-        console.log('⚠️ Supabase no disponible:', error);
+    } catch {
+        console.log('⚠️ Supabase no disponible');
         console.log('📝 La aplicación funcionará sin almacenamiento en la nube');
     }
 };
+
+// =======================
+// FUNCIONES UTILITARIAS PARA TOAST
+// =======================
+function createToastElement(content: string): HTMLDivElement {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #4285f4, #34a853);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 10001;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+        animation: slideDown 0.3s ease;
+    `;
+    
+    toast.innerHTML = content;
+    return toast;
+}
+
+function removeToastAfterDelay(toast: HTMLDivElement, delay: number = 3000): void {
+    setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease forwards';
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 300);
+    }, delay);
+}
 
 // =======================
 // INICIALIZACIÓN FINAL
@@ -449,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // LISTENER SILENCIOSO PARA AUTH CHANGES
 // =======================
 document.addEventListener('auth-state-changed', (event) => {
-    const authEvent = event as CustomEvent;
+    const authEvent = event as CustomEvent<AuthState>;
     const authState = authEvent.detail;
     
     // Log silencioso para debug
@@ -464,46 +521,22 @@ document.addEventListener('auth-state-changed', (event) => {
 // LISTENER PARA NUEVAS PUBLICACIONES
 // =======================
 document.addEventListener('nueva-publicacion-firebase', (event) => {
-    const publicationEvent = event as CustomEvent;
+    const publicationEvent = event as CustomEvent<PublicationDetail>;
     const { publicationId, userId } = publicationEvent.detail;
     
     console.log('📱 Nueva publicación Firebase creada:', { publicationId, userId });
     
     // Mostrar notificación global
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, #4285f4, #34a853);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        z-index: 10001;
-        font-family: 'Inter', sans-serif;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-        animation: slideDown 0.3s ease;
-    `;
-    
-    toast.innerHTML = `
+    const toastContent = `
         <div style="display: flex; align-items: center; gap: 8px;">
             <div style="width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse 2s infinite;"></div>
             <span>Nueva publicación en el feed</span>
         </div>
     `;
     
+    const toast = createToastElement(toastContent);
     document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideUp 0.3s ease forwards';
-        setTimeout(() => {
-            if (document.body.contains(toast)) {
-                document.body.removeChild(toast);
-            }
-        }, 300);
-    }, 3000);
+    removeToastAfterDelay(toast);
 });
 
 // =======================
@@ -516,7 +549,7 @@ if (typeof window !== 'undefined') {
         console.log('📝 Antojar:', !!window.LuladaServices?.antojarService);
         console.log('🔥 Firebase Auth:', !!window.LuladaFirebase?.userService);
         console.log('🔥 Firebase Publications:', !!window.LuladaFirebasePublications?.service);
-        console.log('☁️ Supabase:', typeof (window as any).debugSupabase === 'function');
+        console.log('☁️ Supabase:', typeof window.debugSupabase === 'function');
         
         // Test rápido de cada servicio
         if (window.LuladaServices?.publicationsService) {
@@ -556,9 +589,9 @@ if (typeof window !== 'undefined') {
         }
         
         // Supabase
-        if ((window as any).debugSupabase) {
+        if (window.debugSupabase) {
             console.log('\n☁️ SUPABASE:');
-            (window as any).debugSupabase();
+            window.debugSupabase();
         }
         
         // Estado general
