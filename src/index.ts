@@ -1,45 +1,63 @@
+// index.ts - RESTAURADO CON ARREGLOS PARA QUE FUNCIONE
+
 // =======================
 // DECLARACIONES GLOBALES
 // =======================
 export {};
 
-import PublicationsService from './Services/PublicationsService';
-import AntojarPopupService from './Components/Home/Antojar/antojar-popup';
+// Importar servicios básicos primero
+import './services-global';
+import './Services/realtime-sync-init';
 
-declare global {
-    interface Window {
-        debugSidebar?: () => void;
-        AntojarPopupService?: typeof AntojarPopupService;
-        LuladaServices?: {
-            publicationsService: ReturnType<typeof PublicationsService.getInstance>;
-            antojarService: ReturnType<typeof AntojarPopupService.getInstance>;
-        };
-        LuladaFirebase?: {
-            userService: any;
-        };
-        LuladaFirebasePublications?: {
-            service: any;
-        };
-        debugFirebaseAuth?: () => void;
-        debugFirebasePublications?: () => void;
-        debugAuthState?: () => void;
-        forceAuthRefresh?: () => void;
-        createTestPublication?: () => Promise<void>;
-        checkLuladaServices?: () => void;
-        debugAllLuladaServices?: () => void;
-    }
-}
 
 interface ComponentConstructor {
     new (...args: unknown[]): HTMLElement;
 }
 
+// Interfaces para servicios y componentes
+interface PublicationsServiceInstance {
+    getInstance?(): PublicationsServiceInstance;
+    [key: string]: unknown;
+}
+
+interface AntojarServiceInstance {
+    getInstance?(): AntojarServiceInstance;
+    initialize?(): void;
+    [key: string]: unknown;
+}
+
+interface InteractionServiceInstance {
+    getInstance(): InteractionServiceInstance;
+    loadInteractions?(): void;
+    [key: string]: unknown;
+}
+
+interface SidebarElement extends HTMLElement {
+    debugNavigation?(): void;
+}
+
+interface LuladaServices {
+    publicationsService: PublicationsServiceInstance | null;
+    antojarService: AntojarServiceInstance | null;
+}
+
+// Declaraciones globales para window - REMOVIDAS PARA EVITAR DUPLICADOS
+// Las declaraciones están en services-global.ts
+
+// Interface para window con propiedades necesarias
+interface WindowWithGlobalProperties extends Window {
+    AntojarPopupService?: unknown;
+    LuladaServices?: LuladaServices;
+    debugSidebar?: () => void;
+    luladaStatus?: () => void;
+    luladaDebug?: () => void;
+    UserActions?: unknown;
+    userStore?: unknown;
+}
+
 // =======================
-// IMPORTS
+// IMPORTS - SOLO LOS QUE EXISTEN
 // =======================
-import './services-global';
-import { InteractionService } from './Services/flux/Interactionservice';
-import { LuladaStorageService,luladaStorage} from './Services/Supabase/ServiceStorage';
 
 // CORE
 import RootComponent from "./Components/Root/RootComponent";
@@ -65,7 +83,6 @@ import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarCont
 // NAVEGACIÓN
 import Navigation from "./Components/Home/navigation";
 import './Components/Home/Header/reponsiveheader';
-import NavigationBar from './Components/Home/Navbars/responsivebar';
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
 
 // HEADERS
@@ -78,10 +95,6 @@ import HeaderExplorer from "./Components/Explore/exploreHeader";
 import Publication from "./Components/Home/posts/publications";
 import Review from "./Components/Home/posts/reviews";
 import ReviewsContainer from "./Components/Home/posts/reviewscontainer";
-
-// ANTOJAR
-import { LuladaAntojar } from './Components/Home/Antojar/antojar';
-import { LuladaAntojarBoton } from './Components/Home/Antojar/antojar-boton';
 
 // EXPLORACIÓN
 import ExploreContainer from "./Components/Explore/explorecontainer";
@@ -119,37 +132,112 @@ import CambiarCorreoSimple from "./Components/Settings/CambiarCorreoSimple";
 import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
 import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
 
+// IMPORTS OPCIONALES (que pueden fallar)
+let NavigationBar: ComponentConstructor | null = null;
+let LuladaAntojar: ComponentConstructor | null = null;
+let LuladaAntojarBoton: ComponentConstructor | null = null;
+let PublicationsService: PublicationsServiceInstance | null = null;
+let AntojarPopupService: AntojarServiceInstance | null = null;
+let InteractionService: InteractionServiceInstance | null = null;
+
+// Importar los que pueden fallar de forma segura
+try {
+    const NavigationBarModule = require('./Components/Home/Navbars/responsivebar');
+    NavigationBar = NavigationBarModule.default;
+} catch (_e: unknown) {
+    console.log('NavigationBar no disponible');
+}
+
+try {
+    const antojarModule = require('./Components/Home/Antojar/antojar');
+    LuladaAntojar = antojarModule.LuladaAntojar;
+} catch (_e: unknown) {
+    console.log('LuladaAntojar no disponible');
+}
+
+try {
+    const antojarBotonModule = require('./Components/Home/Antojar/antojar-boton');
+    LuladaAntojarBoton = antojarBotonModule.LuladaAntojarBoton;
+} catch (_e: unknown) {
+    console.log('LuladaAntojarBoton no disponible');
+}
+
+try {
+    const PublicationsServiceModule = require('./Services/PublicationsService');
+    PublicationsService = PublicationsServiceModule.default;
+} catch (_e: unknown) {
+    console.log('PublicationsService no disponible');
+}
+
+try {
+    const AntojarPopupServiceModule = require('./Components/Home/Antojar/antojar-popup');
+    AntojarPopupService = AntojarPopupServiceModule.default;
+} catch (_e: unknown) {
+    console.log('AntojarPopupService no disponible');
+}
+
+try {
+    const interactionModule = require('./Services/flux/Interactionservice');
+    InteractionService = interactionModule.InteractionService;
+} catch (_e: unknown) {
+    console.log('InteractionService no disponible');
+}
+
 // =======================
 // INICIALIZACIÓN DE SERVICIOS
 // =======================
-const publicationsService = PublicationsService.getInstance();
-const antojarService = AntojarPopupService.getInstance();
-antojarService.initialize();
+let publicationsService: PublicationsServiceInstance | null = null;
+let antojarService: AntojarServiceInstance | null = null;
 
+if (PublicationsService) {
+    try {
+        publicationsService = PublicationsService.getInstance ? PublicationsService.getInstance() : PublicationsService;
+    } catch (_e: unknown) {
+        console.log('Error inicializando PublicationsService');
+    }
+}
+
+if (AntojarPopupService) {
+    try {
+        antojarService = AntojarPopupService.getInstance ? AntojarPopupService.getInstance() : AntojarPopupService;
+        if (antojarService && antojarService.initialize) {
+            antojarService.initialize();
+        }
+    } catch (_e: unknown) {
+        console.log('Error inicializando AntojarPopupService');
+    }
+}
+
+// Asignar a window de forma segura
 if (typeof window !== 'undefined') {
     try {
-        window.AntojarPopupService = AntojarPopupService;
+        const globalWindow = window as WindowWithGlobalProperties;
+        
+        if (AntojarPopupService) {
+            globalWindow.AntojarPopupService = AntojarPopupService;
+        }
 
-        if (!window.LuladaServices) {
-            window.LuladaServices = {
-                publicationsService,
-                antojarService
+        if (publicationsService || antojarService) {
+            globalWindow.LuladaServices = {
+                publicationsService: publicationsService,
+                antojarService: antojarService
             };
         }
 
-        if (!window.debugSidebar) {
-            window.debugSidebar = () => {
-                const sidebar = document.querySelector('lulada-sidebar') as HTMLElement & { debugNavigation?: () => void };
+        // Debug sidebar
+        if (!globalWindow.debugSidebar) {
+            globalWindow.debugSidebar = () => {
+                const sidebar = document.querySelector('lulada-sidebar') as SidebarElement;
                 if (sidebar?.debugNavigation) {
                     sidebar.debugNavigation();
                 } else {
-                    console.log("Sidebar no encontrado o sin debugNavigation");
+                    console.log("🔍 Sidebar no encontrado o sin debugNavigation");
                 }
             };
         }
 
-    } catch (error) {
-        console.error('Error asignando servicios:', error);
+    } catch (_error: unknown) {
+        console.error('Error asignando servicios a window:', _error);
     }
 }
 
@@ -158,15 +246,24 @@ if (typeof window !== 'undefined') {
 // =======================
 function registerComponent(name: string, component: ComponentConstructor): boolean {
     try {
-        if (!customElements.get(name)) {
+        if (component && !customElements.get(name)) {
             customElements.define(name, component);
+            console.log(`✅ ${name} registrado`);
+            return true;
+        } else if (!component) {
+            console.log(`⚠️ ${name} no disponible`);
+            return false;
+        } else {
+            console.log(`✅ ${name} ya registrado`);
+            return true;
         }
-        return true;
-    } catch (error) {
-        console.error(`Error registrando ${name}:`, error);
+    } catch (_error: unknown) {
+        console.error(`❌ Error registrando ${name}:`, _error);
         return false;
     }
 }
+
+console.log('🚀 === REGISTRANDO COMPONENTES ===');
 
 // CORE
 registerComponent('root-component', RootComponent);
@@ -204,10 +301,6 @@ registerComponent('lulada-publication', Publication);
 registerComponent('lulada-review', Review);
 registerComponent('lulada-reviews-container', ReviewsContainer);
 
-// ANTOJAR
-registerComponent('lulada-antojar', LuladaAntojar);
-registerComponent('lulada-antojar-boton', LuladaAntojarBoton);
-
 // EXPLORACIÓN
 registerComponent('explore-container', ExploreContainer);
 registerComponent('images-explore', ImagesExplore);
@@ -244,366 +337,113 @@ registerComponent('cambiar-correo-simple', CambiarCorreoSimple);
 registerComponent('cambiar-nombre-simple', CambiarNombreSimple);
 registerComponent('cambiar-contrasena-simple', CambiarContrasenaSimple);
 
-// =======================
-// FIREBASE INTEGRATION (Opcional)
-// =======================
-const initializeFirebaseIfAvailable = async (): Promise<void> => {
-    try {
-        const { FirebaseUserService } = await import('./Services/firebase/FirebaseUserService');
-        const firebaseUserService = FirebaseUserService.getInstance();
-        
-        // Agregar al objeto global para debug
-        if (typeof window !== 'undefined') {
-            const globalWindow = window as typeof window & {
-                LuladaFirebase?: {
-                    userService: typeof firebaseUserService;
-                };
-                debugFirebaseAuth?: () => void;
-                debugAuthState?: () => void;
-                forceAuthRefresh?: () => void;
-            };
+// COMPONENTES OPCIONALES
+if (NavigationBar) {
+    registerComponent('navigation-bar', NavigationBar);
+}
 
-            if (!globalWindow.LuladaFirebase) {
-                globalWindow.LuladaFirebase = {
-                    userService: firebaseUserService
-                };
-            }
+if (LuladaAntojar) {
+    registerComponent('lulada-antojar', LuladaAntojar);
+}
 
-            // Funciones de debug para Firebase
-            if (!globalWindow.debugFirebaseAuth) {
-                globalWindow.debugFirebaseAuth = () => {
-                    firebaseUserService.debugInfo();
-                };
-            }
-
-            if (!globalWindow.debugAuthState) {
-                globalWindow.debugAuthState = () => {
-                    console.log('🔥 Estado actual:', firebaseUserService.getAuthState());
-                    console.log('🔥 Usuario actual:', firebaseUserService.getCurrentUser());
-                    console.log('🔥 ¿Autenticado?:', firebaseUserService.isAuthenticated());
-                };
-            }
-
-            if (!globalWindow.forceAuthRefresh) {
-                globalWindow.forceAuthRefresh = () => {
-                    firebaseUserService.refreshAuthState();
-                    console.log('🔥 Estado de auth refrescado');
-                };
-            }
-        }
-
-        console.log('🔥 Firebase User Service inicializado');
-        console.log('🔥 Estado de autenticación:', firebaseUserService.isAuthenticated());
-        
-    } catch (error) {
-        // Firebase no disponible, continuar sin él
-        console.log('Firebase no disponible, la app funcionará sin autenticación');
-    }
-};
-
-// =======================
-// FIREBASE PUBLICATIONS INTEGRATION
-// =======================
-const initializeFirebasePublications = async (): Promise<void> => {
-    try {
-        const { FirebasePublicationsService } = await import('./Services/firebase/FirebasePublicationsService');
-        const publicationsService = FirebasePublicationsService.getInstance();
-        
-        // Agregar al objeto global para debug
-        if (typeof window !== 'undefined') {
-            const globalWindow = window as typeof window & {
-                LuladaFirebasePublications?: {
-                    service: typeof publicationsService;
-                };
-                debugFirebasePublications?: () => void;
-                createTestPublication?: () => Promise<void>;
-            };
-
-            if (!globalWindow.LuladaFirebasePublications) {
-                globalWindow.LuladaFirebasePublications = {
-                    service: publicationsService
-                };
-            }
-
-            // Función de debug para publicaciones
-            if (!globalWindow.debugFirebasePublications) {
-                globalWindow.debugFirebasePublications = () => {
-                    const stats = publicationsService.getStats();
-                    console.log('🔥 Firebase Publications Debug:');
-                    console.log('- Total publicaciones:', stats.total);
-                    console.log('- Por ubicación:', stats.byLocation);
-                    console.log('- Top restaurantes:', stats.topRestaurants);
-                };
-            }
-
-            // Función para crear publicación de prueba (solo desarrollo)
-            if (!globalWindow.createTestPublication) {
-                globalWindow.createTestPublication = async () => {
-                    try {
-                        const { FirebaseUserService } = await import('./Services/firebase/FirebaseUserService');
-                        const userService = FirebaseUserService.getInstance();
-                        const authState = userService.getAuthState();
-                        
-                        if (!authState.isAuthenticated || !authState.user) {
-                            console.log('❌ Debes estar autenticado para crear una publicación de prueba');
-                            return;
-                        }
-
-                        const testPublication = {
-                            text: 'Esta es una publicación de prueba desde la consola del navegador. ¡El sistema Firebase está funcionando!',
-                            stars: 5,
-                            restaurant: 'Restaurante de Prueba',
-                            location: 'centro' as const
-                        };
-
-                        const publicationId = await publicationsService.createPublication(testPublication, authState.user);
-                        
-                        if (publicationId) {
-                            console.log('✅ Publicación de prueba creada con ID:', publicationId);
-                        } else {
-                            console.log('❌ Error creando publicación de prueba');
-                        }
-                    } catch (error) {
-                        console.error('Error en publicación de prueba:', error);
-                    }
-                };
-            }
-        }
-
-        console.log('🔥 Firebase Publications Service inicializado');
-        
-    } catch (error) {
-        console.log('⚠️ Firebase Publications no disponible:', error);
-    }
-};
-
-// =======================
-// VERIFICACIÓN SUPABASE (SIMPLIFICADA)
-// =======================
-const verifySupabaseConnection = async (): Promise<void> => {
-    try {
-        // Importar dinámicamente para evitar errores si no está instalado
-        const { supabase } = await import('./Services/Supabase/Supabaseconfig');
-        
-        console.log('🔍 Verificando Supabase...');
-        
-        // Test básico de conexión
-        const { data, error } = await supabase
-            .from('test')
-            .select('*')
-            .limit(1);
-            
-        if (error && error.code !== 'PGRST116') {
-            throw error;
-        }
-        
-        console.log('✅ Supabase está funcionando correctamente');
-        
-        // Agregar función global para debug
-        if (typeof window !== 'undefined') {
-            (window as any).debugSupabase = async () => {
-                console.log('📊 Estado de Supabase:');
-                console.log('- Cliente:', !!supabase);
-                console.log('- URL:', supabase ? 'Configurado' : 'No configurado');
-                
-                try {
-                    const { data, error } = await supabase
-                        .from('test')
-                        .select('*')
-                        .limit(1);
-                    
-                    console.log('- Conexión:', error ? 'Error' : 'OK');
-                    if (error) console.log('- Error:', error.message);
-                } catch (e) {
-                    console.log('- Error de conexión:', e);
-                }
-            };
-        }
-        
-    } catch (error) {
-        console.log('⚠️ Supabase no disponible:', error);
-        console.log('📝 La aplicación funcionará sin almacenamiento en la nube');
-    }
-};
+if (LuladaAntojarBoton) {
+    registerComponent('lulada-antojar-boton', LuladaAntojarBoton);
+}
 
 // =======================
 // INICIALIZACIÓN FINAL
 // =======================
 document.addEventListener('DOMContentLoaded', () => {
-    const interactionService = InteractionService.getInstance();
-    interactionService.loadInteractions();
+    console.log('🎯 DOM listo, inicializando servicios finales...');
+    
+    if (InteractionService) {
+        try {
+            const interactionService = InteractionService.getInstance();
+            if (interactionService && interactionService.loadInteractions) {
+                interactionService.loadInteractions();
+            }
+        } catch (_e: unknown) {
+            console.log('Error inicializando InteractionService');
+        }
+    }
 
-    antojarService.initialize();
-    
-    // Inicializar Firebase Auth (opcional)
-    initializeFirebaseIfAvailable();
-    
-    // Inicializar Firebase Publications (opcional)
-    initializeFirebasePublications();
-    
-    // Verificar Supabase (opcional)
-    verifySupabaseConnection();
-});
-
-// =======================
-// LISTENER SILENCIOSO PARA AUTH CHANGES
-// =======================
-document.addEventListener('auth-state-changed', (event) => {
-    const authEvent = event as CustomEvent;
-    const authState = authEvent.detail;
-    
-    // Log silencioso para debug
-    if (authState.isAuthenticated) {
-        console.log('✅ Usuario autenticado silenciosamente:', authState.user?.email);
-    } else if (!authState.isLoading) {
-        console.log('❌ Usuario no autenticado');
+    if (antojarService && antojarService.initialize) {
+        try {
+            antojarService.initialize();
+        } catch (_e: unknown) {
+            console.log('Error re-inicializando antojarService');
+        }
     }
 });
 
-// =======================
-// LISTENER PARA NUEVAS PUBLICACIONES
-// =======================
-document.addEventListener('nueva-publicacion-firebase', (event) => {
-    const publicationEvent = event as CustomEvent;
-    const { publicationId, userId } = publicationEvent.detail;
-    
-    console.log('📱 Nueva publicación Firebase creada:', { publicationId, userId });
-    
-    // Mostrar notificación global
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, #4285f4, #34a853);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        z-index: 10001;
-        font-family: 'Inter', sans-serif;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-        animation: slideDown 0.3s ease;
-    `;
-    
-    toast.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse 2s infinite;"></div>
-            <span>Nueva publicación en el feed</span>
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    
+// Crear root-component si no existe al cargar
+if (typeof document !== 'undefined') {
     setTimeout(() => {
-        toast.style.animation = 'slideUp 0.3s ease forwards';
-        setTimeout(() => {
-            if (document.body.contains(toast)) {
-                document.body.removeChild(toast);
-            }
-        }, 300);
-    }, 3000);
-});
+        if (!document.querySelector('root-component')) {
+            const root = document.createElement('root-component');
+            document.body.appendChild(root);
+            console.log('✅ Root component creado y agregado al DOM');
+        }
+    }, 100);
+}
 
 // =======================
-// FUNCIÓN GLOBAL DE ESTADO
+// FUNCIONES DE DEBUG
 // =======================
 if (typeof window !== 'undefined') {
-    window.checkLuladaServices = () => {
-        console.log('🔍 Estado completo de servicios Lulada:');
-        console.log('📦 Publications (Local):', !!window.LuladaServices?.publicationsService);
-        console.log('📝 Antojar:', !!window.LuladaServices?.antojarService);
-        console.log('🔥 Firebase Auth:', !!window.LuladaFirebase?.userService);
-        console.log('🔥 Firebase Publications:', !!window.LuladaFirebasePublications?.service);
-        console.log('☁️ Supabase:', typeof (window as any).debugSupabase === 'function');
+    const globalWindow = window as WindowWithGlobalProperties;
+    
+    globalWindow.luladaStatus = () => {
+        console.log('📊 === STATUS LULADA ===');
+        console.log('✅ Componentes críticos:');
+        console.log('- RootComponent:', !!customElements.get('root-component'));
+        console.log('- LoadPage:', !!customElements.get('load-pages'));
+        console.log('- Home:', !!customElements.get('lulada-home'));
+        console.log('- Login:', !!customElements.get('login-page'));
+        console.log('- NewAccount:', !!customElements.get('register-new-account'));
         
-        // Test rápido de cada servicio
-        if (window.LuladaServices?.publicationsService) {
-            const stats = window.LuladaServices.publicationsService.getStats();
-            console.log('📊 Publicaciones locales:', stats.total);
-        }
+        console.log('🔧 Servicios:');
+        console.log('- UserActions:', !!globalWindow.UserActions);
+        console.log('- userStore:', !!globalWindow.userStore);
+        console.log('- LuladaServices:', !!globalWindow.LuladaServices);
         
-        if (window.LuladaFirebase?.userService) {
-            const authState = window.LuladaFirebase.userService.getAuthState();
-            console.log('👤 Usuario autenticado:', authState.isAuthenticated);
-            if (authState.isAuthenticated) {
-                console.log('👤 Usuario:', authState.user?.displayName || authState.user?.email);
-            }
-        }
-
-        if (window.LuladaFirebasePublications?.service) {
-            const stats = window.LuladaFirebasePublications.service.getStats();
-            console.log('🔥 Publicaciones Firebase:', stats.total);
-            console.log('🔥 Top restaurantes:', stats.topRestaurants.slice(0, 3));
-        }
+        console.log('🌐 DOM:');
+        console.log('- root-component en DOM:', !!document.querySelector('root-component'));
+        console.log('- load-pages en DOM:', !!document.querySelector('load-pages'));
+        
+        console.log('🔐 Auth:');
+        console.log('- Autenticado:', localStorage.getItem('isAuthenticated'));
+        console.log('- Usuario:', !!localStorage.getItem('currentUser'));
+        
+        console.log('====================');
     };
 
-    // Función para debug completo
-    window.debugAllLuladaServices = () => {
-        console.log('🚀 === DEBUG COMPLETO LULADA ===');
+    globalWindow.luladaDebug = () => {
+        console.log('🐛 === DEBUG COMPLETO ===');
+        globalWindow.luladaStatus?.();
         
-        // Firebase Auth
-        if (window.debugFirebaseAuth) {
-            console.log('\n🔥 FIREBASE AUTH:');
-            window.debugFirebaseAuth();
-        }
+        console.log('📋 Todos los componentes registrados:');
+        const allComponents = [
+            'root-component', 'load-pages', 'lulada-home', 'login-page', 'register-new-account',
+            'lulada-header', 'lulada-navigation', 'lulada-sidebar', 'user-info'
+        ];
         
-        // Firebase Publications
-        if (window.debugFirebasePublications) {
-            console.log('\n🔥 FIREBASE PUBLICATIONS:');
-            window.debugFirebasePublications();
-        }
+        allComponents.forEach(name => {
+            const registered = !!customElements.get(name);
+            const inDOM = !!document.querySelector(name);
+            console.log(`- ${name}: ${registered ? '✅' : '❌'} registrado, ${inDOM ? '✅' : '❌'} en DOM`);
+        });
         
-        // Supabase
-        if ((window as any).debugSupabase) {
-            console.log('\n☁️ SUPABASE:');
-            (window as any).debugSupabase();
-        }
-        
-        // Estado general
-        console.log('\n📊 RESUMEN:');
-        window.checkLuladaServices?.();
-        
-        console.log('\n🎯 COMANDOS DISPONIBLES:');
-        console.log('- window.debugFirebaseAuth()');
-        console.log('- window.debugFirebasePublications()');
-        console.log('- window.createTestPublication() (si estás autenticado)');
-        console.log('- window.checkLuladaServices()');
-        console.log('- window.debugAllLuladaServices()');
-        
-        console.log('\n=== FIN DEBUG ===');
+        console.log('========================');
     };
 }
 
-// Agregar estilos para animaciones de toast
-if (typeof document !== 'undefined') {
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideDown {
-            from { transform: translate(-50%, -100%); opacity: 0; }
-            to { transform: translate(-50%, 0); opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { transform: translate(-50%, 0); opacity: 1; }
-            to { transform: translate(-50%, -100%); opacity: 0; }
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-    `;
-    document.head.appendChild(style);
-}
+console.log('✅ === APLICACIÓN LULADA RESTAURADA ===');
 
 // =======================
 // EXPORTS
 // =======================
 export {
-    PublicationsService,
-    AntojarPopupService,
-    LuladaAntojar,
-    LuladaAntojarBoton,
     Home,
     LuladaExplore,
     PUser,
@@ -612,16 +452,8 @@ export {
     LoginPage,
     LuladaSettings,
     LuladaNotifications,
-    NavigationBar,
     HeaderCompleto,
     LuladaSidebar,
     Publication,
     ReviewsContainer
-};
-
-export default {
-    Publication,
-    LuladaAntojar,
-    ReviewsContainer,
-    AntojarPopupService
 };

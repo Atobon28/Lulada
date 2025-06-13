@@ -1,14 +1,15 @@
 
 import { EventEmitter } from 'events';
-import { AppDispatcher } from './Dispacher';
+import { AppDispatcher } from './Dispatcher';
 import { UserData } from './UserActions';
-import { firebaseUserSync } from '../firebase/FirebaseUserSync';
 
 // Definimos cómo debe verse el estado completo del usuario en nuestra aplicación
 export interface UserState {
     currentUser: UserData | null;  // Los datos del usuario actual (null si no hay usuario)
     isLoading: boolean;           // Si estamos cargando datos
     error: string | null;         // Si hay algún error
+    isSyncing: boolean;          // Si estamos sincronizando con Firebase
+    lastSyncTime: string | null; // Última vez que se sincronizó
 }
 
 // Definimos el tipo de acciones que puede recibir el store
@@ -21,6 +22,8 @@ export interface FluxAction {
 class UserStore extends EventEmitter {
     private _state: UserState;
     private _isHydrated: boolean = false;
+    private _syncService: unknown = null;
+    private _syncUnsubscribe?: () => void;
 
     constructor() {
         super();
@@ -29,7 +32,9 @@ class UserStore extends EventEmitter {
         this._state = {
             currentUser: null,
             isLoading: false,
-            error: null
+            error: null,
+            isSyncing: false,
+            lastSyncTime: null
         };
 
         // Nos registramos para escuchar todas las acciones
@@ -37,6 +42,9 @@ class UserStore extends EventEmitter {
         
         // Intentamos cargar datos guardados del usuario
         this._loadUserData();
+        
+        // Inicializar sincronización en tiempo real
+        this._initializeRealTimeSync();
     }
 
     // Función para obtener el estado actual completo
@@ -92,6 +100,10 @@ class UserStore extends EventEmitter {
         try {
             if (this._state.currentUser) {
                 localStorage.setItem('currentUser', JSON.stringify(this._state.currentUser));
+                
+                // También guardar timestamp de última actualización
+                localStorage.setItem('userLastUpdate', new Date().toISOString());
+                
                 console.log('UserStore: Datos guardados en localStorage');
             }
         } catch (error) {
@@ -99,14 +111,48 @@ class UserStore extends EventEmitter {
         }
     }
 
-    // Función privada para sincronizar con Firebase - CORREGIDA
+    // Función privada para inicializar sincronización en tiempo real
+    private async _initializeRealTimeSync(): Promise<void> {
+        try {
+            const syncModule = await import('../firebase/RealTimeUserSyncService');
+            this._syncService = syncModule.realTimeUserSync;
+            
+            // Suscribirse a cambios en el estado de sincronización
+            const service = this._syncService as {
+                subscribe: (callback: (state: { isSyncing: boolean; lastSyncTime: string | null; error: string | null }) => void) => () => void;
+            };
+            
+            this._syncUnsubscribe = service.subscribe((syncState) => {
+                this._state.isSyncing = syncState.isSyncing;
+                this._state.lastSyncTime = syncState.lastSyncTime;
+                
+                // Solo actualizar error si no hay uno más reciente
+                if (syncState.error && !this._state.error) {
+                    this._state.error = syncState.error;
+                }
+                
+                this._emitChange();
+            });
+            
+            console.log('UserStore: ✅ Sincronización en tiempo real inicializada');
+        } catch (error) {
+            console.log('UserStore: Sincronización en tiempo real no disponible');
+        }
+    }
+
+    // Función privada para sincronizar con Firebase - MEJORADA
     private async _syncWithFirebase(): Promise<void> {
         if (!this._state.currentUser) {
             return;
         }
 
+        // No hacer nada si ya hay un servicio de sincronización en tiempo real
+        if (this._syncService) {
+            return; // El servicio de tiempo real se encarga de la sincronización
+        }
+
         try {
-            // Importación dinámica SOLO cuando se necesita
+            // Fallback para sincronización manual si no hay tiempo real
             const firebaseModule = await import('../firebase/FirebaseUserSync');
             const firebaseUserSync = firebaseModule.firebaseUserSync;
             
@@ -114,12 +160,12 @@ class UserStore extends EventEmitter {
             const result = await firebaseUserSync.updateUserProfile(this._state.currentUser);
             
             if (result.success) {
+                this._state.lastSyncTime = new Date().toISOString();
                 console.log('[UserStore] ✅ Sincronización exitosa con Firebase');
             } else {
                 console.warn('[UserStore] ⚠️ Error sincronizando con Firebase:', result.error);
             }
         } catch (error) {
-            // No loggeamos error si Firebase no está disponible
             console.log('[UserStore] Firebase no disponible, funcionando solo con localStorage');
         }
     }
@@ -160,7 +206,7 @@ class UserStore extends EventEmitter {
                     this._state.error = null;
                     
                     this._saveUserData();
-                    this._syncWithFirebase(); // Intentar sincronizar
+                    this._syncWithFirebase();
                     this._emitChange();
                 } else {
                     console.error('No hay usuario actual para actualizar');
@@ -178,7 +224,7 @@ class UserStore extends EventEmitter {
                     this._state.error = null;
                     
                     this._saveUserData();
-                    this._syncWithFirebase(); // Intentar sincronizar
+                    this._syncWithFirebase();
                     this._emitChange();
                 } else {
                     console.error('No hay usuario actual para actualizar');
@@ -196,7 +242,7 @@ class UserStore extends EventEmitter {
                     this._state.error = null;
                     
                     this._saveUserData();
-                    this._syncWithFirebase(); // Intentar sincronizar
+                    this._syncWithFirebase();
                     this._emitChange();
                 } else {
                     console.error('No hay usuario actual para actualizar');
@@ -220,7 +266,7 @@ class UserStore extends EventEmitter {
                     this._state.error = null;
                     
                     this._saveUserData();
-                    this._syncWithFirebase(); // Intentar sincronizar
+                    this._syncWithFirebase();
                     this._emitChange();
                 } else {
                     console.error('No hay usuario actual para actualizar o no hay datos de actualización');
@@ -231,7 +277,7 @@ class UserStore extends EventEmitter {
                 if (this._state.currentUser) {
                     this._state.error = null;
                     this._saveUserData();
-                    this._syncWithFirebase(); // Intentar sincronizar
+                    this._syncWithFirebase();
                     this._emitChange();
                 }
                 break;
@@ -255,7 +301,7 @@ class UserStore extends EventEmitter {
                     this._state.error = null;
                     
                     this._saveUserData();
-                    this._syncWithFirebase(); // Intentar sincronizar
+                    this._syncWithFirebase();
                     this._emitChange();
                 } else {
                     console.error('No hay usuario actual para actualizar');
@@ -265,7 +311,9 @@ class UserStore extends EventEmitter {
             case 'RESET_PROFILE':
                 this._state.currentUser = null;
                 this._state.error = null;
+                this._state.lastSyncTime = null;
                 localStorage.removeItem('currentUser');
+                localStorage.removeItem('userLastUpdate');
                 this._emitChange();
                 break;
 
@@ -280,28 +328,80 @@ class UserStore extends EventEmitter {
                 this._emitChange();
                 break;
 
+            case 'SYNC_FROM_FIREBASE':
+                // Acción especial para sincronización desde Firebase sin trigger de vuelta
+                this._state.currentUser = action.payload as UserData;
+                this._state.error = null;
+                this._saveUserData();
+                this._emitChange();
+                break;
+
             default:
                 console.log('UserStore: Acción no reconocida:', action.type);
         }
     }
 
-    // NUEVA: Función para sincronizar datos desde Firebase
+    // NUEVA: Función para sincronizar datos desde Firebase (tiempo real)
     public async syncFromFirebase(userData: UserData): Promise<void> {
-        console.log('[UserStore] Sincronizando datos desde Firebase');
+        console.log('[UserStore] Sincronizando datos desde Firebase (tiempo real)');
         
-        this._state.currentUser = userData;
-        this._state.error = null;
-        this._saveUserData();
-        this._emitChange();
+        // Usar acción especial que no dispara sync de vuelta a Firebase
+        AppDispatcher.dispatch({
+            type: 'SYNC_FROM_FIREBASE',
+            payload: userData
+        });
     }
 
     // NUEVA: Función para verificar si hay conexión con Firebase
     public async hasFirebaseSync(): Promise<boolean> {
         try {
-            await import(firebaseUserSync);
+            await import('../firebase/FirebaseUserSync');
             return true;
         } catch {
             return false;
+        }
+    }
+
+    // NUEVA: Función para obtener información de sincronización
+    public getSyncInfo(): { 
+        hasRealTimeSync: boolean; 
+        lastSyncTime: string | null; 
+        isSyncing: boolean;
+        lastLocalUpdate: string | null;
+    } {
+        const lastLocalUpdate = localStorage.getItem('userLastUpdate');
+        
+        return {
+            hasRealTimeSync: !!this._syncService,
+            lastSyncTime: this._state.lastSyncTime,
+            isSyncing: this._state.isSyncing,
+            lastLocalUpdate
+        };
+    }
+
+    // NUEVA: Función para forzar sincronización manual
+    public async forceSync(): Promise<{ success: boolean; error?: string }> {
+        if (!this._state.currentUser) {
+            return { success: false, error: 'No hay usuario para sincronizar' };
+        }
+
+        try {
+            if (this._syncService) {
+                // Usar servicio de tiempo real
+                const service = this._syncService as {
+                    forcSync: () => Promise<{ success: boolean; error?: string }>;
+                };
+                return await service.forcSync();
+            } else {
+                // Fallback a sincronización manual
+                await this._syncWithFirebase();
+                return { success: true };
+            }
+        } catch (error) {
+            return { 
+                success: false, 
+                error: error instanceof Error ? error.message : 'Error desconocido' 
+            };
         }
     }
 
@@ -311,9 +411,21 @@ class UserStore extends EventEmitter {
             currentUser: this._state.currentUser,
             isLoading: this._state.isLoading,
             error: this._state.error,
+            isSyncing: this._state.isSyncing,
+            lastSyncTime: this._state.lastSyncTime,
             isHydrated: this._isHydrated,
-            listenerCount: this.listenerCount('change')
+            hasRealTimeSync: !!this._syncService,
+            listenerCount: this.listenerCount('change'),
+            syncInfo: this.getSyncInfo()
         };
+    }
+
+    // Función para limpiar recursos
+    public cleanup(): void {
+        if (this._syncUnsubscribe) {
+            this._syncUnsubscribe();
+        }
+        this.removeAllListeners();
     }
 }
 

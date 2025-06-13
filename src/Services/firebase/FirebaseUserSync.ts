@@ -1,4 +1,3 @@
-
 import { Auth, db, doc, setDoc, getDoc } from './firebase';
 import { updateDoc } from 'firebase/firestore';
 import { UserData } from '../flux/UserActions';
@@ -45,7 +44,7 @@ export class FirebaseUserSync {
 
             console.log('[FirebaseSync] Actualizando perfil en Firestore para:', currentUser.uid);
 
-            // Preparar datos para Firestore
+            // Preparar datos para Firestore - SOLO campos definidos
             const firebaseData: Partial<FirebaseUserData> = {
                 uid: currentUser.uid,
                 email: currentUser.email || '',
@@ -54,10 +53,17 @@ export class FirebaseUserSync {
                 descripcion: userData.descripcion,
                 foto: userData.foto,
                 rol: userData.rol,
-                locationText: userData.locationText,
-                menuLink: userData.menuLink,
                 updatedAt: new Date().toISOString()
             };
+
+            // Solo agregar campos opcionales si están definidos
+            if (userData.locationText) {
+                firebaseData.locationText = userData.locationText;
+            }
+            
+            if (userData.menuLink) {
+                firebaseData.menuLink = userData.menuLink;
+            }
 
             // Actualizar documento en Firestore
             const userDocRef = doc(db, 'users', currentUser.uid);
@@ -90,8 +96,8 @@ export class FirebaseUserSync {
                 descripcion: userData.descripcion,
                 foto: userData.foto,
                 rol: userData.rol,
-                locationText: userData.locationText,
-                menuLink: userData.menuLink,
+                locationText: userData.locationText || '',
+                menuLink: userData.menuLink || '',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
@@ -135,8 +141,8 @@ export class FirebaseUserSync {
                 nombre: firebaseData.nombre,
                 descripcion: firebaseData.descripcion,
                 rol: firebaseData.rol,
-                locationText: firebaseData.locationText,
-                menuLink: firebaseData.menuLink
+                locationText: firebaseData.locationText || undefined,
+                menuLink: firebaseData.menuLink || undefined
             };
 
             console.log('[FirebaseSync] ✅ Perfil obtenido exitosamente desde Firestore');
