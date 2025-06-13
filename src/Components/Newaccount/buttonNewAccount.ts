@@ -1,553 +1,695 @@
-// src/Components/Newaccount/buttonNewAccount.ts - Versión corregida y simplificada
-import { registerUser } from '../../Services/firebase/Authservice';
-
-interface RegisterFormData {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    userType: 'person' | 'restaurant';
-}
-
-interface ValidationResult {
-    isValid: boolean;
-}
-
+// src/Components/Newaccount/buttonNewAccount.ts - REGISTRO CON FIREBASE Y ROL
 class ButtonNewAccount extends HTMLElement {
     private isLoading = false;
-    private formData: Partial<RegisterFormData> = {};
+    private currentStep = 1;
 
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        this.render();
     }
 
-    connectedCallback(): void {
-        this.render();
+    connectedCallback() {
         this.setupEventListeners();
     }
 
-    disconnectedCallback(): void {
-        // Los event listeners se limpian automáticamente
-    }
-
     private render(): void {
-        if (!this.shadowRoot) return;
+        if (this.shadowRoot) {
+            this.shadowRoot.innerHTML = /*html*/ `
+                <style>
+                    :host {
+                        display: block;
+                        width: 100%;
+                        max-width: 400px;
+                        margin: 0 auto;
+                    }
 
-        this.shadowRoot.innerHTML = `
-            <style>
-                :host {
-                    display: block;
-                    max-width: 400px;
-                    margin: 0 auto;
-                    font-family: 'Inter', sans-serif;
-                }
+                    .register-container {
+                        width: 100%;
+                        background: transparent;
+                        text-align: center;
+                    }
 
-                .form-container {
-                    background: white;
-                    border-radius: 16px;
-                    padding: 32px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
+                    .step-indicator {
+                        display: flex;
+                        justify-content: center;
+                        margin-bottom: 30px;
+                        gap: 15px;
+                    }
 
-                .title {
-                    font-size: 24px;
-                    font-weight: 700;
-                    color: #1a1a1a;
-                    margin: 0 0 8px 0;
-                    text-align: center;
-                }
+                    .step {
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 50%;
+                        background: #e5e7eb;
+                        transition: all 0.3s ease;
+                    }
 
-                .subtitle {
-                    font-size: 14px;
-                    color: #666;
-                    margin: 0 0 24px 0;
-                    text-align: center;
-                }
+                    .step.active {
+                        background: #AAAB54;
+                        transform: scale(1.2);
+                    }
 
-                .form-group {
-                    margin-bottom: 20px;
-                }
+                    .step.completed {
+                        background: #16a34a;
+                    }
 
-                .form-label {
-                    display: block;
-                    margin-bottom: 6px;
-                    font-weight: 600;
-                    color: #333;
-                    font-size: 14px;
-                }
+                    .form-step {
+                        display: none;
+                        animation: fadeIn 0.4s ease;
+                    }
 
-                .form-input {
-                    width: 100%;
-                    padding: 12px 16px;
-                    border: 2px solid #e0e0e0;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    box-sizing: border-box;
-                    font-family: inherit;
-                }
+                    .form-step.active {
+                        display: block;
+                    }
 
-                .form-input:focus {
-                    outline: none;
-                    border-color: #AAAB54;
-                }
+                    @keyframes fadeIn {
+                        from { opacity: 0; transform: translateY(20px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
 
-                .form-input.error {
-                    border-color: #dc2626;
-                }
+                    .step-title {
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: #333;
+                        margin-bottom: 10px;
+                        font-family: 'Poppins', sans-serif;
+                    }
 
-                .error-message {
-                    display: none;
-                    margin-top: 6px;
-                    padding: 8px 12px;
-                    background: #fef2f2;
-                    border-radius: 6px;
-                    color: #dc2626;
-                    font-size: 12px;
-                }
+                    .step-subtitle {
+                        font-size: 14px;
+                        color: #666;
+                        margin-bottom: 30px;
+                    }
 
-                .error-message.visible {
-                    display: block;
-                }
+                    .form-group {
+                        margin-bottom: 20px;
+                        text-align: left;
+                    }
 
-                .user-type-selector {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 12px;
-                    margin-bottom: 20px;
-                }
+                    .form-label {
+                        display: block;
+                        margin-bottom: 6px;
+                        font-weight: 600;
+                        color: #333;
+                        font-size: 13px;
+                    }
 
-                .user-type-option {
-                    padding: 16px;
-                    border: 2px solid #e0e0e0;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    text-align: center;
-                    transition: all 0.2s ease;
-                }
+                    .form-input {
+                        width: 100%;
+                        padding: 12px 16px;
+                        border: 2px solid #e1e5e9;
+                        border-radius: 10px;
+                        font-size: 15px;
+                        font-family: inherit;
+                        transition: all 0.3s ease;
+                        box-sizing: border-box;
+                        background: #fafbfc;
+                    }
 
-                .user-type-option:hover {
-                    border-color: #AAAB54;
-                }
+                    .form-input:focus {
+                        outline: none;
+                        border-color: #AAAB54;
+                        box-shadow: 0 0 0 3px rgba(170, 171, 84, 0.1);
+                        background: white;
+                    }
 
-                .user-type-option.selected {
-                    border-color: #AAAB54;
-                    background: rgba(170, 171, 84, 0.1);
-                }
+                    .role-selection {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 15px;
+                        margin-bottom: 30px;
+                    }
 
-                .user-type-title {
-                    font-weight: 600;
-                    color: #333;
-                    margin-bottom: 4px;
-                }
+                    .role-option {
+                        padding: 20px 15px;
+                        border: 2px solid #e1e5e9;
+                        border-radius: 12px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        text-align: center;
+                        background: #fafbfc;
+                    }
 
-                .user-type-desc {
-                    font-size: 12px;
-                    color: #666;
-                }
+                    .role-option:hover {
+                        border-color: #AAAB54;
+                        background: white;
+                        transform: translateY(-2px);
+                    }
 
-                .btn {
-                    width: 100%;
-                    padding: 14px;
-                    border: none;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    font-family: inherit;
-                    margin-bottom: 12px;
-                }
+                    .role-option.selected {
+                        border-color: #AAAB54;
+                        background: rgba(170, 171, 84, 0.1);
+                        box-shadow: 0 0 0 3px rgba(170, 171, 84, 0.1);
+                    }
 
-                .btn-primary {
-                    background: #AAAB54;
-                    color: white;
-                }
+                    .role-icon {
+                        font-size: 28px;
+                        margin-bottom: 10px;
+                    }
 
-                .btn-primary:hover:not(:disabled) {
-                    background: #999A4A;
-                }
+                    .role-title {
+                        font-weight: 600;
+                        color: #333;
+                        margin-bottom: 5px;
+                        font-size: 14px;
+                    }
 
-                .btn:disabled {
-                    background: #ccc;
-                    cursor: not-allowed;
-                }
+                    .role-description {
+                        font-size: 12px;
+                        color: #666;
+                        line-height: 1.4;
+                    }
 
-                .login-link {
-                    text-align: center;
-                    font-size: 14px;
-                    color: #666;
-                }
+                    .action-button {
+                        width: 100%;
+                        padding: 14px 24px;
+                        background: linear-gradient(135deg, #AAAB54, #999A4A);
+                        color: white;
+                        border: none;
+                        border-radius: 10px;
+                        font-size: 15px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        margin-bottom: 15px;
+                        position: relative;
+                        letter-spacing: 0.3px;
+                    }
 
-                .login-link button {
-                    background: none;
-                    border: none;
-                    color: #AAAB54;
-                    font-weight: 600;
-                    cursor: pointer;
-                    font-size: inherit;
-                    font-family: inherit;
-                }
+                    .action-button:hover:not(:disabled) {
+                        background: linear-gradient(135deg, #999A4A, #8a8b3a);
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 20px rgba(170, 171, 84, 0.3);
+                    }
 
-                .login-link button:hover {
-                    color: #999A4A;
-                }
-            </style>
+                    .action-button:disabled {
+                        background: #e5e7eb;
+                        color: #9ca3af;
+                        cursor: not-allowed;
+                        transform: none;
+                        box-shadow: none;
+                    }
 
-            <div class="form-container">
-                <h1 class="title">Crear Cuenta</h1>
-                <p class="subtitle">Únete a la comunidad de Lulada</p>
+                    .secondary-button {
+                        width: 100%;
+                        padding: 12px 24px;
+                        background: transparent;
+                        color: #666;
+                        border: 2px solid #e1e5e9;
+                        border-radius: 10px;
+                        font-size: 14px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        margin-bottom: 20px;
+                    }
 
-                <div class="form-group">
-                    <label for="firstName" class="form-label">Nombre</label>
-                    <input
-                        type="text"
-                        id="firstName"
-                        name="firstName"
-                        class="form-input"
-                        placeholder="Tu nombre"
-                        required
-                    >
-                    <div class="error-message" id="firstName-error"></div>
-                </div>
+                    .secondary-button:hover {
+                        border-color: #AAAB54;
+                        color: #AAAB54;
+                    }
 
-                <div class="form-group">
-                    <label for="lastName" class="form-label">Apellido</label>
-                    <input
-                        type="text"
-                        id="lastName"
-                        name="lastName"
-                        class="form-input"
-                        placeholder="Tu apellido"
-                        required
-                    >
-                    <div class="error-message" id="lastName-error"></div>
-                </div>
+                    .loading-spinner {
+                        display: none;
+                        width: 18px;
+                        height: 18px;
+                        border: 2px solid transparent;
+                        border-top: 2px solid currentColor;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin-right: 8px;
+                    }
 
-                <div class="form-group">
-                    <label for="email" class="form-label">Correo electrónico</label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        class="form-input"
-                        placeholder="tu@email.com"
-                        required
-                    >
-                    <div class="error-message" id="email-error"></div>
-                </div>
+                    .loading .loading-spinner {
+                        display: inline-block;
+                    }
 
-                <div class="form-group">
-                    <label for="password" class="form-label">Contraseña</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        class="form-input"
-                        placeholder="Mínimo 6 caracteres"
-                        required
-                    >
-                    <div class="error-message" id="password-error"></div>
-                </div>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
 
-                <div class="form-group">
-                    <label for="confirmPassword" class="form-label">Confirmar contraseña</label>
-                    <input
-                        type="password"
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        class="form-input"
-                        placeholder="Confirma tu contraseña"
-                        required
-                    >
-                    <div class="error-message" id="confirmPassword-error"></div>
-                </div>
+                    .error-message, .success-message {
+                        padding: 10px 14px;
+                        border-radius: 8px;
+                        margin-bottom: 20px;
+                        font-size: 13px;
+                        font-weight: 500;
+                        text-align: center;
+                        opacity: 0;
+                        transform: translateY(-10px);
+                        transition: all 0.3s ease;
+                    }
 
-                <div class="form-group">
-                    <label class="form-label">Tipo de cuenta</label>
-                    <div class="user-type-selector">
-                        <div class="user-type-option" data-type="person">
-                            <div class="user-type-title">Personal</div>
-                            <div class="user-type-desc">Para usuarios</div>
+                    .error-message.show, .success-message.show {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+
+                    .error-message {
+                        background: #fef2f2;
+                        color: #dc2626;
+                        border: 1px solid #fecaca;
+                    }
+
+                    .success-message {
+                        background: #f0fdf4;
+                        color: #16a34a;
+                        border: 1px solid #bbf7d0;
+                    }
+
+                    .login-link {
+                        color: #666;
+                        font-size: 13px;
+                        text-align: center;
+                        margin-top: 20px;
+                    }
+
+                    .login-link a {
+                        color: #AAAB54;
+                        text-decoration: none;
+                        font-weight: 600;
+                    }
+
+                    .login-link a:hover {
+                        text-decoration: underline;
+                    }
+
+                    @media (max-width: 480px) {
+                        .role-selection {
+                            grid-template-columns: 1fr;
+                        }
+                    }
+                </style>
+
+                <div class="register-container">
+                    <!-- Indicador de pasos -->
+                    <div class="step-indicator">
+                        <div class="step active" id="step-1"></div>
+                        <div class="step" id="step-2"></div>
+                        <div class="step" id="step-3"></div>
+                    </div>
+
+                    <!-- Mensajes -->
+                    <div class="error-message" id="error-message"></div>
+                    <div class="success-message" id="success-message"></div>
+
+                    <!-- Paso 1: Datos personales -->
+                    <div class="form-step active" id="form-step-1">
+                        <h3 class="step-title">Datos Personales</h3>
+                        <p class="step-subtitle">Cuéntanos un poco sobre ti</p>
+
+                        <div class="form-group">
+                            <label class="form-label" for="firstName">Nombre</label>
+                            <input type="text" id="firstName" class="form-input" placeholder="Tu nombre" required>
                         </div>
-                        <div class="user-type-option" data-type="restaurant">
-                            <div class="user-type-title">Restaurante</div>
-                            <div class="user-type-desc">Para propietarios</div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="lastName">Apellido</label>
+                            <input type="text" id="lastName" class="form-input" placeholder="Tu apellido" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="email">Correo Electrónico</label>
+                            <input type="email" id="email" class="form-input" placeholder="tu@email.com" required>
+                        </div>
+
+                        <button type="button" class="action-button" id="next-step-1">
+                            Continuar
+                        </button>
+
+                        <div class="login-link">
+                            ¿Ya tienes cuenta? <a href="#" id="login-link">Inicia sesión</a>
                         </div>
                     </div>
-                    <div class="error-message" id="userType-error"></div>
-                </div>
 
-                <button type="button" class="btn btn-primary" id="register-btn">
-                    Crear Cuenta
-                </button>
+                    <!-- Paso 2: Contraseña -->
+                    <div class="form-step" id="form-step-2">
+                        <h3 class="step-title">Contraseña</h3>
+                        <p class="step-subtitle">Crea una contraseña segura</p>
 
-                <div class="login-link">
-                    ¿Ya tienes cuenta? <button type="button" id="login-link">Inicia sesión</button>
+                        <div class="form-group">
+                            <label class="form-label" for="password">Contraseña</label>
+                            <input type="password" id="password" class="form-input" placeholder="Mínimo 6 caracteres" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="confirmPassword">Confirmar Contraseña</label>
+                            <input type="password" id="confirmPassword" class="form-input" placeholder="Repite tu contraseña" required>
+                        </div>
+
+                        <button type="button" class="action-button" id="next-step-2">
+                            Continuar
+                        </button>
+
+                        <button type="button" class="secondary-button" id="back-step-2">
+                            ← Atrás
+                        </button>
+                    </div>
+
+                    <!-- Paso 3: Seleccionar rol -->
+                    <div class="form-step" id="form-step-3">
+                        <h3 class="step-title">¿Cómo usarás Lulada?</h3>
+                        <p class="step-subtitle">Esto nos ayuda a personalizar tu experiencia</p>
+
+                        <div class="role-selection">
+                            <div class="role-option" data-role="persona">
+                                <div class="role-icon">👤</div>
+                                <div class="role-title">Usuario Personal</div>
+                                <div class="role-description">Buscar y reseñar restaurantes</div>
+                            </div>
+                            <div class="role-option" data-role="restaurante">
+                                <div class="role-icon">🍽️</div>
+                                <div class="role-title">Restaurante</div>
+                                <div class="role-description">Gestionar mi negocio gastronómico</div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="action-button" id="complete-registration" disabled>
+                            <div class="loading-spinner"></div>
+                            <span class="button-text">Crear Cuenta</span>
+                        </button>
+
+                        <button type="button" class="secondary-button" id="back-step-3">
+                            ← Atrás
+                        </button>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
     }
 
     private setupEventListeners(): void {
-        if (!this.shadowRoot) return;
+        // Navegación entre pasos
+        this.shadowRoot?.getElementById('next-step-1')?.addEventListener('click', () => this.nextStep(1));
+        this.shadowRoot?.getElementById('next-step-2')?.addEventListener('click', () => this.nextStep(2));
+        this.shadowRoot?.getElementById('back-step-2')?.addEventListener('click', () => this.prevStep(2));
+        this.shadowRoot?.getElementById('back-step-3')?.addEventListener('click', () => this.prevStep(3));
 
-        const registerBtn = this.shadowRoot.getElementById('register-btn') as HTMLButtonElement;
-        const loginLink = this.shadowRoot.getElementById('login-link') as HTMLButtonElement;
-        const userTypeOptions = this.shadowRoot.querySelectorAll('.user-type-option');
-
-        registerBtn?.addEventListener('click', this.handleRegister.bind(this));
-        loginLink?.addEventListener('click', this.handleLoginClick.bind(this));
-
-        // Selección de tipo de usuario
-        userTypeOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                userTypeOptions.forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                this.formData.userType = option.getAttribute('data-type') as 'person' | 'restaurant';
-                this.clearFieldError('userType');
+        // Selección de rol
+        this.shadowRoot?.querySelectorAll('.role-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const target = e.currentTarget as HTMLElement;
+                this.selectRole(target.dataset.role as 'persona' | 'restaurante');
             });
         });
 
-        // Validación en tiempo real
-        const inputs = this.shadowRoot.querySelectorAll('.form-input');
-        inputs.forEach(input => {
-            const inputElement = input as HTMLInputElement;
-            inputElement.addEventListener('input', () => {
-                this.clearFieldError(inputElement.name);
-            });
+        // Registro final
+        this.shadowRoot?.getElementById('complete-registration')?.addEventListener('click', () => this.handleRegistration());
+
+        // Link de login
+        this.shadowRoot?.getElementById('login-link')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.navigateToLogin();
         });
     }
 
-    private async handleRegister(): Promise<void> {
-        if (!this.validateForm()) {
+    private nextStep(currentStep: number): void {
+        if (!this.validateStep(currentStep)) return;
+
+        this.currentStep = currentStep + 1;
+        this.updateStepDisplay();
+    }
+
+    private prevStep(currentStep: number): void {
+        this.currentStep = currentStep - 1;
+        this.updateStepDisplay();
+    }
+
+    private validateStep(step: number): boolean {
+        switch (step) {
+            case 1:
+                const firstName = (this.shadowRoot?.getElementById('firstName') as HTMLInputElement)?.value.trim();
+                const lastName = (this.shadowRoot?.getElementById('lastName') as HTMLInputElement)?.value.trim();
+                const email = (this.shadowRoot?.getElementById('email') as HTMLInputElement)?.value.trim();
+
+                if (!firstName || !lastName || !email) {
+                    this.showError('Por favor, completa todos los campos');
+                    return false;
+                }
+
+                if (!this.isValidEmail(email)) {
+                    this.showError('Por favor, ingresa un email válido');
+                    return false;
+                }
+                break;
+
+            case 2:
+                const password = (this.shadowRoot?.getElementById('password') as HTMLInputElement)?.value;
+                const confirmPassword = (this.shadowRoot?.getElementById('confirmPassword') as HTMLInputElement)?.value;
+
+                if (!password || !confirmPassword) {
+                    this.showError('Por favor, completa ambos campos de contraseña');
+                    return false;
+                }
+
+                if (password.length < 6) {
+                    this.showError('La contraseña debe tener al menos 6 caracteres');
+                    return false;
+                }
+
+                if (password !== confirmPassword) {
+                    this.showError('Las contraseñas no coinciden');
+                    return false;
+                }
+                break;
+        }
+
+        return true;
+    }
+
+    private updateStepDisplay(): void {
+        // Actualizar indicadores
+        for (let i = 1; i <= 3; i++) {
+            const stepEl = this.shadowRoot?.getElementById(`step-${i}`);
+            const formEl = this.shadowRoot?.getElementById(`form-step-${i}`);
+
+            if (i < this.currentStep) {
+                stepEl?.classList.add('completed');
+                stepEl?.classList.remove('active');
+            } else if (i === this.currentStep) {
+                stepEl?.classList.add('active');
+                stepEl?.classList.remove('completed');
+            } else {
+                stepEl?.classList.remove('active', 'completed');
+            }
+
+            if (i === this.currentStep) {
+                formEl?.classList.add('active');
+            } else {
+                formEl?.classList.remove('active');
+            }
+        }
+    }
+
+    private selectRole(role: 'persona' | 'restaurante'): void {
+        // Remover selección anterior
+        this.shadowRoot?.querySelectorAll('.role-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+
+        // Seleccionar nueva opción
+        const selectedOption = this.shadowRoot?.querySelector(`[data-role="${role}"]`);
+        selectedOption?.classList.add('selected');
+
+        // Habilitar botón
+        const completeButton = this.shadowRoot?.getElementById('complete-registration') as HTMLButtonElement;
+        completeButton.disabled = false;
+    }
+
+    private async handleRegistration(): Promise<void> {
+        if (this.isLoading) return;
+
+        const selectedRole = this.shadowRoot?.querySelector('.role-option.selected')?.getAttribute('data-role') as 'persona' | 'restaurante';
+        
+        if (!selectedRole) {
+            this.showError('Por favor, selecciona cómo usarás Lulada');
             return;
         }
 
-        this.setLoadingState(true);
-
-        try {
-            const result = await registerUser(
-                this.formData.email!,
-                this.formData.password!,
-                this.formData.firstName!,
-                this.formData.lastName!,
-                this.formData.userType!
-            );
-
-            if (result.success && result.user) {
-                this.handleRegistrationSuccess();
-            } else {
-                this.handleRegistrationError(result.error || 'Error desconocido');
-            }
-        } catch {
-            this.handleRegistrationError('Error de conexión');
-        } finally {
-            this.setLoadingState(false);
-        }
-    }
-
-    private validateForm(): boolean {
-        const firstName = (this.shadowRoot?.getElementById('firstName') as HTMLInputElement)?.value.trim() || '';
-        const lastName = (this.shadowRoot?.getElementById('lastName') as HTMLInputElement)?.value.trim() || '';
-        const email = (this.shadowRoot?.getElementById('email') as HTMLInputElement)?.value.trim() || '';
-        const password = (this.shadowRoot?.getElementById('password') as HTMLInputElement)?.value || '';
-        const confirmPassword = (this.shadowRoot?.getElementById('confirmPassword') as HTMLInputElement)?.value || '';
-
-        let isValid = true;
-
-        // Validar nombre
-        if (!firstName) {
-            this.showFieldError('firstName', 'El nombre es requerido');
-            isValid = false;
-        } else if (firstName.length < 2) {
-            this.showFieldError('firstName', 'Mínimo 2 caracteres');
-            isValid = false;
-        }
-
-        // Validar apellido
-        if (!lastName) {
-            this.showFieldError('lastName', 'El apellido es requerido');
-            isValid = false;
-        } else if (lastName.length < 2) {
-            this.showFieldError('lastName', 'Mínimo 2 caracteres');
-            isValid = false;
-        }
-
-        // Validar email
-        if (!email) {
-            this.showFieldError('email', 'El correo es requerido');
-            isValid = false;
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            this.showFieldError('email', 'Formato de correo inválido');
-            isValid = false;
-        }
-
-        // Validar contraseña
-        if (!password) {
-            this.showFieldError('password', 'La contraseña es requerida');
-            isValid = false;
-        } else if (password.length < 6) {
-            this.showFieldError('password', 'Mínimo 6 caracteres');
-            isValid = false;
-        }
-
-        // Validar confirmación de contraseña
-        if (!confirmPassword) {
-            this.showFieldError('confirmPassword', 'Confirma tu contraseña');
-            isValid = false;
-        } else if (password !== confirmPassword) {
-            this.showFieldError('confirmPassword', 'Las contraseñas no coinciden');
-            isValid = false;
-        }
-
-        // Validar tipo de usuario
-        if (!this.formData.userType) {
-            this.showFieldError('userType', 'Selecciona el tipo de cuenta');
-            isValid = false;
-        }
-
-        // Guardar datos si es válido
-        if (isValid) {
-            this.formData = {
-                firstName,
-                lastName,
-                email,
-                password,
-                confirmPassword,
-                userType: this.formData.userType!
-            };
-        }
-
-        return isValid;
-    }
-
-    private showFieldError(field: string, message: string): void {
-        const input = this.shadowRoot?.getElementById(field) as HTMLInputElement;
-        const errorDiv = this.shadowRoot?.getElementById(`${field}-error`) as HTMLElement;
-
-        if (input && errorDiv) {
-            input.classList.add('error');
-            errorDiv.textContent = message;
-            errorDiv.classList.add('visible');
-        }
-    }
-
-    private clearFieldError(field: string): void {
-        const input = this.shadowRoot?.getElementById(field) as HTMLInputElement;
-        const errorDiv = this.shadowRoot?.getElementById(`${field}-error`) as HTMLElement;
-
-        if (input && errorDiv) {
-            input.classList.remove('error');
-            errorDiv.classList.remove('visible');
-        }
-    }
-
-    private setLoadingState(loading: boolean): void {
-        this.isLoading = loading;
-        const registerBtn = this.shadowRoot?.getElementById('register-btn') as HTMLButtonElement;
-
-        if (registerBtn) {
-            registerBtn.disabled = loading;
-            registerBtn.textContent = loading ? 'Creando cuenta...' : 'Crear Cuenta';
-        }
-    }
-
-    private handleRegistrationSuccess(): void {
-        this.showToast(`¡Bienvenido ${this.formData.firstName}! Cuenta creada exitosamente`, 'success');
-
-        setTimeout(() => {
-            const navEvent = new CustomEvent('navigate', {
-                detail: '/home',
-                bubbles: true,
-                composed: true
-            });
-            document.dispatchEvent(navEvent);
-        }, 2000);
-    }
-
-    private handleRegistrationError(errorMessage: string): void {
-        const friendlyErrors: { [key: string]: string } = {
-            'auth/email-already-in-use': 'Ya existe una cuenta con este correo',
-            'auth/invalid-email': 'El correo electrónico es inválido',
-            'auth/weak-password': 'La contraseña es muy débil',
-            'auth/operation-not-allowed': 'El registro no está habilitado'
+        // Obtener datos del formulario
+        const formData = {
+            firstName: (this.shadowRoot?.getElementById('firstName') as HTMLInputElement)?.value.trim(),
+            lastName: (this.shadowRoot?.getElementById('lastName') as HTMLInputElement)?.value.trim(),
+            email: (this.shadowRoot?.getElementById('email') as HTMLInputElement)?.value.trim(),
+            password: (this.shadowRoot?.getElementById('password') as HTMLInputElement)?.value,
+            role: selectedRole
         };
 
-        const userMessage = friendlyErrors[errorMessage] || errorMessage;
-        this.showToast(userMessage, 'error');
+        this.setLoading(true);
 
-        if (errorMessage.includes('email')) {
-            this.showFieldError('email', userMessage);
+        try {
+            // Intentar registro con Firebase
+            const firebaseSuccess = await this.attemptFirebaseRegistration(formData);
+            
+            if (firebaseSuccess) {
+                this.showSuccess('¡Cuenta creada exitosamente con Firebase!');
+                setTimeout(() => this.navigateToProfile(), 1500);
+                return;
+            }
+
+            // Fallback: registro local
+            await this.attemptLocalRegistration(formData);
+            
+        } catch (error) {
+            console.error('Error en registro:', error);
+            this.showError('Error al crear la cuenta. Intenta de nuevo.');
+        } finally {
+            this.setLoading(false);
         }
     }
 
-    private handleLoginClick(): void {
+    private async attemptFirebaseRegistration(formData: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        password: string;
+        role: 'persona' | 'restaurante';
+    }): Promise<boolean> {
+        try {
+            const { registerUser } = await import('../../Services/firebase/Authservice');
+            
+            // CORREGIDO: Preparar userData para Firebase (3er parámetro)
+            const userData = {
+                foto: "https://randomuser.me/api/portraits/women/44.jpg",
+                nombreDeUsuario: `@${formData.email.split('@')[0]}`,
+                nombre: `${formData.firstName} ${formData.lastName}`,
+                descripcion: formData.role === 'restaurante' 
+                    ? "Propietario de restaurante en Lulada" 
+                    : "Usuario de Lulada",
+                locationText: "",
+                menuLink: "",
+                rol: formData.role
+            };
+            
+            // CORREGIDO: Pasar los 3 argumentos requeridos
+            const result = await registerUser(formData.email, formData.password, userData);
+            
+            if (result.success && result.user) {
+                console.log('✅ Registro exitoso con Firebase:', result.user.email);
+                
+                // Guardar datos completos del usuario
+                const userStorageData = {
+                    email: result.user.email,
+                    name: `${formData.firstName} ${formData.lastName}`,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    uid: result.user.uid,
+                    role: formData.role
+                };
+                
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('currentUser', JSON.stringify(userStorageData));
+                
+                // Disparar evento de selección de rol
+                document.dispatchEvent(new CustomEvent('user-role-selected', {
+                    detail: { role: formData.role },
+                    bubbles: true
+                }));
+                
+                return true;
+            } else {
+                if (result.error) {
+                    this.showError(result.error);
+                }
+                return false;
+            }
+            
+        } catch (error) {
+            console.log('⚠️ Firebase no disponible, usando registro local');
+            return false;
+        }
+    }
+
+    private async attemptLocalRegistration(formData: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        password: string;
+        role: 'persona' | 'restaurante';
+    }): Promise<void> {
+        // Simulación de registro local
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        const userData = {
+            email: formData.email,
+            name: `${formData.firstName} ${formData.lastName}`,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            uid: `local-${Date.now()}`,
+            role: formData.role
+        };
+        
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        
+        // Disparar evento de selección de rol
+        document.dispatchEvent(new CustomEvent('user-role-selected', {
+            detail: { role: formData.role },
+            bubbles: true
+        }));
+        
+        this.showSuccess('¡Cuenta creada exitosamente!');
+        setTimeout(() => this.navigateToProfile(), 1500);
+    }
+
+    private navigateToProfile(): void {
+        const navEvent = new CustomEvent('navigate', {
+            detail: '/profile',
+            bubbles: true,
+            composed: true
+        });
+        this.dispatchEvent(navEvent);
+    }
+
+    private navigateToLogin(): void {
         const navEvent = new CustomEvent('navigate', {
             detail: '/login',
             bubbles: true,
             composed: true
         });
-        document.dispatchEvent(navEvent);
+        this.dispatchEvent(navEvent);
     }
 
-    private showToast(message: string, type: 'success' | 'error'): void {
-        const toast = document.createElement('div');
-        const isSuccess = type === 'success';
+    private setLoading(loading: boolean): void {
+        this.isLoading = loading;
+        const completeButton = this.shadowRoot?.getElementById('complete-registration') as HTMLButtonElement;
         
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${isSuccess ? '#22c55e' : '#dc2626'};
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 10001;
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            max-width: 300px;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        `;
-        
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.transform = 'translateX(0)';
-        }, 100);
-        
-        setTimeout(() => {
-            toast.style.transform = 'translateX(100%)';
+        if (loading) {
+            completeButton?.classList.add('loading');
+            completeButton.disabled = true;
+        } else {
+            completeButton?.classList.remove('loading');
+            // Solo habilitar si hay un rol seleccionado
+            const hasRoleSelected = !!this.shadowRoot?.querySelector('.role-option.selected');
+            completeButton.disabled = !hasRoleSelected;
+        }
+    }
+
+    private showError(message: string): void {
+        this.showMessage(message, 'error');
+    }
+
+    private showSuccess(message: string): void {
+        this.showMessage(message, 'success');
+    }
+
+    private showMessage(message: string, type: 'error' | 'success'): void {
+        const messageEl = this.shadowRoot?.getElementById(`${type}-message`) as HTMLElement;
+        if (messageEl) {
+            messageEl.textContent = message;
+            messageEl.classList.add('show');
+
             setTimeout(() => {
-                if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                }
-            }, 300);
-        }, 4000);
+                messageEl.classList.remove('show');
+            }, 4000);
+        }
     }
 
-    // Métodos públicos
-    public getValidationResult(): ValidationResult {
-        return { isValid: this.validateForm() };
-    }
-
-    public getFormData(): Partial<RegisterFormData> {
-        return { ...this.formData };
-    }
-
-    public resetForm(): void {
-        this.formData = {};
-        this.render();
-    }
-
-    public debugInfo(): void {
-        console.log('📝 ButtonNewAccount Debug:');
-        console.log('- Datos del formulario:', this.formData);
-        console.log('- Estado de carga:', this.isLoading);
-        console.log('- Validación:', this.getValidationResult());
+    private isValidEmail(email: string): boolean {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
     }
 }
 

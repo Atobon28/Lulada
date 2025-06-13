@@ -38,4 +38,3 @@ export class ExploreContainer extends HTMLElement {
 
 // Exportación por defecto del componente
 export default ExploreContainer;
-

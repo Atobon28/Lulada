@@ -1,3 +1,5 @@
+// Components/Settings/CajonListInteractive.ts - COMPLETO CORREGIDO
+
 // Componente que crea una lista interactiva de configuraciones
 class CajonListInteractive extends HTMLElement {
     // Variables para controlar qué opción está seleccionada y qué vista se muestra
@@ -63,6 +65,9 @@ class CajonListInteractive extends HTMLElement {
                         gap: 16px;
                         width: 100%;
                         padding: 20px;
+                        box-sizing: border-box;
+                        height: 100%;
+                        overflow-y: auto;
                     }
                     
                     /* Estilos para cada opción de configuración */
@@ -326,14 +331,13 @@ class CajonListInteractive extends HTMLElement {
             this.showPlaceholder();
         });
         
-formView.addEventListener('save', () => {
-    this.showSuccessMessage();
+        formView.addEventListener('save', () => {
+            this.showSuccessMessage();
 
-    setTimeout(() => {
-        this.showPlaceholder();
-    }, 1500);
-});
-
+            setTimeout(() => {
+                this.showPlaceholder();
+            }, 1500);
+        });
     }
     
     // Vuelve al estado inicial (panel derecho vacío)
@@ -375,7 +379,7 @@ formView.addEventListener('save', () => {
             try {
                 localStorage.removeItem('userToken');
                 sessionStorage.clear();
-            } catch (e) {
+            } catch (e: unknown) {
                 console.log('Error limpiando datos:', e);
             }
             

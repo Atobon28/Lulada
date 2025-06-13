@@ -1,358 +1,325 @@
-// Importamos las herramientas que necesitamos para manejar eventos y datos de usuario
-import { AppDispatcher, Action } from './Dispacher';
+import { EventEmitter } from 'events';
+import { AppDispatcher } from './Dispatcher';
 import { UserData } from './UserActions';
 
-// Esta interfaz define cómo se ve el estado del usuario en la aplicación
+// Definimos cómo debe verse el estado completo del usuario en nuestra aplicación
 export interface UserState {
-    currentUser: UserData | null; // Los datos del usuario actual (puede ser null si no hay usuario)
-    isLoading: boolean;           // Si estamos cargando datos (true/false)
-    error: string | null;         // Si hay algún error (texto del error o null si no hay error)
+    currentUser: UserData | null;  // Los datos del usuario actual (null si no hay usuario)
+    isLoading: boolean;           // Si estamos cargando datos
+    error: string | null;         // Si hay algún error
+    isSyncing: boolean;          // Si estamos sincronizando con Firebase
+    lastSyncTime: string | null; // Última vez que se sincronizó
 }
 
-// Tipo de función que puede escuchar cambios en el estado del usuario
-type UserListener = (state: UserState) => void;
+// Definimos el tipo de acciones que puede recibir el store
+export interface FluxAction {
+    type: string;                 // Tipo de acción (ej: 'LOAD_USER_DATA')
+    payload?: unknown;            // Datos que acompañan la acción
+}
 
-// Clase principal que maneja todos los datos del usuario
-export class UserStore {
-    // Estado inicial del usuario (privado, solo esta clase puede modificarlo)
-    private _state: UserState = {
-        currentUser: null,      // Al principio no hay usuario
-        isLoading: false,       // No estamos cargando nada
-        error: null            // No hay errores
-    };
+// Listener type for subscriptions
+type UserStoreListener = (state: UserState) => void;
 
-    // Lista de funciones que escuchan cuando cambian los datos del usuario
-    private _listeners: UserListener[] = [];
+// Esta clase maneja todos los datos del usuario en la aplicación
+class UserStore extends EventEmitter {
+    private _state: UserState;
+    private _isHydrated: boolean = false;
+    private _syncService: unknown = null;
+    private _syncUnsubscribe?: () => void;
+    private _listeners: Set<UserStoreListener> = new Set();
 
-    // Constructor: se ejecuta cuando se crea una nueva instancia de UserStore
     constructor() {
-        // Registramos esta clase para que escuche todos los eventos/acciones que ocurren en la app
-        AppDispatcher.register(this._handleActions.bind(this));
-        // Cargamos los datos iniciales del usuario
-        this._loadInitialData();
-    }
-
-    // Función privada que carga los datos del usuario cuando inicia la aplicación
-    private _loadInitialData(): void {
-        // Primero intentamos cargar datos guardados en el navegador (localStorage)
-        try {
-            const savedUser = localStorage.getItem('currentUser'); // Buscamos datos guardados
-            if (savedUser) {
-                // Si encontramos datos, los convertimos de texto a objeto JavaScript
-                const userData = JSON.parse(savedUser) as UserData;
-                // Establecemos estos datos como el usuario actual
-                this._state.currentUser = userData;
-                // Notificamos a todos los componentes que escuchan cambios
-                this._emitChange();
-                return; // Salimos de la función porque ya tenemos datos
-            }
-        } catch (error) {
-            // Si hay error al cargar datos guardados, los borramos para evitar problemas
-            console.error('Error loading saved user data:', error);
-            localStorage.removeItem('currentUser');
-        }
-
-        // Si no hay datos guardados, creamos un usuario por defecto
-        this._state.currentUser = {
-            foto: "https://randomuser.me/api/portraits/women/44.jpg",  // Foto de ejemplo
-            nombreDeUsuario: "@CrisTiJauregui",                        // Username de ejemplo
-            nombre: "Cristina Jauregui",                               // Nombre de ejemplo
-            descripcion: "Me encanta el alcohol, los cocteles me vuelven loca", // Descripción de ejemplo
-            rol: "persona"                                             // Tipo de usuario
+        super();
+        
+        // Estado inicial: no hay usuario, no estamos cargando, no hay errores
+        this._state = {
+            currentUser: null,
+            isLoading: false,
+            error: null,
+            isSyncing: false,
+            lastSyncTime: null
         };
-        // Guardamos estos datos por defecto
-        this._saveUserData();
-        // Notificamos el cambio
-        this._emitChange();
+
+        // Nos registramos para escuchar todas las acciones
+        AppDispatcher.register(this._handleActions.bind(this));
+        
+        // Intentamos cargar datos guardados del usuario
+        this._loadUserData();
+        
+        // Inicializar sincronización en tiempo real
+        this._initializeRealTimeSync();
     }
 
-    // Función que maneja todas las acciones/eventos que pueden cambiar los datos del usuario
-    private _handleActions(action: Action): void {
-        // Usamos switch para manejar diferentes tipos de acciones
-        switch (action.type) {
-            case 'LOAD_USER_DATA':
-                // Acción: cargar datos completos del usuario
-                this._state.currentUser = action.payload as UserData;
-                this._state.error = null; // Limpiamos cualquier error previo
-                this._saveUserData(); // Guardamos en el navegador
-                this._emitChange();   // Notificamos el cambio
-                break;
-
-            case 'UPDATE_USERNAME':
-                // Acción: cambiar el nombre de usuario
-                if (this._state.currentUser) { // Solo si hay un usuario actual
-                    const newUsername = action.payload as string;
-                    
-                    // Nos aseguramos de que el username empiece con @
-                    const formattedUsername = newUsername.startsWith('@') ? newUsername : `@${newUsername}`;
-                    
-                    // Creamos un nuevo objeto con los datos actualizados (inmutabilidad)
-                    this._state.currentUser = {
-                        ...this._state.currentUser,           // Copiamos todos los datos existentes
-                        nombreDeUsuario: formattedUsername    // Actualizamos solo el username
-                    };
-                    this._state.error = null;
-                    
-                    this._saveUserData(); // Guardamos
-                    this._emitChange();   // Notificamos
-                } else {
-                    console.error('No hay usuario actual para actualizar');
-                }
-                break;
-
-            case 'UPDATE_FULL_NAME':
-                // Acción: cambiar el nombre completo del usuario
-                if (this._state.currentUser) {
-                    const newName = action.payload as string;
-                    
-                    // Creamos nuevo objeto con el nombre actualizado
-                    this._state.currentUser = {
-                        ...this._state.currentUser,
-                        nombre: newName
-                    };
-                    this._state.error = null;
-                    
-                    this._saveUserData();
-                    this._emitChange();
-                } else {
-                    console.error('No hay usuario actual para actualizar');
-                }
-                break;
-
-            case 'UPDATE_DESCRIPTION':
-                // Acción: cambiar la descripción/biografía del usuario
-                if (this._state.currentUser) {
-                    const newDescription = action.payload as string;
-                    
-                    // Actualizamos solo la descripción
-                    this._state.currentUser = {
-                        ...this._state.currentUser,
-                        descripcion: newDescription
-                    };
-                    this._state.error = null;
-                    
-                    this._saveUserData();
-                    this._emitChange();
-                } else {
-                    console.error('No hay usuario actual para actualizar');
-                }
-                break;
-
-            case 'UPDATE_PROFILE':
-                // Acción: actualizar múltiples campos del perfil a la vez
-                if (this._state.currentUser && action.payload) {
-                    const updates = action.payload as Partial<UserData>; // Cambios parciales
-                    
-                    // Si se está actualizando el username, le agregamos @ si no lo tiene
-                    if (updates.nombreDeUsuario) {
-                        updates.nombreDeUsuario = updates.nombreDeUsuario.startsWith('@') 
-                            ? updates.nombreDeUsuario 
-                            : `@${updates.nombreDeUsuario}`;
-                    }
-                    
-                    // Combinamos los datos existentes con las actualizaciones
-                    this._state.currentUser = {
-                        ...this._state.currentUser,    // Datos existentes
-                        ...updates                      // Nuevos datos (sobrescriben los existentes)
-                    };
-                    this._state.error = null;
-                    
-                    this._saveUserData();
-                    this._emitChange();
-                } else {
-                    console.error('No hay usuario actual para actualizar o no hay datos de actualización');
-                }
-                break;
-
-            case 'UPDATE_EMAIL':
-                // Acción: cambiar email (funcionalidad básica, se puede expandir)
-                if (this._state.currentUser) {
-                    this._state.error = null;
-                    this._saveUserData();
-                    this._emitChange();
-                }
-                break;
-
-            case 'UPDATE_PASSWORD':
-                // Acción: cambiar contraseña (funcionalidad básica, se puede expandir)
-                if (this._state.currentUser) {
-                    this._state.error = null;
-                    this._saveUserData();
-                    this._emitChange();
-                }
-                break;
-
-            case 'UPDATE_PROFILE_PICTURE':
-                // Acción: cambiar la foto de perfil
-                if (this._state.currentUser) {
-                    const newPhotoUrl = action.payload as string;
-                    
-                    // Actualizamos solo la foto
-                    this._state.currentUser = {
-                        ...this._state.currentUser,
-                        foto: newPhotoUrl
-                    };
-                    this._state.error = null;
-                    
-                    this._saveUserData();
-                    this._emitChange();
-                }
-                break;
-
-            case 'RESET_PROFILE':
-                // Acción: resetear el perfil a los valores por defecto
-                this._state.currentUser = {
-                    foto: "https://randomuser.me/api/portraits/women/44.jpg",
-                    nombreDeUsuario: "@CrisTiJauregui",
-                    nombre: "Cristina Jauregui",
-                    descripcion: "Me encanta el alcohol, los cocteles me vuelven loca",
-                    rol: "persona"
-                };
-                this._state.error = null;
-                this._saveUserData();
-                this._emitChange();
-                break;
-
-            default:
-                // Si llega una acción que no conocemos, no hacemos nada
-                break;
-        }
+    // Función para obtener el estado actual completo
+    public getState(): UserState {
+        return { ...this._state }; // Devolvemos una copia para evitar modificaciones
     }
 
-    // Función privada que guarda los datos del usuario en el navegador
-    private _saveUserData(): void {
-        if (this._state.currentUser) { // Solo si hay un usuario actual
-            try {
-                // Convertimos el objeto a texto para guardarlo
-                const dataToSave = JSON.stringify(this._state.currentUser);
-                // Guardamos en localStorage (permanente hasta que el usuario borre datos del navegador)
-                localStorage.setItem('currentUser', dataToSave);
-                
-                // También guardamos en sessionStorage como respaldo (se borra al cerrar la pestaña)
-                sessionStorage.setItem('currentUser_backup', dataToSave);
-            } catch (error) {
-                console.error('Error saving user data:', error);
-                this._state.error = 'Error al guardar datos del usuario';
-            }
-        }
-    }
-
-    // Función privada que notifica a todos los componentes que escuchan cambios
-    private _emitChange(): void {
-        // Llamamos a cada función que está escuchando cambios
-        for (const listener of this._listeners) {
-            try {
-                listener(this._state); // Le pasamos el estado actual
-            } catch (error) {
-                console.error('Error en listener:', error);
-            }
-        }
-    }
-
-    // Función pública: obtener una copia del estado actual
-    getState(): UserState {
-        return { ...this._state }; // Devolvemos una copia para evitar modificaciones externas
-    }
-
-    // Función pública: obtener solo los datos del usuario actual
-    getCurrentUser(): UserData | null {
-        // Devolvemos una copia de los datos del usuario o null si no hay usuario
+    // Función para obtener solo los datos del usuario actual
+    public getCurrentUser(): UserData | null {
         return this._state.currentUser ? { ...this._state.currentUser } : null;
     }
 
-    // Función pública: suscribirse para escuchar cambios en el usuario
-    subscribe(listener: UserListener): void {
-        // Agregamos la función a nuestra lista de oyentes
-        this._listeners.push(listener);
-        // Inmediatamente le enviamos el estado actual
-        try {
-            listener(this._state);
-        } catch (error) {
-            console.error('Error en listener inicial:', error);
-        }
+    // Función para suscribirse a cambios en el estado
+    public subscribe(listener: UserStoreListener): void {
+        this._listeners.add(listener);
     }
 
-    // Función pública: desuscribirse (dejar de escuchar cambios)
-    unsubscribe(listener: UserListener): void {
-        // Removemos la función de nuestra lista de oyentes
-        this._listeners = this._listeners.filter(l => l !== listener);
+    // Función para cancelar suscripción a cambios
+    public unsubscribe(listener: UserStoreListener): void {
+        this._listeners.delete(listener);
     }
 
-    // Función pública: verificar si hay cambios que no se han guardado
-    hasUnsavedChanges(): boolean {
-        try {
-            // Comparamos los datos guardados con los datos actuales
-            const saved = localStorage.getItem('currentUser');
-            if (!saved || !this._state.currentUser) return false;
-            
-            const savedData = JSON.parse(saved) as UserData;
-            // Si son diferentes, hay cambios sin guardar
-            return JSON.stringify(savedData) !== JSON.stringify(this._state.currentUser);
-        } catch {
-            return false;
-        }
+    // Función para sincronizar desde Firebase
+    public syncFromFirebase(firebaseData: UserData): void {
+        this._updateState({
+            currentUser: firebaseData,
+            lastSyncTime: new Date().toISOString(),
+            isSyncing: false
+        });
+        this._saveUserData();
     }
 
-    // Función pública: obtener estadísticas sobre qué tan completo está el perfil
-    getProfileStats(): {
-        hasUsername: boolean;      // ¿Tiene username?
-        hasName: boolean;         // ¿Tiene nombre?
-        hasDescription: boolean;  // ¿Tiene descripción?
-        hasPhoto: boolean;        // ¿Tiene foto?
-        completionPercentage: number; // Porcentaje de completitud
-    } {
-        // Si no hay usuario, todo está vacío
-        if (!this._state.currentUser) {
-            return {
-                hasUsername: false,
-                hasName: false,
-                hasDescription: false,
-                hasPhoto: false,
-                completionPercentage: 0
-            };
-        }
+    // Función para verificar si el usuario está autenticado
+    public isAuthenticated(): boolean {
+        return this._state.currentUser !== null;
+    }
 
-        const user = this._state.currentUser;
-        // Verificamos si cada campo tiene contenido
-        const hasUsername = !!user.nombreDeUsuario && user.nombreDeUsuario !== '';
-        const hasName = !!user.nombre && user.nombre !== '';
-        const hasDescription = !!user.descripcion && user.descripcion !== '';
-        const hasPhoto = !!user.foto && user.foto !== '';
+    // Función para verificar si el store está cargando
+    public isLoading(): boolean {
+        return this._state.isLoading;
+    }
 
-        // Calculamos el porcentaje de completitud
-        const fields = [hasUsername, hasName, hasDescription, hasPhoto];
-        const completedFields = fields.filter(Boolean).length; // Contamos los que son true
-        const completionPercentage = Math.round((completedFields / fields.length) * 100);
+    // Función para obtener cualquier error actual
+    public getError(): string | null {
+        return this._state.error;
+    }
 
-        return {
-            hasUsername,
-            hasName,
-            hasDescription,
-            hasPhoto,
-            completionPercentage
+    // Función para verificar si se está sincronizando
+    public isSyncing(): boolean {
+        return this._state.isSyncing;
+    }
+
+    // Función para obtener la última vez que se sincronizó
+    public getLastSyncTime(): string | null {
+        return this._state.lastSyncTime;
+    }
+
+    // Función para limpiar el estado del usuario (logout)
+    public clearUser(): void {
+        this._updateState({
+            currentUser: null,
+            error: null,
+            isSyncing: false,
+            lastSyncTime: null
+        });
+        this._clearUserData();
+    }
+
+    // Función privada para actualizar el estado y notificar a los listeners
+    private _updateState(updates: Partial<UserState>): void {
+        this._state = {
+            ...this._state,
+            ...updates
         };
+        
+        // Notificar a todos los listeners
+        this._listeners.forEach(listener => {
+            try {
+                listener(this.getState());
+            } catch (error) {
+                console.error('Error en listener del UserStore:', error);
+            }
+        });
+        
+        // Emitir evento de cambio para compatibilidad
+        this.emit('change');
     }
 
-    // Función pública: restaurar datos desde el backup si es necesario
-    restoreFromBackup(): boolean {
-        try {
-            // Intentamos obtener el backup de sessionStorage
-            const backup = sessionStorage.getItem('currentUser_backup');
-            if (backup) {
-                // Si hay backup, lo restauramos
-                const userData = JSON.parse(backup) as UserData;
-                this._state.currentUser = userData;
-                this._saveUserData(); // Lo guardamos como datos principales
-                this._emitChange();   // Notificamos el cambio
-                return true; // Éxito
-            }
-            return false; // No había backup
-        } catch (error) {
-            console.error('Error restaurando backup:', error);
-            return false; // Error al restaurar
+    // Función privada para manejar las acciones del dispatcher
+    private _handleActions(action: FluxAction): void {
+        switch (action.type) {
+            case 'LOAD_USER_DATA':
+                this._handleLoadUserData();
+                break;
+            
+            case 'UPDATE_USER_DATA':
+                this._handleUpdateUserData(action.payload as UserData);
+                break;
+            
+            case 'SET_USER_LOADING':
+                this._updateState({ 
+                    isLoading: action.payload as boolean 
+                });
+                break;
+            
+            case 'SET_USER_ERROR':
+                this._updateState({ 
+                    error: action.payload as string,
+                    isLoading: false 
+                });
+                break;
+            
+            case 'CLEAR_USER_DATA':
+                this.clearUser();
+                break;
+            
+            case 'SYNC_FROM_FIREBASE':
+                this._handleSyncFromFirebase(action.payload as UserData);
+                break;
+            
+            case 'SET_SYNC_STATUS':
+                this._updateState({ 
+                    isSyncing: action.payload as boolean 
+                });
+                break;
+            
+            default:
+                // Acción no reconocida, no hacer nada
+                break;
         }
+    }
+
+    // Función privada para manejar la carga de datos del usuario
+    private _handleLoadUserData(): void {
+        this._updateState({ isLoading: true, error: null });
+        
+        try {
+            const savedData = localStorage.getItem('lulada_user_data');
+            if (savedData) {
+                const userData = JSON.parse(savedData) as UserData;
+                this._updateState({
+                    currentUser: userData,
+                    isLoading: false,
+                    error: null
+                });
+            } else {
+                this._updateState({ 
+                    isLoading: false,
+                    currentUser: null 
+                });
+            }
+        } catch (error) {
+            console.error('Error cargando datos del usuario:', error);
+            this._updateState({
+                isLoading: false,
+                error: 'Error cargando datos del usuario'
+            });
+        }
+    }
+
+    // Función privada para manejar la actualización de datos del usuario
+    private _handleUpdateUserData(userData: UserData): void {
+        this._updateState({
+            currentUser: userData,
+            error: null,
+            lastSyncTime: new Date().toISOString()
+        });
+        this._saveUserData();
+    }
+
+    // Función privada para manejar sincronización desde Firebase
+    private _handleSyncFromFirebase(firebaseData: UserData): void {
+        this._updateState({
+            isSyncing: true
+        });
+        
+        // Simular un pequeño delay para mostrar el estado de sincronización
+        setTimeout(() => {
+            this.syncFromFirebase(firebaseData);
+        }, 500);
+    }
+
+    // Función privada para cargar datos del usuario desde localStorage
+    private _loadUserData(): void {
+        if (this._isHydrated) return;
+        
+        try {
+            const savedData = localStorage.getItem('lulada_user_data');
+            if (savedData) {
+                const userData = JSON.parse(savedData) as UserData;
+                this._state.currentUser = userData;
+                this._state.lastSyncTime = localStorage.getItem('lulada_last_sync') || null;
+            }
+        } catch (error) {
+            console.error('Error cargando datos del usuario desde localStorage:', error);
+            this._state.error = 'Error cargando datos guardados';
+        } finally {
+            this._isHydrated = true;
+            this._state.isLoading = false;
+        }
+    }
+
+    // Función privada para guardar datos del usuario en localStorage
+    private _saveUserData(): void {
+        try {
+            if (this._state.currentUser) {
+                localStorage.setItem('lulada_user_data', JSON.stringify(this._state.currentUser));
+                if (this._state.lastSyncTime) {
+                    localStorage.setItem('lulada_last_sync', this._state.lastSyncTime);
+                }
+            }
+        } catch (error) {
+            console.error('Error guardando datos del usuario:', error);
+            this._updateState({ 
+                error: 'Error guardando datos del usuario' 
+            });
+        }
+    }
+
+    // Función privada para limpiar datos del usuario de localStorage
+    private _clearUserData(): void {
+        try {
+            localStorage.removeItem('lulada_user_data');
+            localStorage.removeItem('lulada_last_sync');
+        } catch (error) {
+            console.error('Error limpiando datos del usuario:', error);
+        }
+    }
+
+    // Función privada para inicializar sincronización en tiempo real
+    private _initializeRealTimeSync(): void {
+        // Solo inicializar si no está ya inicializado
+        if (this._syncUnsubscribe) return;
+        
+        try {
+            // Importar dinámicamente el servicio de sincronización
+            import('../firebase/RealTimeUserSyncService')
+                .then(({ RealTimeUserSyncService }) => {
+                    this._syncService = RealTimeUserSyncService.getInstance();
+                    console.log('✅ Servicio de sincronización en tiempo real inicializado');
+                })
+                .catch((error) => {
+                    console.warn('⚠️ No se pudo inicializar la sincronización en tiempo real:', error);
+                });
+        } catch (error) {
+            console.warn('⚠️ Sincronización en tiempo real no disponible:', error);
+        }
+    }
+
+    // Función para debug - información del estado actual
+    public debug(): void {
+        console.group('🔍 UserStore Debug Info');
+        console.log('Estado actual:', this._state);
+        console.log('Está hidratado:', this._isHydrated);
+        console.log('Número de listeners:', this._listeners.size);
+        console.log('Tiene servicio de sync:', !!this._syncService);
+        console.groupEnd();
+    }
+
+    // Función para forzar una re-hidratación desde localStorage
+    public forceRehydrate(): void {
+        this._isHydrated = false;
+        this._loadUserData();
+        this._listeners.forEach(listener => {
+            try {
+                listener(this.getState());
+            } catch (error) {
+                console.error('Error en listener durante re-hidratación:', error);
+            }
+        });
     }
 }
 
-// Creamos una instancia única de UserStore que será usada en toda la aplicación
+// Exportamos una instancia única del store (Singleton)
 export const userStore = new UserStore();

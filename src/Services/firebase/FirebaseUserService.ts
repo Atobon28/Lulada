@@ -1,7 +1,7 @@
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { Auth } from './firebase';
 import { UserActions, UserData } from '../flux/UserActions';
-import { AppDispatcher } from '../flux/Dispacher';
+import { AppDispatcher } from '../flux/Dispatcher';
 
 export interface FirebaseUserProfile {
     uid: string;

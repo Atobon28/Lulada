@@ -1,10 +1,5 @@
 import { FirebaseUserService, AuthState } from '../../Services/firebase/FirebaseUserService';
 
-// Interfaces para tipificación estricta
-interface FirebaseModule {
-    FirebaseUserService: typeof FirebaseUserService;
-}
-
 export class Home extends HTMLElement {
     private firebaseService?: FirebaseUserService;
     private unsubscribe?: () => void;
@@ -226,15 +221,21 @@ export class Home extends HTMLElement {
         }
     }
 
-    private async initializeFirebaseIntegration(): Promise<void> {
+    private initializeFirebaseIntegration(): void {
         try {
             // Intentar cargar Firebase solo si está disponible
-            const firebaseModule = await import('../../Services/firebase/FirebaseUserService') as FirebaseModule;
-            this.firebaseService = firebaseModule.FirebaseUserService.getInstance();
-            this.unsubscribe = this.firebaseService.subscribe(this.handleAuthStateChange.bind(this));
-        } catch {
-            // Firebase no disponible o error al cargar, continuar sin él
-            console.log('Firebase no disponible, continuando sin autenticación');
+            import('../../Services/firebase/FirebaseUserService')
+                .then(({ FirebaseUserService }) => {
+                    this.firebaseService = FirebaseUserService.getInstance();
+                    this.unsubscribe = this.firebaseService.subscribe(this.handleAuthStateChange.bind(this));
+                })
+                .catch(() => {
+                    // Firebase no disponible, continuar sin él
+                    console.log('Firebase no disponible, continuando sin autenticación');
+                });
+        } catch (_error) {
+            // Error cargando Firebase, continuar normalmente
+            console.log('Error inicializando Firebase, continuando sin autenticación');
         }
     }
 
@@ -261,23 +262,13 @@ export class Home extends HTMLElement {
 
     private showWelcomeToast(displayName: string): void {
         // Solo mostrar una vez por sesión
-        const lastWelcome = this.getSessionStorageValue('last_welcome_shown');
-        const now = Date.now();
+        const lastWelcome = sessionStorage.getItem('last_welcome_shown');
+        const now = Date.now().toString();
         
-        if (lastWelcome && (now - parseInt(lastWelcome, 10)) < 60000) {
+        if (lastWelcome && (Date.now() - parseInt(lastWelcome)) < 60000) {
             return;
         }
 
-        const toast = this.createWelcomeToast(displayName);
-        document.body.appendChild(toast);
-
-        this.animateToastIn(toast);
-        this.scheduleToastRemoval(toast);
-
-        this.setSessionStorageValue('last_welcome_shown', now.toString());
-    }
-
-    private createWelcomeToast(displayName: string): HTMLDivElement {
         const toast = document.createElement('div');
         toast.style.cssText = `
             position: fixed;
@@ -299,20 +290,16 @@ export class Home extends HTMLElement {
         toast.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px;">
                 <div style="font-size: 16px;">👋</div>
-                <div>¡Hola ${this.escapeHtml(displayName)}!</div>
+                <div>¡Hola ${displayName}!</div>
             </div>
         `;
 
-        return toast;
-    }
+        document.body.appendChild(toast);
 
-    private animateToastIn(toast: HTMLDivElement): void {
         setTimeout(() => {
             toast.style.transform = 'translateX(0)';
         }, 100);
-    }
 
-    private scheduleToastRemoval(toast: HTMLDivElement): void {
         setTimeout(() => {
             toast.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -321,32 +308,8 @@ export class Home extends HTMLElement {
                 }
             }, 300);
         }, 3000);
-    }
 
-    private getSessionStorageValue(key: string): string | null {
-        try {
-            return sessionStorage.getItem(key);
-        } catch (error) {
-            console.warn('No se pudo acceder a sessionStorage:', error);
-            return null;
-        }
-    }
-
-    private setSessionStorageValue(key: string, value: string): void {
-        try {
-            sessionStorage.setItem(key, value);
-        } catch (error) {
-            console.warn('No se pudo escribir en sessionStorage:', error);
-        }
-    }
-
-    private escapeHtml(unsafe: string): string {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+        sessionStorage.setItem('last_welcome_shown', now);
     }
     
     // Configurar filtros de ubicación (funcionalidad existente)
@@ -363,16 +326,6 @@ export class Home extends HTMLElement {
 
     public isUserAuthenticated(): boolean {
         return this.firebaseService?.isAuthenticated() || false;
-    }
-
-    // Método para debug
-    public debugInfo(): void {
-        console.log('🏠 Home Component Debug:');
-        console.log('- Firebase Service:', !!this.firebaseService);
-        console.log('- Is Authenticated:', this.isUserAuthenticated());
-        console.log('- Auth State:', this.getAuthState());
-        console.log('- Shadow DOM:', !!this.shadowRoot);
-        console.log('- Connected to DOM:', this.isConnected);
     }
 }
 

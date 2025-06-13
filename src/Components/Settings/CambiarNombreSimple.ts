@@ -1,339 +1,358 @@
 import { userStore, UserState } from "../../Services/flux/UserStore";
-import { UserData } from "../../Services/flux/UserActions";
+import { UserData, UserActions } from "../../Services/flux/UserActions";
 
 class CambiarNombreSimple extends HTMLElement {
-    
-    private username: string = '';
     private currentUser: UserData | null = null;
     private storeListener = this.handleStoreChange.bind(this);
-    
+    private _isVisible = false;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
     }
-    
-    static get observedAttributes() {
-        return ['username'];
-    }
-    
-    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-        if (name === 'username' && oldValue !== newValue) {
-            this.username = newValue;
-            this.render();
-        }
-    }
-    
-    connectedCallback() {
+
+    connectedCallback(): void {
         userStore.subscribe(this.storeListener);
-        
+
         const currentUser = userStore.getCurrentUser();
         if (currentUser) {
-            this.username = currentUser.nombreDeUsuario;
-            this.currentUser = currentUser;
+            this.currentUser = { ...currentUser };
         }
-        
+
         this.render();
         this.setupEventListeners();
     }
 
-    disconnectedCallback() {
+    disconnectedCallback(): void {
         userStore.unsubscribe(this.storeListener);
     }
 
     private handleStoreChange(state: UserState): void {
         const newUser = state.currentUser;
-        
         if (JSON.stringify(this.currentUser) !== JSON.stringify(newUser)) {
             this.currentUser = newUser ? { ...newUser } : null;
-            
-            if (newUser) {
-                this.username = newUser.nombreDeUsuario;
-                this.updateUsernameDisplay();
+            this.updateDisplay();
+        }
+    }
+
+    private updateDisplay(): void {
+        if (!this.shadowRoot || !this.currentUser) return;
+
+        const nameDisplay = this.shadowRoot.querySelector('.current-name');
+        if (nameDisplay) {
+            nameDisplay.textContent = this.currentUser.nombre || 'Sin nombre';
+        }
+
+        const nameInput = this.shadowRoot.querySelector('#new-name') as HTMLInputElement;
+        if (nameInput) {
+            nameInput.value = this.currentUser.nombre || '';
+        }
+    }
+
+    private setupEventListeners(): void {
+        if (!this.shadowRoot) return;
+
+        const form = this.shadowRoot.querySelector('#change-name-form') as HTMLFormElement;
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSubmit();
+            });
+        }
+
+        const toggleBtn = this.shadowRoot.querySelector('#toggle-edit-btn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                this.toggleEditMode();
+            });
+        }
+
+        const cancelBtn = this.shadowRoot.querySelector('#cancel-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.cancelEdit();
+            });
+        }
+    }
+
+    private handleSubmit(): void {
+        if (!this.shadowRoot || !this.currentUser) return;
+
+        const nameInput = this.shadowRoot.querySelector('#new-name') as HTMLInputElement;
+        const newName = nameInput.value.trim();
+
+        if (!newName) {
+            this.showMessage('El nombre no puede estar vacío', 'error');
+            return;
+        }
+
+        if (newName === this.currentUser.nombre) {
+            this.showMessage('El nombre no ha cambiado', 'info');
+            this.toggleEditMode();
+            return;
+        }
+
+        const updatedUser: UserData = {
+            ...this.currentUser,
+            nombre: newName
+        };
+
+        UserActions.updateUserData(updatedUser);
+        this.showMessage('Nombre actualizado correctamente', 'success');
+        this.toggleEditMode();
+    }
+
+    private toggleEditMode(): void {
+        this._isVisible = !this._isVisible;
+        
+        if (!this.shadowRoot) return;
+
+        const editForm = this.shadowRoot.querySelector('.edit-form') as HTMLElement;
+        const displaySection = this.shadowRoot.querySelector('.display-section') as HTMLElement;
+        
+        if (editForm && displaySection) {
+            if (this._isVisible) {
+                editForm.style.display = 'block';
+                displaySection.style.display = 'none';
+                
+                const nameInput = this.shadowRoot.querySelector('#new-name') as HTMLInputElement;
+                if (nameInput) {
+                    nameInput.focus();
+                    nameInput.select();
+                }
+            } else {
+                editForm.style.display = 'none';
+                displaySection.style.display = 'block';
             }
         }
     }
 
-    private updateUsernameDisplay(): void {
-        if (!this.shadowRoot) return;
-        
-        const subtitle2El = this.shadowRoot.querySelector('.subtitle2');
-        const currentUsernameEl = this.shadowRoot.querySelector('.current-username-display');
-        
-        if (subtitle2El) {
-            subtitle2El.textContent = this.username;
-        }
-        
-        if (currentUsernameEl) {
-            currentUsernameEl.textContent = this.username;
-        }
+    private cancelEdit(): void {
+        this.updateDisplay(); // Restaurar valor original
+        this.toggleEditMode();
     }
-    
-    private render() {
+
+    private showMessage(message: string, type: 'success' | 'error' | 'info'): void {
         if (!this.shadowRoot) return;
-        
+
+        // Remover mensaje anterior
+        const existingMessage = this.shadowRoot.querySelector('.message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        const messageEl = document.createElement('div');
+        messageEl.className = `message message-${type}`;
+        messageEl.textContent = message;
+
+        const container = this.shadowRoot.querySelector('.container');
+        if (container) {
+            container.insertBefore(messageEl, container.firstChild);
+        }
+
+        setTimeout(() => {
+            messageEl.remove();
+        }, 3000);
+    }
+
+    private render(): void {
+        if (!this.shadowRoot) return;
+
         this.shadowRoot.innerHTML = `
             <style>
-                :host {
-                    display: block;
-                    font-family: Arial, sans-serif;
-                    height: 100%;
+                * {
+                    box-sizing: border-box;
+                    margin: 0;
+                    padding: 0;
                 }
-                
-                .form-container {
-                    background-color: white;
-                    border-radius: 16px;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                    padding: 32px;
-                    max-width: 600px;
+
+                .container {
+                    background: white;
+                    border-radius: 8px;
+                    padding: 20px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    max-width: 400px;
+                    margin: 0 auto;
                 }
-                
-                .back-button {
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    padding: 8px 0;
-                    color: #666;
-                    font-size: 16px;
+
+                .title {
+                    font-size: 1.2rem;
+                    font-weight: 600;
                     margin-bottom: 16px;
-                    transition: color 0.2s ease;
-                }
-                
-                .back-button:hover {
                     color: #333;
                 }
-                
-                .back-arrow {
-                    margin-right: 8px;
+
+                .display-section {
+                    display: block;
                 }
-                
-                .title {
-                    font-size: 22px;
-                    font-weight: bold;
-                    color: #000;
-                    margin: 0 0 8px 0;
+
+                .current-name {
+                    font-size: 1.1rem;
+                    padding: 12px;
+                    background: #f8f9fa;
+                    border-radius: 6px;
+                    margin-bottom: 12px;
+                    min-height: 44px;
+                    display: flex;
+                    align-items: center;
                 }
-                
-                .subtitle {
-                    font-size: 16px;
-                    color: #aaa;
-                    margin: 0 0 4px 0;
+
+                .edit-form {
+                    display: none;
                 }
-                
-                .subtitle2 {
-                    font-size: 16px;
-                    margin: 0 0 4px 0;
+
+                .form-group {
+                    margin-bottom: 16px;
+                }
+
+                .form-label {
+                    display: block;
+                    margin-bottom: 6px;
                     font-weight: 500;
                     color: #333;
                 }
-                
-                .current-username {
-                    font-size: 16px;
-                    color: #333;
-                    margin-bottom: 24px;
-                    padding: 12px;
-                    background-color: #f5f5f5;
-                    border-radius: 8px;
-                    border-left: 4px solid #AAAB54;
-                }
-                
-                .input-field {
+
+                .form-input {
                     width: 100%;
-                    padding: 14px;
-                    font-size: 16px;
+                    padding: 12px;
                     border: 1px solid #ddd;
-                    border-radius: 8px;
-                    margin-bottom: 24px;
-                    box-sizing: border-box;
-                    transition: border-color 0.2s ease;
+                    border-radius: 6px;
+                    font-size: 1rem;
                 }
-                
-                .input-field:focus {
+
+                .form-input:focus {
                     outline: none;
-                    border-color:rgb(201, 202, 136);
-                    box-shadow: 0 0 5px rgba(170, 171, 84, 0.3);
+                    border-color: #007bff;
+                    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
                 }
-                
-                .input-field::placeholder {
-                    color: #ccc;
-                }
-                
-                .save-button {
-                    background-color: #b4c13b;
-                    color: white;
+
+                .btn {
+                    padding: 10px 16px;
                     border: none;
-                    padding: 12px 24px;
-                    border-radius: 8px;
-                    font-weight: 600;
+                    border-radius: 6px;
                     cursor: pointer;
-                    font-size: 16px;
+                    font-size: 0.9rem;
+                    font-weight: 500;
                     transition: all 0.2s ease;
-                }
-                
-                .save-button:hover {
-                    background-color: #9aa732;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                    margin-right: 8px;
                 }
 
-                .save-button:disabled {
-                    background-color: #ccc;
-                    cursor: not-allowed;
-                    transform: none;
-                    box-shadow: none;
+                .btn-primary {
+                    background: #007bff;
+                    color: white;
                 }
 
-                .save-button.loading {
-                    background-color: #999;
-                    cursor: wait;
+                .btn-primary:hover {
+                    background: #0056b3;
                 }
 
-                @keyframes slideIn {
-                    from { opacity: 0; transform: translateY(-10px); }
-                    to { opacity: 1; transform: translateY(0); }
+                .btn-secondary {
+                    background: #6c757d;
+                    color: white;
+                }
+
+                .btn-secondary:hover {
+                    background: #545b62;
+                }
+
+                .btn-success {
+                    background: #28a745;
+                    color: white;
+                }
+
+                .btn-success:hover {
+                    background: #1e7e34;
+                }
+
+                .form-actions {
+                    display: flex;
+                    gap: 8px;
+                    margin-top: 16px;
+                }
+
+                .message {
+                    padding: 12px;
+                    border-radius: 6px;
+                    margin-bottom: 16px;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                }
+
+                .message-success {
+                    background: #d4edda;
+                    color: #155724;
+                    border: 1px solid #c3e6cb;
+                }
+
+                .message-error {
+                    background: #f8d7da;
+                    color: #721c24;
+                    border: 1px solid #f5c6cb;
+                }
+
+                .message-info {
+                    background: #cce5ff;
+                    color: #004085;
+                    border: 1px solid #99d1ff;
+                }
+
+                @media (max-width: 480px) {
+                    .container {
+                        margin: 10px;
+                        padding: 16px;
+                    }
+                    
+                    .form-actions {
+                        flex-direction: column;
+                    }
+                    
+                    .btn {
+                        width: 100%;
+                        margin-right: 0;
+                        margin-bottom: 8px;
+                    }
                 }
             </style>
-            
-            <button id="back-btn" class="back-button">
-                <span class="back-arrow">←</span> Volver
-            </button>
-            
-            <div class="form-container">
-                <h2 class="title">Cambiar nombre de usuario</h2>
-                <p class="subtitle">Nombre de usuario actual</p>
-                <div class="current-username">
-                    <span class="current-username-display">${this.username || '@CrisTiJauregui'}</span>
+
+            <div class="container">
+                <h3 class="title">Cambiar Nombre</h3>
+                
+                <div class="display-section">
+                    <div class="current-name">Sin nombre</div>
+                    <button id="toggle-edit-btn" class="btn btn-primary">Editar Nombre</button>
                 </div>
-                
-                <input type="text" id="username-input" class="input-field" placeholder="Nuevo nombre de usuario">
-                
-                <button id="save-btn" class="save-button">Guardar</button>
+
+                <div class="edit-form">
+                    <form id="change-name-form">
+                        <div class="form-group">
+                            <label class="form-label" for="new-name">Nuevo nombre:</label>
+                            <input 
+                                type="text" 
+                                id="new-name" 
+                                class="form-input" 
+                                placeholder="Ingresa tu nuevo nombre"
+                                required
+                                maxlength="50"
+                            >
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                            <button type="button" id="cancel-btn" class="btn btn-secondary">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         `;
-    }
-    
-    private setupEventListeners() {
-        if (!this.shadowRoot) return;
-        
-        const backButton = this.shadowRoot.querySelector('#back-btn');
-        if (backButton) {
-            backButton.addEventListener('click', () => {
-                this.dispatchEvent(new CustomEvent('back', { 
-                    bubbles: true,
-                    composed: true
-                }));
-            });
-        }
-        
-        const saveButton = this.shadowRoot.querySelector('#save-btn');
-        if (saveButton) {
-            saveButton.addEventListener('click', this.handleSaveClick.bind(this));
-        }
 
-        const usernameInput = this.shadowRoot.querySelector('#username-input') as HTMLInputElement;
-        if (usernameInput) {
-            usernameInput.addEventListener('input', this.validateInput.bind(this));
-        }
-    }
-
-    private validateInput(): void {
-        const usernameInput = this.shadowRoot?.querySelector('#username-input') as HTMLInputElement;
-        const saveButton = this.shadowRoot?.querySelector('#save-btn') as HTMLButtonElement;
-        
-        if (usernameInput && saveButton) {
-            const value = usernameInput.value.trim();
-            const currentUsernameWithoutAt = this.username.replace('@', '');
-            
-            saveButton.disabled = value.length === 0 || value === currentUsernameWithoutAt;
-        }
-    }
-
-private handleSaveClick(): void {
-    const inputField = this.shadowRoot?.querySelector('#username-input') as HTMLInputElement;
-    const saveButton = this.shadowRoot?.querySelector('#save-btn') as HTMLButtonElement;
-    
-    if (!inputField || !inputField.value.trim()) {
-        return;
-    }
-
-    const newUsername = inputField.value.trim();
-    
-    if (!window.UserActions) {
-        alert('Error: Sistema de usuario no disponible');
-        return;
-    }
-
-    if (!window.userStore) {
-        alert('Error: Almacén de usuario no disponible');
-        return;
-    }
-
-    saveButton.disabled = true;
-    saveButton.classList.add('loading');
-    saveButton.textContent = 'Guardando...';
-
-    try {
-        window.UserActions.updateUsername(newUsername);
-        
-        inputField.value = '';
-        this.showSuccessMessage();
-
-        this.dispatchEvent(new CustomEvent('save', { 
-            detail: { newUsername },
-            bubbles: true,
-            composed: true
-        }));
-    } catch (error) {
-        console.error('Error al guardar el cambio:', error);
-        alert('Error al guardar el cambio. Por favor intenta de nuevo.');
-    } finally {
-        setTimeout(() => {
-            saveButton.disabled = false;
-            saveButton.classList.remove('loading');
-            saveButton.textContent = 'Guardar';
-            this.validateInput();
-        }, 1000);
+        this.updateDisplay();
     }
 }
 
+// CORREGIDO: Registrar automáticamente y exportar como default
+customElements.define('cambiar-nombre-simple', CambiarNombreSimple);
 
-    private showSuccessMessage(): void {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 12px;
-            z-index: 10001;
-            font-family: Arial, sans-serif;
-            font-weight: 600;
-            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
-            transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        `;
-        toast.textContent = ' Tu nombre de usuario cambió con éxito';
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.transform = 'translateX(0)';
-        }, 100);
-        
-        setTimeout(() => {
-            toast.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                }
-            }, 400);
-        }, 3000);
-    }
-}
-
+// CORREGIDO: Export default para uso en index.ts
 export default CambiarNombreSimple;
+
+// AGREGADO: También export nombrado para flexibilidad
+export { CambiarNombreSimple };

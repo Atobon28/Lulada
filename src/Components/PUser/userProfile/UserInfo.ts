@@ -1,4 +1,3 @@
-// src/Components/PUser/userProfile/UserInfo.ts - CORREGIDO
 import { userStore, UserState } from "../../../Services/flux/UserStore";
 import { UserData } from "../../../Services/flux/UserActions";
 
@@ -57,9 +56,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
     disconnectedCallback(): void {
         this._isConnected = false;
         
-        if (userStore) {
-            userStore.unsubscribe(this.storeListener);
-        }
+        userStore.unsubscribe(this.storeListener);
         
         if (this.firebaseUnsubscribe) {
             this.firebaseUnsubscribe();
@@ -77,8 +74,8 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             };
             
             this.firebaseUnsubscribe = service.subscribe(this.handleFirebaseAuthChange.bind(this));
-        } catch {
-            // ✅ CORREGIDO: Sin usar variable error
+        } catch (error) {
+            // Firebase no disponible, continuar solo con Flux
             console.log('Firebase no disponible, usando solo sistema Flux');
         }
     }
@@ -101,373 +98,29 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             nombreDeUsuario: this.generateUsername(firebaseUser.displayName, firebaseUser.email),
             nombre: firebaseUser.displayName || this.extractNameFromEmail(firebaseUser.email),
             descripcion: `Usuario verificado ${firebaseUser.isVerified ? '✓' : ''}`.trim(),
-            rol: "persona"
+            rol: "persona" // ✅ AGREGADO
         };
 
-        // Importar dinámicamente UserActions solo si es necesario
-        import('../../../Services/flux/UserActions')
-            .then(({ UserActions }) => {
-                UserActions.loadUserData(fluxUserData);
-            })
-            .catch(() => {
-                console.log('No se pudo sincronizar con UserActions');
-            });
+        // Actualizar Flux store con datos de Firebase
+        import('../../../Services/flux/UserActions').then(({ UserActions }) => {
+            UserActions.loadUserData(fluxUserData); // ✅ CORREGIDO
+        });
     }
 
     private generateUsername(displayName: string | null, email: string): string {
         if (displayName) {
-            const cleaned = displayName.replace(/\s+/g, '').toLowerCase();
-            return `@${cleaned}`;
+            return displayName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
         }
         
-        const emailName = email.split('@')[0];
-        return `@${emailName}`;
+        const emailUsername = email.split('@')[0];
+        return emailUsername.replace(/[^a-z0-9_]/g, '');
     }
 
     private extractNameFromEmail(email: string): string {
-        const name = email.split('@')[0];
-        return name.charAt(0).toUpperCase() + name.slice(1);
-    }
-
-    private handleStoreChange(state: UserState): void {
-        if (!this._isConnected) {
-            return;
-        }
-
-        const newUser = state.currentUser;
-        
-        const userChanged = !this.currentUser || 
-                          !newUser || 
-                          JSON.stringify(this.currentUser) !== JSON.stringify(newUser);
-        
-        if (userChanged) {
-            this.currentUser = newUser ? { ...newUser } : null;
-            this.render();
-            
-            setTimeout(() => {
-                if (newUser) {
-                    this.updateDOMDirectly(newUser);
-                }
-            }, 50);
-        }
-    }
-
-    private updateDOMDirectly(user: UserData): void {
-        if (!this.shadowRoot || !this._isConnected) return;
-        
-        const elements = {
-            username: this.shadowRoot.querySelector('.nombreDeUsuario') as HTMLElement | null,
-            name: this.shadowRoot.querySelector('.nombre') as HTMLElement | null,
-            description: this.shadowRoot.querySelector('.descripcion') as HTMLElement | null,
-            photo: this.shadowRoot.querySelector('.foto') as HTMLImageElement | null
-        };
-        
-        if (elements.username && user.nombreDeUsuario) {
-            elements.username.textContent = user.nombreDeUsuario;
-        }
-        
-        if (elements.name && user.nombre) {
-            elements.name.textContent = user.nombre;
-        }
-        
-        if (elements.description && user.descripcion) {
-            elements.description.textContent = user.descripcion;
-        }
-        
-        if (elements.photo) {
-            elements.photo.src = FIXED_PROFILE_PHOTO;
-        }
-    }
-
-    private render(): void {
-        if (!this.shadowRoot || !this._isConnected) return;
-
-        if (!this.currentUser) {
-            this.shadowRoot.innerHTML = `
-                <style>
-                    .loading {
-                        text-align: center;
-                        padding: 2rem;
-                        color: #666;
-                        font-family: 'Inter', sans-serif;
-                        background-color: #f9f9f9;
-                        border-radius: 10px;
-                        margin: 1rem;
-                    }
-                    .loading-spinner {
-                        border: 2px solid #f3f3f3;
-                        border-top: 2px solid #AAAB54;
-                        border-radius: 50%;
-                        width: 20px;
-                        height: 20px;
-                        animation: spin 1s linear infinite;
-                        margin: 0 auto 10px;
-                    }
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                </style>
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    Cargando información del usuario...
-                </div>
-            `;
-            return;
-        }
-
-        // Determinar si mostrar indicador de Firebase
-        const isFirebaseUser = this.authState?.isAuthenticated && this.authState.user;
-
-        this.shadowRoot.innerHTML = `
-            <style>
-                .userTopCompleto {
-                    background-color: #ffffff;
-                    padding: 1.25rem;
-                    border-radius: 0.9375rem;
-                    font-family: 'Inter', sans-serif;
-                    max-width: 90%;
-                    margin: auto;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                    transition: all 0.3s ease;
-                    position: relative;
-                }
-
-                .userTopCompleto:hover {
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                    transform: translateY(-2px);
-                }
-
-                /* Indicador de Firebase */
-                .firebase-badge {
-                    position: absolute;
-                    top: 10px;
-                    right: 15px;
-                    background: linear-gradient(135deg, #4285f4, #34a853);
-                    color: white;
-                    padding: 3px 8px;
-                    border-radius: 12px;
-                    font-size: 10px;
-                    font-weight: 600;
-                    display: ${isFirebaseUser ? 'flex' : 'none'};
-                    align-items: center;
-                    gap: 4px;
-                    box-shadow: 0 2px 4px rgba(66, 133, 244, 0.3);
-                }
-
-                .firebase-icon {
-                    width: 8px;
-                    height: 8px;
-                    background: white;
-                    border-radius: 50%;
-                }
-
-                .etiquetados {
-                    font-family: 'Inter', sans-serif;
-                    font-size: 0.80rem;
-                    font-weight: bold;
-                    margin-left: 3rem;
-                }
-                
-                .userTop {
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                    min-width: 18.75rem;
-                    min-height: 6.25rem;
-                }
-                
-                .userTopFoto img {
-                    border-radius: 50%;
-                    width: 13.4375rem;
-                    height: 13.4375rem;
-                    object-fit: cover;
-                    transition: transform 0.3s ease;
-                    border: 3px solid ${isFirebaseUser ? '#4285f4' : '#AAAB54'};
-                }
-                
-                .userTopFoto img:hover {
-                    transform: scale(1.05);
-                }
-                
-                .userTopInfo {
-                    flex: 1;
-                }
-                
-                .nombreDeUsuario {
-                    font-size: 1.25rem;
-                    color: ${isFirebaseUser ? '#4285f4' : '#AAAB54'};
-                    font-weight: bold;
-                    margin-top: 0.8rem;
-                    margin-bottom: 0.8rem;
-                    transition: all 0.3s ease;
-                }
-                
-                .nombre {
-                    font-size: 1.625rem;
-                    font-weight: bold;
-                    color: #000;
-                    margin-top: 0.4rem;
-                    margin-bottom: 0.5rem;
-                    transition: color 0.3s ease;
-                }
-                
-                .descripcion {
-                    font-size: 1rem;
-                    color: #333;
-                    margin-top: 0.375rem;
-                    line-height: 1.4;
-                    transition: color 0.3s ease;
-                }
-                
-                hr {
-                    width: 100%;
-                    border: 1px solid #D9D9D9;
-                    margin: 0.5rem 0;
-                    transition: border-color 0.3s ease;
-                }
-
-                .location {
-                    display: flex;
-                    gap: 0.3rem;
-                    align-items: center;
-                    margin-top: 0.05rem;
-                }
-
-                /* Responsive Design */
-                @media (max-width: 1024px) {
-                    .userTopCompleto {
-                        max-width: 95%;
-                        padding: 1rem;
-                    }
-                    
-                    .userTopFoto img {
-                        width: 12rem;
-                        height: 12rem;
-                    }
-
-                    .firebase-badge {
-                        top: 8px;
-                        right: 12px;
-                        font-size: 9px;
-                        padding: 2px 6px;
-                    }
-                }
-                
-                @media (max-width: 768px) {
-                    .userTopCompleto {
-                        max-width: 100%;
-                        margin: 0.5rem;
-                        padding: 1rem;
-                        position: relative;
-                    }
-
-                    .userTop {
-                        flex-direction: column;
-                        text-align: center;
-                        min-width: auto;
-                        gap: 1rem;
-                    }
-
-                    .userTopFoto img {
-                        width: 10rem;
-                        height: 10rem;
-                    }
-                
-                    .nombre {
-                        font-size: 1.25rem;
-                        margin: 0.3rem 0;
-                    }
-
-                    .etiquetados {
-                        font-size: 0.65rem;
-                        font-weight: bold;
-                        margin-left: 1rem;
-                    }
-                
-                    .nombreDeUsuario {
-                        font-size: 1rem;
-                        margin: 0.3rem 0;
-                    }
-                
-                    .descripcion {
-                        font-size: 0.85rem;
-                        margin: 0.3rem 0;
-                        text-align: center;
-                    }
-
-                    .firebase-badge {
-                        top: 5px;
-                        right: 8px;
-                        font-size: 8px;
-                        padding: 2px 5px;
-                    }
-                }
-
-                @media (max-width: 480px) {
-                    .userTopCompleto {
-                        margin: 0.25rem;
-                        padding: 0.75rem;
-                    }
-
-                    .userTopFoto img {
-                        width: 8rem;
-                        height: 8rem;
-                    }
-                    
-                    .nombre {
-                        font-size: 1.1rem;
-                    }
-                    
-                    .nombreDeUsuario {
-                        font-size: 0.9rem;
-                    }
-                    
-                    .descripcion {
-                        font-size: 0.8rem;
-                    }
-
-                    .etiquetados {
-                        margin-left: 0.5rem;
-                    }
-                }
-            </style>            
-            
-            <div class="userTopCompleto">
-                ${isFirebaseUser ? `
-                    <div class="firebase-badge">
-                        <div class="firebase-icon"></div>
-                        Verificado
-                    </div>
-                ` : ''}
-                ${this.renderUsuario(this.currentUser)}
-            </div>
-        `;
-    }
-
-    private renderUsuario(user: UserData): string {
-        return `
-            <div class="userTop"> 
-                <div class="userTopFoto">
-                    <img class="foto" 
-                         src="${FIXED_PROFILE_PHOTO}" 
-                         alt="Foto de perfil" 
-                         onerror="this.src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcQg-lr5__zRqY3mRg6erzAD9n4BGp3G8VfA&s'">
-                </div>
-                
-                <div class="userTopInfo">
-                    <p class="nombreDeUsuario">${user.nombreDeUsuario || '@Usuario'}</p>
-                    
-                    <p class="nombre">${user.nombre || "Nombre del usuario"}</p>
-                    
-                    <hr>
-                    
-                    <p class="descripcion">${user.descripcion || "Sin descripción"}</p>
-                    
-                    <div id="additional-info"></div>
-                </div>
-            </div>
-        `;
+        const username = email.split('@')[0];
+        return username.split('.').map(part => 
+            part.charAt(0).toUpperCase() + part.slice(1)
+        ).join(' ');
     }
 
     public forceUpdate(): void {
@@ -475,53 +128,441 @@ class UserInfo extends HTMLElement implements UserInfoElement {
         this.handleStoreChange(currentState);
     }
 
-    public debugInfo(): void {
-        console.log('UserInfo: === INFORMACIÓN DE DEBUG ===');
-        console.log('- Usuario actual guardado:', this.currentUser);
-        console.log('- Estado completo del store:', userStore.getState());
-        console.log('- Estado de Firebase:', this.authState);
-        console.log('- Shadow DOM existe:', !!this.shadowRoot);
-        console.log('- Componente conectado:', this._isConnected);
+    public getCurrentUser(): UserData | null {
+        return this.currentUser;
+    }
+
+    public updateUser(userData: Partial<UserData>): void {
+        if (!this.currentUser) return;
+
+        const updatedUser = { ...this.currentUser, ...userData };
         
-        if (this.shadowRoot) {
-            const elements = {
-                username: this.shadowRoot.querySelector('.nombreDeUsuario'),
-                name: this.shadowRoot.querySelector('.nombre'),
-                description: this.shadowRoot.querySelector('.descripcion'),
-                photo: this.shadowRoot.querySelector('.foto')
-            };
-            console.log('- Elementos del DOM encontrados:', elements);
-        } else {
-            console.log('No hay shadow DOM disponible');
+        import('../../../Services/flux/UserActions').then(({ UserActions }) => {
+            UserActions.loadUserData(updatedUser); // ✅ CORREGIDO
+        });
+    }
+
+    public debugInfo(): void {
+        console.group('🔍 UserInfo Debug');
+        console.log('Usuario actual:', this.currentUser);
+        console.log('Conectado:', this._isConnected);
+        console.log('AuthState Firebase:', this.authState);
+        console.log('Servicio Firebase:', !!this.firebaseService);
+        console.groupEnd();
+    }
+
+    private handleStoreChange(state: UserState): void {
+        const newUser = state.currentUser;
+        
+        // Solo actualizar si hay cambios reales
+        if (JSON.stringify(this.currentUser) !== JSON.stringify(newUser)) {
+            this.currentUser = newUser;
+            this.render();
         }
-        console.log('=== FIN DEBUG ===');
+    }
+
+    private render(): void {
+        if (!this.shadowRoot || !this._isConnected) return;
+
+        // Determinar qué datos mostrar
+        const displayUser = this.getDisplayUser();
+        const isLoading = this.isLoading();
+
+        this.shadowRoot.innerHTML = `
+            <style>
+                * {
+                    box-sizing: border-box;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                :host {
+                    display: block;
+                    width: 100%;
+                }
+
+                .user-info-container {
+                    background: #ffffff;
+                    border-radius: 12px;
+                    padding: 20px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    transition: all 0.3s ease;
+                }
+
+                .user-info-container:hover {
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+                }
+
+                .loading {
+                    text-align: center;
+                    padding: 40px 20px;
+                    color: #666;
+                }
+
+                .loading-spinner {
+                    display: inline-block;
+                    width: 32px;
+                    height: 32px;
+                    border: 3px solid #f3f3f3;
+                    border-top: 3px solid #007bff;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 12px;
+                }
+
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+
+                .no-user {
+                    text-align: center;
+                    padding: 40px 20px;
+                    color: #666;
+                }
+
+                .no-user-icon {
+                    font-size: 48px;
+                    margin-bottom: 12px;
+                    opacity: 0.5;
+                }
+
+                .user-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    margin-bottom: 20px;
+                }
+
+                .user-avatar {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 3px solid #e0e0e0;
+                    transition: border-color 0.3s ease;
+                }
+
+                .user-avatar:hover {
+                    border-color: #007bff;
+                }
+
+                .user-basic-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .user-name {
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 4px;
+                    word-wrap: break-word;
+                }
+
+                .user-username {
+                    font-size: 1rem;
+                    color: #666;
+                    margin-bottom: 8px;
+                    word-wrap: break-word;
+                }
+
+                .user-status {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .status-badge {
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    font-size: 0.8rem;
+                    font-weight: 500;
+                }
+
+                .status-online {
+                    background: #d4edda;
+                    color: #155724;
+                }
+
+                .status-synced {
+                    background: #cce5ff;
+                    color: #004085;
+                }
+
+                .status-offline {
+                    background: #f8d7da;
+                    color: #721c24;
+                }
+
+                .user-description {
+                    margin-top: 16px;
+                    padding: 16px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    border-left: 4px solid #007bff;
+                }
+
+                .description-text {
+                    color: #555;
+                    line-height: 1.5;
+                    font-style: italic;
+                }
+
+                .no-description {
+                    color: #999;
+                    font-style: italic;
+                }
+
+                .user-actions {
+                    margin-top: 20px;
+                    display: flex;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+
+                .action-btn {
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    transition: all 0.2s ease;
+                    text-decoration: none;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .btn-primary {
+                    background: #007bff;
+                    color: white;
+                }
+
+                .btn-primary:hover {
+                    background: #0056b3;
+                }
+
+                .btn-secondary {
+                    background: #6c757d;
+                    color: white;
+                }
+
+                .btn-secondary:hover {
+                    background: #545b62;
+                }
+
+                .user-stats {
+                    margin-top: 16px;
+                    padding: 16px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                    gap: 16px;
+                }
+
+                .stat-item {
+                    text-align: center;
+                }
+
+                .stat-value {
+                    font-size: 1.5rem;
+                    font-weight: 600;
+                    color: #007bff;
+                    display: block;
+                }
+
+                .stat-label {
+                    font-size: 0.8rem;
+                    color: #666;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                @media (max-width: 600px) {
+                    .user-header {
+                        flex-direction: column;
+                        text-align: center;
+                    }
+                    
+                    .user-actions {
+                        justify-content: center;
+                    }
+                    
+                    .action-btn {
+                        flex: 1;
+                        justify-content: center;
+                    }
+                }
+            </style>
+
+            <div class="user-info-container">
+                ${isLoading ? this.renderLoading() : 
+                  displayUser ? this.renderUserInfo(displayUser) : this.renderNoUser()}
+            </div>
+        `;
+
+        this.setupEventListeners();
+    }
+
+    private renderLoading(): string {
+        return `
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Cargando información del usuario...</p>
+            </div>
+        `;
+    }
+
+    private renderNoUser(): string {
+        return `
+            <div class="no-user">
+                <div class="no-user-icon">👤</div>
+                <h3>No hay usuario</h3>
+                <p>Inicia sesión para ver tu información</p>
+            </div>
+        `;
+    }
+
+    private renderUserInfo(user: UserData): string {
+        return `
+            <div class="user-header">
+                <img 
+                    class="user-avatar" 
+                    src="${user.foto || FIXED_PROFILE_PHOTO}" 
+                    alt="Avatar de ${user.nombre || 'Usuario'}"
+                    onerror="this.src='${FIXED_PROFILE_PHOTO}'"
+                >
+                <div class="user-basic-info">
+                    <h2 class="user-name">${user.nombre || 'Usuario'}</h2>
+                    <p class="user-username">@${user.nombreDeUsuario || 'usuario'}</p>
+                    <div class="user-status">
+                        ${this.renderStatusBadges()}
+                    </div>
+                </div>
+            </div>
+
+            ${user.descripcion ? `
+                <div class="user-description">
+                    <p class="description-text">${user.descripcion}</p>
+                </div>
+            ` : `
+                <div class="user-description">
+                    <p class="no-description">Sin descripción</p>
+                </div>
+            `}
+
+            <div class="user-stats">
+                <div class="stat-item">
+                    <span class="stat-value">1</span>
+                    <span class="stat-label">Perfil</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${this.authState?.isAuthenticated ? '✓' : '○'}</span>
+                    <span class="stat-label">Autenticado</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${userStore.getLastSyncTime() ? '✓' : '○'}</span>
+                    <span class="stat-label">Sincronizado</span>
+                </div>
+            </div>
+
+            <div class="user-actions">
+                <button class="action-btn btn-primary" id="edit-profile-btn">
+                    ✏️ Editar Perfil
+                </button>
+                <button class="action-btn btn-secondary" id="refresh-btn">
+                    🔄 Actualizar
+                </button>
+            </div>
+        `;
+    }
+
+    private renderStatusBadges(): string {
+        const badges = [];
+
+        if (this.authState?.isAuthenticated) {
+            badges.push('<span class="status-badge status-online">En línea</span>');
+        }
+
+        if (userStore.getLastSyncTime()) {
+            badges.push('<span class="status-badge status-synced">Sincronizado</span>');
+        }
+
+        if (badges.length === 0) {
+            badges.push('<span class="status-badge status-offline">Sin conexión</span>');
+        }
+
+        return badges.join('');
+    }
+
+    private setupEventListeners(): void {
+        if (!this.shadowRoot) return;
+
+        // Botón editar perfil
+        const editBtn = this.shadowRoot.querySelector('#edit-profile-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                this.openEditModal();
+            });
+        }
+
+        // Botón actualizar
+        const refreshBtn = this.shadowRoot.querySelector('#refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.forceUpdate();
+            });
+        }
+    }
+
+    private openEditModal(): void {
+        // Buscar modal existente o crearlo
+        let modal = document.querySelector('edit-profile-modal') as any;
+        
+        if (!modal) {
+            modal = document.createElement('edit-profile-modal');
+            document.body.appendChild(modal);
+        }
+
+        // Configurar datos del usuario en el modal
+        if (this.currentUser && typeof modal.setUser === 'function') {
+            modal.setUser(this.currentUser);
+        }
+
+        // Mostrar modal
+        if (typeof modal.show === 'function') {
+            modal.show();
+        }
+    }
+
+    private getDisplayUser(): UserData | null {
+        // Priorizar datos de Flux, luego Firebase si está disponible
+        if (this.currentUser) {
+            return this.currentUser;
+        }
+
+        // Si no hay datos en Flux pero sí en Firebase, crear datos temporales
+        if (this.authState?.user && this.authState.isAuthenticated) {
+            return {
+                foto: this.authState.user.photoURL || FIXED_PROFILE_PHOTO,
+                nombreDeUsuario: this.generateUsername(this.authState.user.displayName, this.authState.user.email),
+                nombre: this.authState.user.displayName || this.extractNameFromEmail(this.authState.user.email),
+                descripcion: 'Usuario de Firebase',
+                rol: "persona" // ✅ AGREGADO
+            };
+        }
+
+        return null;
+    }
+
+    private isLoading(): boolean {
+        return userStore.isLoading() || (this.authState?.isLoading ?? false);
     }
 }
 
-// Funciones globales para debugging (solo en navegador)
-if (typeof window !== 'undefined') {
-    if (!window.debugUserInfo) {
-        window.debugUserInfo = () => {
-            const userInfoEl = document.querySelector('user-info') as UserInfoElement | null;
-            if (userInfoEl && userInfoEl.debugInfo) {
-                userInfoEl.debugInfo();
-            } else {
-                console.log('No se encontró ningún componente user-info en la página');
-            }
-        };
-    }
-    
-    if (!window.forceUpdateUserInfo) {
-        window.forceUpdateUserInfo = () => {
-            const userInfoEl = document.querySelector('user-info') as UserInfoElement | null;
-            if (userInfoEl && userInfoEl.forceUpdate) {
-                userInfoEl.forceUpdate();
-                console.log('Actualización forzada completada');
-            } else {
-                console.log('No se encontró ningún componente user-info en la página');
-            }
-        };
-    }
-}
+// Registrar el componente
+customElements.define('user-info', UserInfo);
 
-export default UserInfo;
+export { UserInfo };

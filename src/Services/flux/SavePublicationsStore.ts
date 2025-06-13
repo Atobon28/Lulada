@@ -1,5 +1,5 @@
 // Importamos las herramientas que necesitamos para manejar eventos y acciones
-import { AppDispatcher, Action } from "./Dispacher";
+import { AppDispatcher, Action } from "./Dispatcher";
 
 // Definimos cómo se ve una publicación guardada
 export interface SavedPublication {

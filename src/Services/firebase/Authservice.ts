@@ -1,106 +1,72 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, User, signOut, onAuthStateChanged } from "firebase/auth";
-import { Auth, db } from "./firebase";
-import { doc, setDoc, getDoc, DocumentData } from "firebase/firestore";
+// services/firebase/Authservice.ts - CORREGIDO
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  User 
+} from 'firebase/auth';
+import { Auth } from './firebase';
+import { firebaseUserSync } from './FirebaseUserSync';
+import { UserData } from '../flux/UserActions';
 
-// Tipos específicos para Firebase Auth errors
-interface FirebaseError extends Error {
-  code: string;
-  message: string;
-}
-
-// Tipos para las respuestas
-interface AuthResponse {
+// Interfaces para respuestas de autenticación
+export interface AuthResponse {
   success: boolean;
   user?: User;
   userData?: UserData;
   error?: string;
 }
 
-interface UserData {
-  email: string;
-  firstName: string;
-  lastName: string;
-  userType: 'person' | 'restaurant';
-  createdAt: Date;
-}
-
-interface GetUserDataResponse {
+export interface LogoutResponse {
   success: boolean;
-  data?: DocumentData;
-  error?: string | FirebaseError;
+  error?: string;
 }
 
-interface LogoutResponse {
-  success: boolean;
-  error?: FirebaseError;
-}
-
-// Type guard para verificar si es un error de Firebase
-function isFirebaseError(error: unknown): error is FirebaseError {
+// Función auxiliar para identificar errores de Firebase
+function isFirebaseError(error: unknown): error is { code: string; message: string } {
   return typeof error === 'object' && error !== null && 'code' in error && 'message' in error;
 }
 
-// Type guard para verificar si los datos del usuario son válidos
-function isValidUserData(data: DocumentData | undefined): data is UserData {
-  if (!data) return false;
-  
-  return (
-    typeof data.email === 'string' &&
-    typeof data.firstName === 'string' &&
-    typeof data.lastName === 'string' &&
-    (data.userType === 'person' || data.userType === 'restaurant') &&
-    data.createdAt instanceof Date
-  );
-}
-
-// Función para obtener mensaje de error específico de Firebase Auth
-function getFirebaseErrorMessage(error: FirebaseError): string {
+// Función para obtener mensajes de error amigables
+function getFirebaseErrorMessage(error: { code: string; message: string }): string {
   switch (error.code) {
-    case "auth/email-already-in-use":
-      return "Este correo ya está registrado";
-    case "auth/weak-password":
-      return "La contraseña debe tener al menos 6 caracteres";
-    case "auth/invalid-email":
-      return "El correo electrónico no es válido";
-    case "auth/user-not-found":
-      return "Usuario no encontrado";
-    case "auth/wrong-password":
-      return "Contraseña incorrecta";
-    case "auth/too-many-requests":
-      return "Demasiados intentos fallidos. Intenta más tarde";
-    case "auth/invalid-credential":
-      return "Credenciales inválidas. Verifica tu correo y contraseña";
-    case "auth/network-request-failed":
-      return "Error de conexión. Verifica tu internet";
-    case "auth/operation-not-allowed":
-      return "Operación no permitida";
-    case "auth/user-disabled":
-      return "Esta cuenta ha sido deshabilitada";
+    case 'auth/email-already-in-use':
+      return 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+    case 'auth/weak-password':
+      return 'La contraseña debe tener al menos 6 caracteres.';
+    case 'auth/invalid-email':
+      return 'El formato del correo electrónico no es válido.';
+    case 'auth/user-not-found':
+      return 'No se encontró una cuenta con este correo electrónico.';
+    case 'auth/wrong-password':
+      return 'La contraseña es incorrecta.';
+    case 'auth/too-many-requests':
+      return 'Demasiados intentos fallidos. Intenta de nuevo más tarde.';
+    case 'auth/network-request-failed':
+      return 'Error de conexión. Verifica tu conexión a internet.';
     default:
-      return error.message || "Error desconocido";
+      return error.message || 'Error inesperado. Intenta de nuevo.';
   }
 }
 
-// Función para registrar usuario en Lulada
+// Función para registrar un nuevo usuario - ACTUALIZADA
 export const registerUser = async (
-  email: string,
-  password: string,
-  firstName: string,
-  lastName: string,
-  userType: 'person' | 'restaurant'
+  email: string, 
+  password: string, 
+  userData: UserData
 ): Promise<AuthResponse> => {
   try {
-    console.log("Registrando usuario:", email);
+    console.log("[FirebaseAuth] Registrando usuario:", email);
     
     // Validaciones básicas
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !password || !userData) {
       return { success: false, error: "Todos los campos son requeridos" };
     }
-
+    
     if (password.length < 6) {
       return { success: false, error: "La contraseña debe tener al menos 6 caracteres" };
     }
-    
+
     // Crear usuario en Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       Auth,
@@ -109,45 +75,71 @@ export const registerUser = async (
     );
     const user = userCredential.user;
 
-    // Guardar información adicional en Firestore
-    const userData: UserData = {
-      email,
-      firstName,
-      lastName,
-      userType,
-      createdAt: new Date(),
+    console.log("[FirebaseAuth] Usuario creado en Firebase Auth:", user.uid);
+
+    // Crear el UserData para Flux con todos los campos necesarios
+    const fluxUserData: UserData = {
+      foto: userData.foto || "https://randomuser.me/api/portraits/women/44.jpg",
+      nombreDeUsuario: userData.nombreDeUsuario || `@${email.split('@')[0]}`,
+      nombre: userData.nombre || user.displayName || email.split('@')[0] || 'Usuario',
+      descripcion: userData.descripcion || "Usuario de Lulada",
+      locationText: userData.locationText || "",
+      menuLink: userData.menuLink || "",
+      rol: userData.rol || 'persona'
     };
 
-    await setDoc(doc(db, "users", user.uid), userData);
+    // Crear perfil en Firestore usando el servicio de sincronización
+    console.log("[FirebaseAuth] Creando perfil en Firestore...");
+    const syncResult = await firebaseUserSync.createUserProfile(user, fluxUserData);
+    
+    if (!syncResult.success) {
+      console.warn("[FirebaseAuth] Error creando perfil en Firestore:", syncResult.error);
+      // No retornamos error aquí porque el usuario ya fue creado en Auth
+      return { 
+        success: true, 
+        user, 
+        userData: fluxUserData,
+        error: "Usuario creado pero hubo un problema guardando el perfil. Intenta de nuevo." 
+      };
+    }
 
-    console.log("Usuario registrado exitosamente:", user.uid);
+    console.log("[FirebaseAuth] ✅ Usuario registrado exitosamente con perfil completo");
 
-    return { success: true, user, userData };
+    return { 
+      success: true, 
+      user, 
+      userData: fluxUserData 
+    };
+
   } catch (error: unknown) {
-    console.error("Error al registrar usuario:", error);
+    console.error("[FirebaseAuth] ❌ Error al registrar usuario:", error);
     
     if (isFirebaseError(error)) {
       const errorMessage = getFirebaseErrorMessage(error);
       return { success: false, error: errorMessage };
     }
     
-    return { success: false, error: "Error al registrar usuario" };
+    return { 
+      success: false, 
+      error: "Error inesperado al registrar usuario. Intenta de nuevo." 
+    };
   }
 };
 
-// Función para iniciar sesión
+// Función para iniciar sesión - ACTUALIZADA
 export const loginUser = async (
   email: string, 
   password: string
 ): Promise<AuthResponse> => {
   try {
-    console.log("Iniciando sesión:", email);
+    console.log("[FirebaseAuth] Iniciando sesión para:", email);
     
     // Validaciones básicas
     if (!email || !password) {
       return { success: false, error: "Email y contraseña son requeridos" };
     }
     
+    // Autenticar con Firebase
     const userCredential = await signInWithEmailAndPassword(
       Auth,
       email,
@@ -155,29 +147,63 @@ export const loginUser = async (
     );
     const user = userCredential.user;
 
-    // Obtener información adicional del usuario desde Firestore
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    const userData = userDoc.data();
+    console.log("[FirebaseAuth] Usuario autenticado:", user.uid);
 
-    console.log("Usuario autenticado exitosamente:", user.uid);
-
-    // Validar que los datos del usuario sean correctos
-    if (userData && isValidUserData(userData)) {
-      return { success: true, user, userData };
+    // Obtener perfil desde Firestore usando el servicio de sincronización
+    console.log("[FirebaseAuth] Obteniendo perfil desde Firestore...");
+    const profileResult = await firebaseUserSync.getUserProfile(user.uid);
+    
+    if (profileResult.success && profileResult.userData) {
+      console.log("[FirebaseAuth] ✅ Perfil obtenido exitosamente");
+      return { 
+        success: true, 
+        user, 
+        userData: profileResult.userData 
+      };
     } else {
-      // Usuario existe en Auth pero no en Firestore o datos incompletos
-      console.warn("Usuario sin datos completos en Firestore");
-      return { success: true, user, userData: undefined };
+      console.warn("[FirebaseAuth] No se pudo obtener el perfil:", profileResult.error);
+      
+      // Crear perfil por defecto si no existe
+      const defaultUserData: UserData = {
+        foto: "https://randomuser.me/api/portraits/women/44.jpg",
+        nombreDeUsuario: `@${user.email?.split('@')[0] || 'usuario'}`,
+        nombre: user.displayName || user.email?.split('@')[0] || 'Usuario',
+        descripcion: "Usuario de Lulada",
+        rol: 'persona'
+      };
+
+      const createResult = await firebaseUserSync.createUserProfile(user, defaultUserData);
+      
+      if (createResult.success) {
+        console.log("[FirebaseAuth] ✅ Perfil por defecto creado");
+        return { 
+          success: true, 
+          user, 
+          userData: defaultUserData 
+        };
+      } else {
+        console.error("[FirebaseAuth] Error creando perfil por defecto:", createResult.error);
+        // Aún así retornamos éxito con datos básicos
+        return { 
+          success: true, 
+          user, 
+          userData: defaultUserData 
+        };
+      }
     }
+
   } catch (error: unknown) {
-    console.error("Error al iniciar sesión:", error);
+    console.error("[FirebaseAuth] ❌ Error al iniciar sesión:", error);
     
     if (isFirebaseError(error)) {
       const errorMessage = getFirebaseErrorMessage(error);
       return { success: false, error: errorMessage };
     }
     
-    return { success: false, error: "Error al iniciar sesión" };
+    return { 
+      success: false, 
+      error: "Error inesperado al iniciar sesión. Intenta de nuevo." 
+    };
   }
 };
 
@@ -185,35 +211,38 @@ export const loginUser = async (
 export const logoutUser = async (): Promise<LogoutResponse> => {
   try {
     await signOut(Auth);
-    console.log("Sesión cerrada exitosamente");
+    console.log("[FirebaseAuth] ✅ Sesión cerrada exitosamente");
+    
+    // Limpiar localStorage
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('currentUser');
+    
     return { success: true };
+    
   } catch (error: unknown) {
-    console.error("Error al cerrar sesión:", error);
+    console.error("[FirebaseAuth] ❌ Error al cerrar sesión:", error);
     
     if (isFirebaseError(error)) {
-      return { success: false, error };
+      const errorMessage = getFirebaseErrorMessage(error);
+      return { success: false, error: errorMessage };
     }
     
-    const genericError: FirebaseError = {
-      name: 'AuthError',
-      code: 'auth/unknown-error',
-      message: 'Error desconocido al cerrar sesión'
+    return { 
+      success: false, 
+      error: "Error inesperado al cerrar sesión" 
     };
-    
-    return { success: false, error: genericError };
   }
 };
 
-// Función para verificar el estado de autenticación
-export const checkAuthState = (callback: (user: User | null) => void): (() => void) => {
-  return onAuthStateChanged(Auth, (user: User | null) => {
-    if (user) {
-      console.log("Usuario autenticado detectado:", user.uid);
-    } else {
-      console.log("No hay usuario autenticado");
-    }
-    callback(user);
-  });
+// Función para obtener datos del usuario desde Firestore
+export const getUserData = async (uid: string): Promise<UserData | null> => {
+  try {
+    const result = await firebaseUserSync.getUserProfile(uid);
+    return result.success ? result.userData || null : null;
+  } catch (error: unknown) {
+    console.error("[FirebaseAuth] Error obteniendo datos del usuario:", error);
+    return null;
+  }
 };
 
 // Función para obtener el usuario actual
@@ -221,86 +250,34 @@ export const getCurrentUser = (): User | null => {
   return Auth.currentUser;
 };
 
-// Función para obtener datos del usuario desde Firestore
-export const getUserData = async (userId: string): Promise<GetUserDataResponse> => {
-  try {
-    if (!userId) {
-      return { success: false, error: "ID de usuario requerido" };
-    }
-
-    const userDoc = await getDoc(doc(db, "users", userId));
-    
-    if (userDoc.exists()) {
-      const data = userDoc.data();
-      return { success: true, data };
-    } else {
-      return { success: false, error: "Usuario no encontrado" };
-    }
-  } catch (error: unknown) {
-    console.error("Error al obtener datos del usuario:", error);
-    
-    if (isFirebaseError(error)) {
-      return { success: false, error };
-    }
-    
-    return { success: false, error: "Error desconocido al obtener datos del usuario" };
-  }
+// Función para verificar si el usuario está autenticado
+export const isAuthenticated = (): boolean => {
+  return !!Auth.currentUser;
 };
 
-// Función para validar email
-export const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+// Función para escuchar cambios en el estado de autenticación
+export const onAuthStateChange = (callback: (user: User | null) => void) => {
+  return Auth.onAuthStateChanged(callback);
 };
 
-// Función para validar password
-export const isValidPassword = (password: string): boolean => {
-  return password.length >= 6;
+// Funciones de utilidad para desarrollo/testing
+export const debugFirebaseAuth = (): void => {
+  console.log("🔥 === FIREBASE AUTH DEBUG ===");
+  console.log("- Usuario actual:", Auth.currentUser?.email || "No autenticado");
+  console.log("- UID:", Auth.currentUser?.uid || "N/A");
+  console.log("- Email verificado:", Auth.currentUser?.emailVerified || false);
+  console.log("- Proveedor:", Auth.currentUser?.providerId || "N/A");
+  console.log("- Último login:", Auth.currentUser?.metadata.lastSignInTime || "N/A");
+  console.log("- Cuenta creada:", Auth.currentUser?.metadata.creationTime || "N/A");
+  console.log("=== FIN FIREBASE AUTH DEBUG ===");
 };
 
-// Función para validar que el usuario esté autenticado
-export const requireAuth = (): User | null => {
-  const user = getCurrentUser();
-  if (!user) {
-    console.warn("Operación requiere autenticación");
-    return null;
-  }
-  return user;
-};
+// Interfaz para propiedades de debug en window
+interface WindowWithDebug extends Window {
+  debugFirebaseAuth?: () => void;
+}
 
-// Función para obtener información básica del usuario actual
-export const getCurrentUserInfo = async (): Promise<{
-  user: User | null;
-  userData: UserData | null;
-  isAuthenticated: boolean;
-}> => {
-  const user = getCurrentUser();
-  
-  if (!user) {
-    return {
-      user: null,
-      userData: null,
-      isAuthenticated: false
-    };
-  }
-
-  try {
-    const userDataResponse = await getUserData(user.uid);
-    
-    if (userDataResponse.success && userDataResponse.data && isValidUserData(userDataResponse.data)) {
-      return {
-        user,
-        userData: userDataResponse.data,
-        isAuthenticated: true
-      };
-    }
-  } catch (error) {
-    console.error("Error obteniendo datos del usuario actual:", error);
-  }
-
-  return {
-    user,
-    userData: null,
-    isAuthenticated: true
-  };
-};
+// Agregar funciones de debug al objeto global
+if (typeof window !== 'undefined') {
+  (window as WindowWithDebug).debugFirebaseAuth = debugFirebaseAuth;
+}
