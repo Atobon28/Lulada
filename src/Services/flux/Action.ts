@@ -18,11 +18,11 @@ interface NavigationPayload {
     timestamp: number;    // Cuándo hizo el click
 }
 
-// Para cuando alguien da like o guarda una publicación
+// ✅ Para cuando alguien da like o guarda una publicación
 interface InteractionPayload {
     publicationId: string;  // ID único de la publicación
-    username: string;       // Quién hizo la acción
-    timestamp: number;      // Cuándo la hizo
+    username?: string;      // Quién hizo la acción (opcional para compatibilidad)
+    timestamp?: number;     // Cuándo la hizo (opcional para compatibilidad)
 }
 
 // Para cuando cambia qué botón está activo en el menú
@@ -31,15 +31,20 @@ interface ActiveNavigationPayload {
     timestamp: number;    // Cuándo se seleccionó
 }
 
+// Interface para payloads con timestamp
+interface TimestampPayload {
+    timestamp: number;
+}
+
 // Este es el objeto principal que contiene todas las acciones posibles
 export const Actions = {
     // Acción básica de ejemplo
-    do: () => {
+    do: (): void => {
         AppDispatcher.dispatch({ type: 'ACTION_TYPE', payload: undefined });
     },
     
     // Cuando el usuario quiere ir a otra página
-    navigate: (route: string) => {
+    navigate: (route: string): void => {
         console.log('Actions: Navegando a:', route);
         AppDispatcher.dispatch({ 
             type: 'NAVIGATE_TO_ROUTE', 
@@ -51,7 +56,7 @@ export const Actions = {
     },
     
     // Para marcar en qué página está el usuario actualmente
-    setActiveRoute: (route: string) => {
+    setActiveRoute: (route: string): void => {
         console.log('Actions: Estableciendo ruta activa:', route);
         AppDispatcher.dispatch({ 
             type: 'SET_ACTIVE_ROUTE', 
@@ -63,7 +68,7 @@ export const Actions = {
     },
     
     // Para resaltar qué botón del menú está seleccionado
-    setActiveNavigation: (navItem: string) => {
+    setActiveNavigation: (navItem: string): void => {
         console.log('Actions: Estableciendo navegación activa:', navItem);
         AppDispatcher.dispatch({ 
             type: 'SET_ACTIVE_NAVIGATION', 
@@ -75,40 +80,40 @@ export const Actions = {
     },
     
     // Para volver a la página anterior
-    goBack: () => {
+    goBack: (): void => {
         console.log('Actions: Navegando hacia atrás');
         AppDispatcher.dispatch({ 
             type: 'NAVIGATE_BACK', 
             payload: {
                 timestamp: Date.now()
-            }
+            } as TimestampPayload
         });
     },
     
     // Para mostrar la ventana donde escribes una reseña
-    showAntojar: () => {
+    showAntojar: (): void => {
         console.log('Actions: Mostrando popup de antojar');
         AppDispatcher.dispatch({ 
             type: 'SHOW_ANTOJAR_POPUP', 
             payload: {
                 timestamp: Date.now()
-            }
+            } as TimestampPayload
         });
     },
     
     // Para cerrar esa ventana
-    hideAntojar: () => {
+    hideAntojar: (): void => {
         console.log('Actions: Ocultando popup de antojar');
         AppDispatcher.dispatch({ 
             type: 'HIDE_ANTOJAR_POPUP', 
             payload: {
                 timestamp: Date.now()
-            }
+            } as TimestampPayload
         });
     },
     
     // Cuando alguien publica una nueva reseña
-    publishReview: (reviewData: ReviewData) => {
+    publishReview: (reviewData: ReviewData): void => {
         console.log('Actions: Publicando reseña:', reviewData);
         AppDispatcher.dispatch({ 
             type: 'PUBLISH_REVIEW', 
@@ -117,7 +122,7 @@ export const Actions = {
     },
     
     // Para avisar a toda la app que se creó una nueva publicación
-    newPublicationCreated: (reviewData: ReviewData) => {
+    newPublicationCreated: (reviewData: ReviewData): void => {
         console.log('Actions: Nueva publicación creada:', reviewData);
         AppDispatcher.dispatch({
             type: 'NEW_PUBLICATION_CREATED',
@@ -125,51 +130,47 @@ export const Actions = {
         });
     },
 
-    // Para dar o quitar "like" a una publicación
-    toggleLike: (publicationId: string, username: string) => {
+    // ✅ Para dar o quitar "like" a una publicación - FORMATO CORRECTO
+    toggleLike: (publicationId: string, username: string): void => {
         console.log('Actions: toggle like en publicación:', publicationId, 'por usuario:', username);
         AppDispatcher.dispatch({
             type: 'TOGGLE_LIKE',
             payload: {
-                publicationId,
-                username,
-                timestamp: Date.now()
+                publicationId  // ✅ SOLO ENVIAR publicationId como espera el store
             } as InteractionPayload
         });
     },
     
-    // Para guardar o quitar de guardados una publicación
-    toggleBookmark: (publicationId: string, username: string) => {
+    // ✅ Para guardar o quitar de guardados una publicación - FORMATO CORRECTO
+    toggleBookmark: (publicationId: string, username: string): void => {
         console.log('Actions: toggle bookmark en publicación:', publicationId, 'por usuario:', username);
         AppDispatcher.dispatch({
             type: 'TOGGLE_BOOKMARK',
             payload: {
-                publicationId,
-                username,
-                timestamp: Date.now()
+                publicationId  // ✅ SOLO ENVIAR publicationId como espera el store
             } as InteractionPayload
         });
     },
     
     // Para cargar todos los likes y bookmarks guardados
-    loadInteractions: () => {
+    loadInteractions: (): void => {
         console.log('Actions: Cargando interacciones de publicaciones');
         AppDispatcher.dispatch({
             type: 'LOAD_INTERACTIONS',
             payload: {
                 timestamp: Date.now()
-            }
+            } as TimestampPayload
         });
     },
     
-    // Para borrar todos los likes y bookmarks
-    clearAllInteractions: () => {
+    // ✅ Para borrar todos los likes y bookmarks - USAR NOMBRE CORRECTO
+    clearAllInteractions: (): void => {
         console.log('Actions: Limpiando todas las interacciones');
         AppDispatcher.dispatch({
-            type: 'CLEAR_INTERACTIONS',
+            type: 'CLEAR_ALL_INTERACTIONS', // ✅ CAMBIAR NOMBRE
             payload: {
                 timestamp: Date.now()
-            }
+            } as TimestampPayload
         });
     }
 };

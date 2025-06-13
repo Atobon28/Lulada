@@ -6,6 +6,10 @@ export interface InteractionState {
     bookmarks: { [publicationId: string]: boolean };    // Guarda qué publicaciones están guardadas
     isLoading: boolean;                                  // Indica si se están cargando datos
     error: string | null;                                // Guarda mensajes de error si algo sale mal
+    
+    // ✅ PROPIEDADES QUE ESPERA EL SERVICIO
+    likedPublications: string[];      // Lista de IDs de publicaciones con like
+    bookmarkedPublications: string[]; // Lista de IDs de publicaciones guardadas
 }
 
 // Define el tipo de función que escucha cambios en las interacciones
@@ -23,7 +27,9 @@ export class InteractionStore {
         likes: {},
         bookmarks: {},
         isLoading: false,
-        error: null
+        error: null,
+        likedPublications: [],      // ✅ INICIALIZAR
+        bookmarkedPublications: []  // ✅ INICIALIZAR
     };
     
     // Lista de funciones que escuchan cambios en el estado
@@ -43,6 +49,12 @@ export class InteractionStore {
         return { ...this._state };
     }
 
+    // ✅ FUNCIÓN PARA ACTUALIZAR LAS LISTAS DE ARRAYS
+    private _updateArrays(): void {
+        this._state.likedPublications = Object.keys(this._state.likes).filter(id => this._state.likes[id]);
+        this._state.bookmarkedPublications = Object.keys(this._state.bookmarks).filter(id => this._state.bookmarks[id]);
+    }
+
     // Función privada que carga los datos guardados del localStorage
     private _loadFromStorage(): void {
         console.log('InteractionStore: Cargando datos de interacciones desde localStorage...');
@@ -59,6 +71,9 @@ export class InteractionStore {
                 this._state.bookmarks = JSON.parse(bookmarks) as { [key: string]: boolean };
                 console.log('bookmarks cargados:', this._state.bookmarks);
             }
+
+            // ✅ ACTUALIZAR ARRAYS DESPUÉS DE CARGAR
+            this._updateArrays();
         } catch (error) {
             console.error('Error al cargar datos de interacciones:', error);
             this._state.error = 'Error al cargar datos de interacciones';
@@ -90,6 +105,7 @@ export class InteractionStore {
 
                     console.log(`Like ${wasLiked ? 'removido' : 'agregado'} en publicación:`, publicationId);
                     this._state.error = null;
+                    this._updateArrays(); // ✅ ACTUALIZAR ARRAYS
                     this._saveToStorage();
                     this._emitChange();
                 }
@@ -103,6 +119,7 @@ export class InteractionStore {
 
                     console.log(`Bookmark ${wasBookmarked ? 'removido' : 'agregado'} en publicación:`, publicationId);
                     this._state.error = null;
+                    this._updateArrays(); // ✅ ACTUALIZAR ARRAYS
                     this._saveToStorage();
                     this._emitChange();
                 }
@@ -114,12 +131,15 @@ export class InteractionStore {
                 break;
 
             case 'CLEAR_INTERACTIONS':
+            case 'CLEAR_ALL_INTERACTIONS': // ✅ AGREGAR ALIAS
                 console.log('Limpiando todas las interacciones...');
                 this._state = {
                     likes: {},
                     bookmarks: {},
                     isLoading: false,
-                    error: null
+                    error: null,
+                    likedPublications: [],      // ✅ LIMPIAR ARRAYS
+                    bookmarkedPublications: []  // ✅ LIMPIAR ARRAYS
                 };
                 localStorage.removeItem(this.STORAGE_KEY_LIKES);
                 localStorage.removeItem(this.STORAGE_KEY_BOOKMARKS);
@@ -132,9 +152,10 @@ export class InteractionStore {
     }
 
     // Función que verifica si los datos de la acción tienen el formato correcto
-    private isToggleInteractionPayload(payload: unknown): payload is ToggleInteractionPayload {
+    private isToggleInteractionPayload(payload: string | object | undefined): payload is ToggleInteractionPayload {
         return (
             payload !== null &&
+            payload !== undefined &&
             typeof payload === 'object' &&
             'publicationId' in payload &&
             typeof (payload as ToggleInteractionPayload).publicationId === 'string'
@@ -167,19 +188,24 @@ export class InteractionStore {
 
     // Función pública: obtiene lista de IDs de publicaciones con like
     getLikePublications(): string[] {
-        return Object.keys(this._state.likes).filter(id => this._state.likes[id]);
+        return this._state.likedPublications; // ✅ USAR ARRAY DIRECTO
     }
 
     // Función pública: obtiene lista de IDs de publicaciones guardadas
     getBookmarkPublications(): string[] {
-        return Object.keys(this._state.bookmarks).filter(id => this._state.bookmarks[id]);
+        return this._state.bookmarkedPublications; // ✅ USAR ARRAY DIRECTO
     }
 
     // Función pública: obtiene estadísticas generales de las interacciones
-    getStats() {
+    getStats(): {
+        totalLikes: number;
+        totalBookmarks: number;
+        likedIds: string[];
+        bookmarkedIds: string[];
+    } {
         return {
-            totalLikes: Object.values(this._state.likes).filter(Boolean).length,
-            totalBookmarks: Object.values(this._state.bookmarks).filter(Boolean).length,
+            totalLikes: this._state.likedPublications.length,     // ✅ USAR ARRAYS
+            totalBookmarks: this._state.bookmarkedPublications.length, // ✅ USAR ARRAYS
             likedIds: this.getLikePublications(),
             bookmarkedIds: this.getBookmarkPublications()
         };
@@ -198,7 +224,7 @@ export class InteractionStore {
         }
 
         // Devuelve una función para "desuscribirse"
-        return () => {
+        return (): void => {
             this._listeners = this._listeners.filter(l => l !== listener);
             console.log('InteractionStore: Listener desuscrito. Total:', this._listeners.length);
         };

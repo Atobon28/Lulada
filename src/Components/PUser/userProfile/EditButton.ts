@@ -233,4 +233,11 @@ class UserEditButton extends HTMLElement {
     }
 }
 
+// CORREGIDO: Registrar automáticamente y exportar como default
+customElements.define('user-edit', UserEditButton);
+
+// CORREGIDO: Export default
 export default UserEditButton;
+
+// AGREGADO: También export nombrado para flexibilidad
+export { UserEditButton };

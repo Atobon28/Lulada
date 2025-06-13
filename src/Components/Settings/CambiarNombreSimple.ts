@@ -348,6 +348,11 @@ class CambiarNombreSimple extends HTMLElement {
     }
 }
 
+// CORREGIDO: Registrar automáticamente y exportar como default
 customElements.define('cambiar-nombre-simple', CambiarNombreSimple);
 
+// CORREGIDO: Export default para uso en index.ts
+export default CambiarNombreSimple;
+
+// AGREGADO: También export nombrado para flexibilidad
 export { CambiarNombreSimple };
