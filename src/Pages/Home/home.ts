@@ -1,91 +1,103 @@
-// Página principal de inicio de la aplicación
+// Home.ts - VERSIÓN PANTALLA COMPLETA COMO EN LA SEGUNDA IMAGEN
+
 class Home extends HTMLElement {
+    private resizeHandler: () => void;
 
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        
+        // Bind del resize handler
+        this.resizeHandler = this.handleResize.bind(this);
     }
 
     connectedCallback() {
-        // PREVENIR DUPLICACIÓN - Verificar si ya está conectado
+        // PREVENIR DUPLICACIÓN
         if (this.hasAttribute('data-connected')) {
             console.log('⚠️ Home ya conectado, evitando duplicación');
             return;
         }
         
-        // Marcar como conectado
         this.setAttribute('data-connected', 'true');
         console.log('🏠 Home component conectado por primera vez');
         
         this.render();
         this.setupEventListeners();
-        window.addEventListener('resize', this.handleResize.bind(this));
+        window.addEventListener('resize', this.resizeHandler);
         this.handleResize();
     }
 
     disconnectedCallback() {
-        // Limpiar el atributo al desconectar
         this.removeAttribute('data-connected');
-        window.removeEventListener('resize', this.handleResize.bind(this));
+        window.removeEventListener('resize', this.resizeHandler);
     }
 
-    // Dibuja el HTML y CSS del componente
-    render() {
+    private render(): void {
         // PREVENIR RENDERIZADO MÚLTIPLE
         if (this.shadowRoot && this.shadowRoot.innerHTML.trim() !== '') {
             console.log('⚠️ Home ya renderizado, evitando duplicación');
             return;
         }
 
-        if (this.shadowRoot) {
-            this.shadowRoot.innerHTML = `
+        if (!this.shadowRoot) return;
+
+        this.shadowRoot.innerHTML = `
             <style>
                 :host {
                     display: block;
                     font-family: Arial, sans-serif;
-                    min-height: 100vh;
+                    width: 100%;
+                    height: 100vh;
                     background-color: #f8f9fa;
+                    overflow: hidden;
                 }
                 
-                .responsive-header {
-                    display: none;
-                }
-                
-                .desktop-logo {
-                    display: block;
+                .home-container {
+                    display: flex;
+                    flex-direction: column;
+                    width: 100%;
+                    height: 100vh;
+                    position: relative;
                 }
                 
                 .header-section {
+                    flex-shrink: 0;
                     background: white;
                     width: 100%;
-                    position: sticky;
-                    top: 0;
-                    z-index: 100;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    z-index: 100;
                 }
                 
                 .main-layout {
                     display: flex;
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    min-height: calc(100vh - 120px);
+                    flex: 1;
+                    width: 100%;
+                    height: calc(100vh - 80px);
+                    overflow: hidden;
                 }
                 
                 .sidebar {
+                    flex-shrink: 0;
                     width: 250px;
                     background: white;
                     border-right: 1px solid #e0e0e0;
-                    position: sticky;
-                    top: 120px;
-                    height: fit-content;
+                    overflow-y: auto;
+                    height: 100%;
+                }
+                
+                .content-area {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+                    overflow: hidden;
                 }
                 
                 .content {
                     flex: 1;
                     padding: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
+                    overflow-y: auto;
+                    background-color: #f8f9fa;
                 }
                 
                 .reviews-section {
@@ -93,30 +105,40 @@ class Home extends HTMLElement {
                     border-radius: 12px;
                     padding: 20px;
                     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    min-height: calc(100vh - 200px);
                 }
                 
                 .suggestions-section {
+                    flex-shrink: 0;
                     width: 300px;
                     padding: 20px;
+                    background-color: #f8f9fa;
+                    border-left: 1px solid #e0e0e0;
+                    overflow-y: auto;
+                    height: 100%;
+                }
+                
+                .responsive-header {
+                    display: none;
                 }
                 
                 .responsive-bar {
                     display: none;
                 }
                 
-                /* Responsive */
+                /* Responsive para móviles */
                 @media (max-width: 768px) {
                     .responsive-header {
                         display: block;
                     }
                     
-                    .desktop-logo {
+                    .header-section {
                         display: none;
                     }
                     
                     .main-layout {
                         flex-direction: column;
-                        padding: 10px;
+                        height: calc(100vh - 60px);
                     }
                     
                     .sidebar {
@@ -136,64 +158,151 @@ class Home extends HTMLElement {
                         background: white;
                         border-top: 1px solid #e0e0e0;
                         z-index: 100;
+                        height: 60px;
                     }
                     
                     .content {
-                        padding-bottom: 80px;
+                        padding: 10px;
+                        padding-bottom: 70px;
+                    }
+                    
+                    .reviews-section {
+                        min-height: calc(100vh - 140px);
                     }
                 }
                 
-                @media (max-width: 900px) {
+                /* Tablet responsivo */
+                @media (max-width: 900px) and (min-width: 769px) {
                     .suggestions-section {
                         display: none;
                     }
                     
                     .content {
-                        padding-right: 10px;
+                        padding-right: 20px;
                     }
+                }
+                
+                /* Loading state */
+                .loading-content {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 200px;
+                    color: #666;
+                    font-size: 16px;
+                }
+                
+                /* Error state */
+                .error-content {
+                    text-align: center;
+                    padding: 40px;
+                    color: #dc3545;
+                }
+                
+                .error-retry {
+                    background: #AAAB54;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    margin-top: 16px;
                 }
             </style>
             
-            <!-- Header responsivo para móvil -->
-            <div class="responsive-header">
-                <lulada-responsive-header></lulada-responsive-header>
-            </div>
-            
-            <!-- Header principal para escritorio -->
-            <div class="header-section desktop-logo">
-                <lulada-header-home></lulada-header-home>
-            </div>
-            
-            <!-- Layout principal -->
-            <div class="main-layout">
-                <!-- Sidebar izquierdo -->
-                <div class="sidebar">
-                    <lulada-sidebar></lulada-sidebar>
+            <div class="home-container">
+                <!-- Header responsivo para móvil -->
+                <div class="responsive-header">
+                    <lulada-responsive-header></lulada-responsive-header>
                 </div>
                 
-                <!-- Contenido principal -->
-                <div class="content">
-                    <div class="reviews-section">
-                        <lulada-reviews-container></lulada-reviews-container>
+                <!-- Header principal para escritorio -->
+                <div class="header-section">
+                    <lulada-header-home></lulada-header-home>
+                </div>
+                
+                <!-- Layout principal -->
+                <div class="main-layout">
+                    <!-- Sidebar izquierdo -->
+                    <div class="sidebar">
+                        <lulada-sidebar></lulada-sidebar>
+                    </div>
+                    
+                    <!-- Área de contenido principal -->
+                    <div class="content-area">
+                        <div class="content">
+                            <div class="reviews-section" id="reviews-container">
+                                <div class="loading-content">
+                                    Cargando publicaciones...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sugerencias -->
+                    <div class="suggestions-section">
+                        <lulada-suggestions></lulada-suggestions>
                     </div>
                 </div>
                 
-                <!-- Sugerencias -->
-                <div class="suggestions-section">
-                    <lulada-suggestions></lulada-suggestions>
+                <!-- Barra responsiva inferior -->
+                <div class="responsive-bar">
+                    <lulada-responsive-bar></lulada-responsive-bar>
                 </div>
             </div>
+        `;
+        
+        // Cargar el contenido después de renderizar
+        setTimeout(() => {
+            this.loadReviewsContent();
+        }, 100);
+    }
+
+    private loadReviewsContent(): void {
+        const reviewsContainer = this.shadowRoot?.querySelector('#reviews-container');
+        if (!reviewsContainer) return;
+
+        console.log('[Home] Cargando contenido de reviews...');
+
+        // Verificar si lulada-reviews-container está registrado
+        const isRegistered = !!customElements.get('lulada-reviews-container');
+        
+        if (isRegistered) {
+            // Cargar el componente lulada-reviews-container
+            reviewsContainer.innerHTML = '<lulada-reviews-container></lulada-reviews-container>';
             
-            <!-- Barra responsiva inferior -->
-            <div class="responsive-bar">
-                <lulada-responsive-bar></lulada-responsive-bar>
-            </div>
-            `;
+            // Verificar que se cargó correctamente
+            setTimeout(() => {
+                const container = reviewsContainer.querySelector('lulada-reviews-container');
+                if (container) {
+                    console.log('[Home] ✅ Reviews container cargado');
+                } else {
+                    console.warn('[Home] ⚠️ Reviews container no se cargó');
+                    this.showReviewsError();
+                }
+            }, 500);
+        } else {
+            console.warn('[Home] lulada-reviews-container no está registrado');
+            this.showReviewsError();
         }
     }
 
-    // Configurar event listeners
-    private setupEventListeners() {
+    private showReviewsError(): void {
+        const reviewsContainer = this.shadowRoot?.querySelector('#reviews-container');
+        if (!reviewsContainer) return;
+
+        reviewsContainer.innerHTML = `
+            <div class="error-content">
+                <h3>⚠️ Error cargando contenido</h3>
+                <p>No se pudo cargar el contenido de las publicaciones.</p>
+                <button class="error-retry" onclick="this.closest('lulada-home').refreshContent()">
+                    Reintentar
+                </button>
+            </div>
+        `;
+    }
+
+    private setupEventListeners(): void {
         // Escuchar eventos de navegación
         this.addEventListener('navigate', this.handleNavigation.bind(this));
         
@@ -206,20 +315,18 @@ class Home extends HTMLElement {
         console.log('👂 Event listeners configurados en Home');
     }
 
-    // Manejar navegación interna
-    private handleNavigation(event: Event) {
+    private handleNavigation(event: Event): void {
         const customEvent = event as CustomEvent;
         console.log('🧭 Home recibió evento de navegación:', customEvent.detail);
     }
 
-    // Manejar clic en botón Antojar
-    private handleAntojarClick() {
+    private handleAntojarClick(): void {
         console.log('📝 Botón Antojar clickeado desde Home');
         
         // Verificar si AntojarPopupService está disponible
-        if (window.AntojarPopupService) {
+        if ((window as any).AntojarPopupService) {
             try {
-                const service = window.AntojarPopupService.getInstance();
+                const service = (window as any).AntojarPopupService.getInstance();
                 if (service && typeof service.showPopup === 'function') {
                     service.showPopup();
                 } else {
@@ -230,13 +337,11 @@ class Home extends HTMLElement {
                 this.showTemporaryMessage('📝 Función de escribir reseña próximamente...');
             }
         } else {
-            // Mostrar mensaje temporal
             this.showTemporaryMessage('📝 Función de escribir reseña próximamente...');
         }
     }
 
-    // Mostrar mensaje temporal
-    private showTemporaryMessage(message: string) {
+    private showTemporaryMessage(message: string): void {
         const tempMessage = document.createElement('div');
         tempMessage.style.cssText = `
             position: fixed;
@@ -253,7 +358,6 @@ class Home extends HTMLElement {
         `;
         tempMessage.textContent = message;
         
-        // Agregar animación CSS
         const style = document.createElement('style');
         style.textContent = `
             @keyframes slideIn {
@@ -281,8 +385,7 @@ class Home extends HTMLElement {
         }, 3000);
     }
 
-    // Manejar clic en botón Explore
-    private handleExploreClick() {
+    private handleExploreClick(): void {
         console.log('🔍 Navegando a Explore...');
         
         const navEvent = new CustomEvent('navigate', {
@@ -293,12 +396,10 @@ class Home extends HTMLElement {
         document.dispatchEvent(navEvent);
     }
 
-    // Manejar cambios de tamaño de ventana
-    private handleResize() {
+    private handleResize(): void {
         const isMobile = window.innerWidth <= 768;
         console.log(`📱 Modo ${isMobile ? 'móvil' : 'escritorio'} activado`);
         
-        // Actualizar clases CSS si es necesario
         if (isMobile) {
             this.classList.add('mobile-mode');
             this.classList.remove('desktop-mode');
@@ -309,14 +410,9 @@ class Home extends HTMLElement {
     }
 
     // Método público para refrescar el contenido
-    public refresh() {
+    public refresh(): void {
         console.log('🔄 Refrescando contenido de Home...');
-        
-        // Recargar componentes si es necesario
-        const reviewsContainer = this.shadowRoot?.querySelector('lulada-reviews-container') as any;
-        if (reviewsContainer && typeof reviewsContainer.refresh === 'function') {
-            reviewsContainer.refresh();
-        }
+        this.loadReviewsContent();
         
         const suggestions = this.shadowRoot?.querySelector('lulada-suggestions') as any;
         if (suggestions && typeof suggestions.refresh === 'function') {
@@ -326,8 +422,13 @@ class Home extends HTMLElement {
         console.log('✅ Refresh de Home completado');
     }
 
+    // Método público para refrescar contenido (alias)
+    public refreshContent(): void {
+        this.refresh();
+    }
+
     // Método para debugging
-    public debug() {
+    public debug(): void {
         console.log('🔍 Home Debug Info:');
         console.log('- Componente conectado:', this.isConnected);
         console.log('- ShadowRoot existe:', !!this.shadowRoot);
@@ -350,7 +451,6 @@ class Home extends HTMLElement {
             console.log(`  ${comp}: ${element ? '✅' : '❌'}`);
         });
 
-        // Verificar duplicados en el DOM global
         const globalHomeElements = document.querySelectorAll('lulada-home');
         console.log(`- Elementos Home en DOM global: ${globalHomeElements.length}`);
         
@@ -360,7 +460,7 @@ class Home extends HTMLElement {
     }
 }
 
-// Hacer métodos disponibles globalmente para debugging
+// Funciones globales para debugging
 if (typeof window !== 'undefined') {
     (window as any).debugHome = () => {
         const homeComponent = document.querySelector('lulada-home') as Home;
@@ -380,7 +480,6 @@ if (typeof window !== 'undefined') {
         }
     };
     
-    // Función para limpiar duplicados manualmente
     (window as any).cleanHomeComponents = () => {
         const homeElements = document.querySelectorAll('lulada-home');
         console.log(`🔍 Encontrados ${homeElements.length} elementos Home`);

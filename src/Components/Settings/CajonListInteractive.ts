@@ -1,4 +1,4 @@
-// Components/Settings/CajonListInteractive.ts - COMPLETO CORREGIDO
+// Components/Settings/CajonListInteractive.ts - CORREGIDO CON LOGOUT FUNCIONAL
 
 // Componente que crea una lista interactiva de configuraciones
 class CajonListInteractive extends HTMLElement {
@@ -372,24 +372,61 @@ class CajonListInteractive extends HTMLElement {
         this.showPlaceholder();
     }
     
-    // Maneja el proceso de cerrar sesión
+    // ✅ FUNCIÓN DE LOGOUT CORREGIDA QUE SÍ FUNCIONA
     private handleLogout() {
-        const confirmLogout = confirm('¿Estás seguro de que quieres cerrar sesión?');
-        if (confirmLogout) {
-            try {
-                localStorage.removeItem('userToken');
-                sessionStorage.clear();
-            } catch (e: unknown) {
-                console.log('Error limpiando datos:', e);
-            }
+        console.log('[CajonListInteractive] 🚪 Iniciando proceso de logout');
+        
+        // Mostrar confirmación
+        const confirmLogout = confirm('¿Estás seguro de que quieres cerrar sesión?\n\nTendrás que volver a iniciar sesión para acceder a tu cuenta.');
+        
+        if (!confirmLogout) {
+            console.log('[CajonListInteractive] Logout cancelado por el usuario');
+            return;
+        }
+
+        try {
+            // Limpiar toda la información de sesión
+            console.log('[CajonListInteractive] 🧹 Limpiando datos de sesión...');
             
-            const loginEvent = new CustomEvent('navigate', {
-                detail: '/login',
+            // Remover elementos específicos de localStorage
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('user');
+            
+            // Limpiar sessionStorage completamente
+            sessionStorage.clear();
+            
+            console.log('[CajonListInteractive] ✅ Datos de sesión limpiados');
+            
+            // Disparar evento de logout para que LoadPage lo capture
+            const logoutEvent = new CustomEvent('auth-logout', {
+                detail: {
+                    reason: 'user_logout',
+                    timestamp: Date.now()
+                },
                 bubbles: true,
                 composed: true
             });
             
-            document.dispatchEvent(loginEvent);
+            document.dispatchEvent(logoutEvent);
+            console.log('[CajonListInteractive] 📡 Evento auth-logout disparado');
+            
+        } catch (error) {
+            console.error('[CajonListInteractive] ❌ Error durante el logout:', error);
+            
+            // En caso de error, intentar limpiar de todas formas
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                document.dispatchEvent(new CustomEvent('auth-logout', { 
+                    bubbles: true, 
+                    composed: true 
+                }));
+            } catch (fallbackError) {
+                console.error('[CajonListInteractive] ❌ Error en fallback logout:', fallbackError);
+            }
         }
     }
     

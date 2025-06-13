@@ -73,6 +73,13 @@ class CambiarNombreSimple extends HTMLElement {
                 this.cancelEdit();
             });
         }
+
+        const backBtn = this.shadowRoot.querySelector('#back-btn');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                this.handleBackClick();
+            });
+        }
     }
 
     private handleSubmit(): void {
@@ -132,6 +139,14 @@ class CambiarNombreSimple extends HTMLElement {
         this.toggleEditMode();
     }
 
+    private handleBackClick(): void {
+        // Disparar evento para que el contenedor sepa que debe volver
+        this.dispatchEvent(new CustomEvent('back', {
+            bubbles: true,
+            composed: true
+        }));
+    }
+
     private showMessage(message: string, type: 'success' | 'error' | 'info'): void {
         if (!this.shadowRoot) return;
 
@@ -145,7 +160,7 @@ class CambiarNombreSimple extends HTMLElement {
         messageEl.className = `message message-${type}`;
         messageEl.textContent = message;
 
-        const container = this.shadowRoot.querySelector('.container');
+        const container = this.shadowRoot.querySelector('.form-container');
         if (container) {
             container.insertBefore(messageEl, container.firstChild);
         }
@@ -160,26 +175,48 @@ class CambiarNombreSimple extends HTMLElement {
 
         this.shadowRoot.innerHTML = `
             <style>
-                * {
-                    box-sizing: border-box;
-                    margin: 0;
-                    padding: 0;
+                :host {
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    font-family: Arial, sans-serif;
                 }
 
-                .container {
-                    background: white;
-                    border-radius: 8px;
-                    padding: 20px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                    max-width: 400px;
-                    margin: 0 auto;
+                .form-container {
+                    background-color: white;
+                    border-radius: 16px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                    padding: 32px;
+                    max-width: 600px;
+                    height: fit-content;
+                }
+
+                .back-button {
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    padding: 8px 0;
+                    color: #666;
+                    font-size: 16px;
+                    margin-bottom: 16px;
+                    transition: color 0.2s ease;
+                }
+
+                .back-button:hover {
+                    color: #333;
+                }
+
+                .back-arrow {
+                    margin-right: 8px;
                 }
 
                 .title {
-                    font-size: 1.2rem;
-                    font-weight: 600;
-                    margin-bottom: 16px;
-                    color: #333;
+                    font-size: 22px;
+                    font-weight: bold;
+                    color: #000;
+                    margin: 0 0 16px 0;
                 }
 
                 .display-section {
@@ -187,14 +224,16 @@ class CambiarNombreSimple extends HTMLElement {
                 }
 
                 .current-name {
-                    font-size: 1.1rem;
+                    font-size: 16px;
                     padding: 12px;
-                    background: #f8f9fa;
-                    border-radius: 6px;
+                    background-color: #f5f5f5;
+                    border-radius: 8px;
+                    border-left: 4px solid #AAAB54;
                     margin-bottom: 12px;
                     min-height: 44px;
                     display: flex;
                     align-items: center;
+                    color: #333;
                 }
 
                 .edit-form {
@@ -214,36 +253,44 @@ class CambiarNombreSimple extends HTMLElement {
 
                 .form-input {
                     width: 100%;
-                    padding: 12px;
+                    padding: 14px;
                     border: 1px solid #ddd;
-                    border-radius: 6px;
-                    font-size: 1rem;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    box-sizing: border-box;
+                    transition: border-color 0.2s ease;
                 }
 
                 .form-input:focus {
                     outline: none;
-                    border-color: #007bff;
-                    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+                    border-color: rgb(201, 202, 136);
+                    box-shadow: 0 0 5px rgba(170, 171, 84, 0.3);
+                }
+
+                .form-input::placeholder {
+                    color: #ccc;
                 }
 
                 .btn {
-                    padding: 10px 16px;
+                    padding: 12px 24px;
                     border: none;
-                    border-radius: 6px;
+                    border-radius: 8px;
                     cursor: pointer;
-                    font-size: 0.9rem;
-                    font-weight: 500;
+                    font-size: 16px;
+                    font-weight: 600;
                     transition: all 0.2s ease;
                     margin-right: 8px;
                 }
 
                 .btn-primary {
-                    background: #007bff;
+                    background: #b4c13b;
                     color: white;
                 }
 
                 .btn-primary:hover {
-                    background: #0056b3;
+                    background: #9aa732;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
                 }
 
                 .btn-secondary {
@@ -256,12 +303,21 @@ class CambiarNombreSimple extends HTMLElement {
                 }
 
                 .btn-success {
-                    background: #28a745;
+                    background: #b4c13b;
                     color: white;
                 }
 
                 .btn-success:hover {
-                    background: #1e7e34;
+                    background: #9aa732;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                }
+
+                .btn:disabled {
+                    background-color: #ccc;
+                    cursor: not-allowed;
+                    transform: none;
+                    box-shadow: none;
                 }
 
                 .form-actions {
@@ -272,9 +328,9 @@ class CambiarNombreSimple extends HTMLElement {
 
                 .message {
                     padding: 12px;
-                    border-radius: 6px;
+                    border-radius: 8px;
                     margin-bottom: 16px;
-                    font-size: 0.9rem;
+                    font-size: 14px;
                     font-weight: 500;
                 }
 
@@ -297,9 +353,13 @@ class CambiarNombreSimple extends HTMLElement {
                 }
 
                 @media (max-width: 480px) {
-                    .container {
+                    .form-container {
                         margin: 10px;
-                        padding: 16px;
+                        padding: 20px;
+                    }
+                    
+                    .title {
+                        font-size: 20px;
                     }
                     
                     .form-actions {
@@ -314,7 +374,11 @@ class CambiarNombreSimple extends HTMLElement {
                 }
             </style>
 
-            <div class="container">
+            <button id="back-btn" class="back-button">
+                <span class="back-arrow">←</span> Volver
+            </button>
+
+            <div class="form-container">
                 <h3 class="title">Cambiar Nombre</h3>
                 
                 <div class="display-section">
@@ -348,11 +412,11 @@ class CambiarNombreSimple extends HTMLElement {
     }
 }
 
-// CORREGIDO: Registrar automáticamente y exportar como default
+// Registrar automáticamente el componente
 customElements.define('cambiar-nombre-simple', CambiarNombreSimple);
 
-// CORREGIDO: Export default para uso en index.ts
+// Export default para uso en index.ts
 export default CambiarNombreSimple;
 
-// AGREGADO: También export nombrado para flexibilidad
+// También export nombrado para flexibilidad
 export { CambiarNombreSimple };

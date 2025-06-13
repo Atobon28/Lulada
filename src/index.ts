@@ -1,12 +1,34 @@
-// index.ts - VERSIÓN FINAL SIN ERRORES DE TYPESCRIPT
+// index.ts - VERSIÓN CORREGIDA BASADA EN LA QUE FUNCIONABA
 
 // ===========================
-// IMPORTS DE TIPOS
+// EXPORTAR PARA COMPATIBILIDAD
 // ===========================
-import type { UserData, UserActionsType, WindowAntojarServiceType } from './types';
+export {};
 
 // ===========================
-// IMPORTS PRINCIPALES
+// INTERFACES Y TIPOS
+// ===========================
+interface ComponentConstructor {
+    new (...args: unknown[]): HTMLElement;
+}
+
+interface WindowWithGlobal extends Window {
+    AntojarPopupService?: {
+        getInstance(): unknown;
+    };
+    UserActions?: unknown;
+    debugSidebar?: () => void;
+    luladaStatus?: () => void;
+    luladaDebug?: () => void;
+    debugLoadPage?: () => void;
+    debugComponents?: () => void;
+    luladaLogout?: () => void;
+    luladaEmergencyLogout?: () => void;
+    saveUserRole?: (role: 'persona' | 'restaurante') => void;
+}
+
+// ===========================
+// IMPORTS PRINCIPALES - SOLO LOS QUE EXISTEN
 // ===========================
 
 // CORE
@@ -23,16 +45,14 @@ import LoginPage from "./Pages/LogIn/Login";
 import LuladaSettings from "./Pages/Settings/Settings";
 import LuladaNotifications from './Pages/Notifications/Notifications';
 import NewAccount from "./Pages/NewAccount/containernewaccount";
-import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
 
-// SETTINGS
+// SETTINGS PAGES
 import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
 import NombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
 import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF";
 
 // NAVEGACIÓN
 import Navigation from "./Components/Home/navigation";
-import './Components/Home/Header/reponsiveheader';
 import LuladaSidebar from "./Components/Home/Navbars/sidebar";
 
 // HEADERS
@@ -52,10 +72,10 @@ import ImagesExplore from "./Components/Explore/imagesExplore";
 import TextCard from "./Components/Explore/textCard";
 
 // USUARIO
-import { UserInfo } from "./Components/PUser/userProfile/UserInfo";
+import UserInfo from "./Components/PUser/userProfile/UserInfo";
 import UserSelftProfile from "./Components/PUser/userProfile/UserProfile";
 import UserEdit from "./Components/PUser/userProfile/EditButton";
-import { EditProfileModal } from "./Components/PUser/userProfile/EditProfileModal";
+import EditProfileModal from "./Components/PUser/userProfile/EditProfileModal";
 import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
 
 // OTROS
@@ -82,25 +102,78 @@ import CambiarCorreoSimple from "./Components/Settings/CambiarCorreoSimple";
 import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
 import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
 
-// SERVICES
-import './Services/PublicationsService';
+// ===========================
+// IMPORTS OPCIONALES (pueden fallar)
+// ===========================
+let NavigationBar: ComponentConstructor | null = null;
+let ResponsiveHeader: ComponentConstructor | null = null;
+let LuladaAntojar: ComponentConstructor | null = null;
+let LuladaAntojarBoton: ComponentConstructor | null = null;
+let AntojarPopupService: unknown = null;
+let ResponsiveBar: ComponentConstructor | null = null;
+let ConfirmRole: ComponentConstructor | null = null;
+
+// Importar componentes opcionales de forma segura
+try {
+    const navBarModule = require('./Components/Home/Navbars/responsivebar');
+    NavigationBar = navBarModule.default || navBarModule.NavigationBar;
+} catch (e) {
+    console.log('NavigationBar no disponible');
+}
+
+try {
+    const responsiveHeaderModule = require('./Components/Home/Header/reponsiveheader');
+    ResponsiveHeader = responsiveHeaderModule.default || responsiveHeaderModule.LuladaResponsiveHeader;
+} catch (e) {
+    console.log('ResponsiveHeader no disponible');
+}
+
+try {
+    const antojarModule = require('./Components/Home/Antojar/antojar');
+    LuladaAntojar = antojarModule.LuladaAntojar || antojarModule.default;
+} catch (e) {
+    console.log('LuladaAntojar no disponible');
+}
+
+try {
+    const antojarBotonModule = require('./Components/Home/Antojar/antojar-boton');
+    LuladaAntojarBoton = antojarBotonModule.LuladaAntojarBoton || antojarBotonModule.default;
+} catch (e) {
+    console.log('LuladaAntojarBoton no disponible');
+}
+
+try {
+    const antojarPopupModule = require('./Components/Home/Antojar/antojar-popup');
+    AntojarPopupService = antojarPopupModule.default;
+} catch (e) {
+    console.log('AntojarPopupService no disponible');
+}
+
+try {
+    const responsiveBarModule = require('./Components/Home/Navbars/responsivebar');
+    ResponsiveBar = responsiveBarModule.default || responsiveBarModule.LuladaResponsiveBar;
+} catch (e) {
+    console.log('ResponsiveBar no disponible');
+}
+
+try {
+    const confirmRoleModule = require('./Pages/ConfirmRole/ConfirRole');
+    ConfirmRole = confirmRoleModule.default;
+} catch (e) {
+    console.log('ConfirmRole no disponible');
+}
 
 // ===========================
-// TIPOS Y INTERFACES
+// IMPLEMENTACIÓN DE UserActions (desde la versión que funcionaba)
 // ===========================
-type ComponentConstructor = new () => HTMLElement;
-
-// ===========================
-// IMPLEMENTACIÓN COMPLETA DE UserActions
-// ===========================
-const UserActionsImplementation: UserActionsType = {
-    loadUserData: (userData: UserData) => {
+const UserActionsImplementation = {
+    loadUserData: (userData: unknown) => {
         console.log('📥 Cargando datos de usuario:', userData);
         localStorage.setItem('currentUser', JSON.stringify(userData));
         localStorage.setItem('isAuthenticated', 'true');
     },
 
-    updateUserData: (userData: UserData) => {
+    updateUserData: (userData: unknown) => {
         console.log('🔄 Actualizando datos de usuario:', userData);
         localStorage.setItem('currentUser', JSON.stringify(userData));
         
@@ -167,20 +240,6 @@ const UserActionsImplementation: UserActionsType = {
         }
     },
 
-    updateLocation: (newLocation: string) => {
-        const currentUser = localStorage.getItem('currentUser');
-        if (currentUser) {
-            try {
-                const userData = JSON.parse(currentUser);
-                userData.locationText = newLocation;
-                localStorage.setItem('currentUser', JSON.stringify(userData));
-                console.log('✅ Ubicación actualizada:', newLocation);
-            } catch (error) {
-                console.error('❌ Error actualizando ubicación:', error);
-            }
-        }
-    },
-
     updateRole: (newRole: string) => {
         const currentUser = localStorage.getItem('currentUser');
         if (currentUser) {
@@ -191,21 +250,6 @@ const UserActionsImplementation: UserActionsType = {
                 console.log('✅ Rol actualizado:', newRole);
             } catch (error) {
                 console.error('❌ Error actualizando rol:', error);
-            }
-        }
-    },
-
-    updatePassword: (newPassword: string) => {
-        console.log('🔒 Actualizando contraseña...');
-        const currentUser = localStorage.getItem('currentUser');
-        if (currentUser) {
-            try {
-                const userData = JSON.parse(currentUser);
-                userData.lastPasswordUpdate = Date.now();
-                localStorage.setItem('currentUser', JSON.stringify(userData));
-                console.log('✅ Contraseña actualizada');
-            } catch (error) {
-                console.error('❌ Error actualizando contraseña:', error);
             }
         }
     },
@@ -223,174 +267,265 @@ const UserActionsImplementation: UserActionsType = {
 };
 
 // ===========================
-// IMPLEMENTACIÓN DEL ANTOJAR SERVICE
+// IMPLEMENTACIÓN DE AntojarService SIMPLE
 // ===========================
-class AntojarServiceImplementation {
-    private static instance: AntojarServiceImplementation;
-    private isInitialized: boolean = false;
+class SimpleAntojarService {
+    private static instance: SimpleAntojarService;
     
-    public popupContainer: HTMLDivElement | null = null;
-    public antojarComponent: HTMLElement | null = null;
-
-    private constructor() {}
-
-    public static getInstance(): AntojarServiceImplementation {
-        if (!AntojarServiceImplementation.instance) {
-            AntojarServiceImplementation.instance = new AntojarServiceImplementation();
+    public static getInstance(): SimpleAntojarService {
+        if (!SimpleAntojarService.instance) {
+            SimpleAntojarService.instance = new SimpleAntojarService();
         }
-        return AntojarServiceImplementation.instance;
+        return SimpleAntojarService.instance;
     }
 
     public initialize(): void {
-        if (this.isInitialized) return;
-        
-        console.log('🔧 Inicializando AntojarService...');
-        this.isInitialized = true;
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            .antojar-popup-overlay {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-                background: rgba(0,0,0,0.6) !important;
-                z-index: 9998 !important;
-                display: flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-            }
-        `;
-        document.head.appendChild(style);
-        
-        console.log('✅ AntojarService inicializado');
+        console.log('🔧 AntojarService simple inicializado');
     }
 
     public showPopup(): void {
-        console.log('📝 Mostrando popup de Antojar');
-        this.initialize();
-        this.hidePopup();
+        console.log('📝 Mostrando popup de Antojar (simple)');
+        
+        // Buscar si existe el componente lulada-antojar
+        const existingAntojar = document.querySelector('lulada-antojar');
+        if (existingAntojar) {
+            console.log('✅ Componente lulada-antojar encontrado');
+            return;
+        }
 
+        // Crear overlay simple
         const overlay = document.createElement('div');
-        overlay.className = 'antojar-popup-overlay';
-        overlay.id = 'antojar-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
 
-        this.antojarComponent = document.createElement('lulada-antojar');
-        this.antojarComponent.style.cssText = `
+        const antojarComponent = document.createElement('lulada-antojar');
+        antojarComponent.style.cssText = `
             background: white;
             border-radius: 12px;
             max-width: 500px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
-            z-index: 9999;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         `;
 
-        overlay.appendChild(this.antojarComponent);
+        overlay.appendChild(antojarComponent);
         document.body.appendChild(overlay);
-        this.popupContainer = overlay;
 
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                this.hidePopup();
+                overlay.remove();
             }
         });
     }
 
     public hidePopup(): void {
-        const existingOverlay = document.getElementById('antojar-overlay');
-        if (existingOverlay) {
-            existingOverlay.remove();
-        }
-        this.popupContainer = null;
-        this.antojarComponent = null;
-    }
-
-    public togglePopup(): void {
-        if (this.popupContainer) {
-            this.hidePopup();
-        } else {
-            this.showPopup();
-        }
+        console.log('🚫 Ocultando popup de Antojar');
     }
 }
 
 // ===========================
-// ASIGNACIÓN SEGURA A WINDOW SIN REDECLARACIÓN
+// REGISTRO SEGURO DE COMPONENTES
 // ===========================
-if (typeof window !== 'undefined' && !window.UserActions) {
-    window.UserActions = UserActionsImplementation;
+function registerComponent(name: string, component: ComponentConstructor): boolean {
+    try {
+        if (!component) {
+            console.log(`⚠️ ${name} - componente no disponible`);
+            return false;
+        }
+
+        if (customElements.get(name)) {
+            console.log(`⚠️ ${name} ya registrado, saltando...`);
+            return true;
+        }
+        
+        customElements.define(name, component);
+        console.log(`✅ ${name} registrado exitosamente`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Error registrando ${name}:`, error);
+        return false;
+    }
 }
 
-if (typeof window !== 'undefined' && !window.AntojarPopupService) {
-    window.AntojarPopupService = {
-        getInstance: () => AntojarServiceImplementation.getInstance()
-    };
+console.log('🚀 === INICIANDO REGISTRO DE COMPONENTES ===');
+
+// ===========================
+// REGISTRO EN ORDEN CORRECTO (basado en la versión que funcionaba)
+// ===========================
+
+// CORE (SIEMPRE PRIMERO)
+registerComponent('root-component', RootComponent);
+registerComponent('load-pages', LoadPage);
+
+// HEADERS (nombres corregidos)
+registerComponent('lulada-header-completo', HeaderCompleto);
+registerComponent('lulada-header-home', HeaderHome);
+registerComponent('lulada-header', HeaderHome); // Alias para compatibilidad
+registerComponent('lulada-logo', Lulada);
+registerComponent('lulada-header-explorer', HeaderExplorer);
+registerComponent('header-explorer', HeaderExplorer); // Alias para compatibilidad
+
+// NAVEGACIÓN
+registerComponent('lulada-navigation', Navigation);
+registerComponent('lulada-sidebar', LuladaSidebar);
+
+// NAVEGACIÓN OPCIONAL
+if (NavigationBar) {
+    registerComponent('lulada-responsive-bar', NavigationBar);
 }
 
-// Funciones de debug (solo si no existen)
+if (ResponsiveHeader) {
+    registerComponent('lulada-responsive-header', ResponsiveHeader);
+}
+
+// PÁGINAS PRINCIPALES
+registerComponent('lulada-home', Home);
+registerComponent('lulada-explore', LuladaExplore);
+registerComponent('puser-page', PUser);
+registerComponent('restaurant-profile', RestaurantProfile);
+registerComponent('save-page', Save);
+registerComponent('login-page', LoginPage);
+registerComponent('lulada-settings', LuladaSettings);
+registerComponent('lulada-notifications', LuladaNotifications);
+registerComponent('register-new-account', NewAccount);
+
+// SETTINGS PAGES
+registerComponent('lulada-cambiar-correo', CambiarCorreoF);
+registerComponent('lulada-cambiar-nombre', NombreUsuraio);
+registerComponent('lulada-cambiar-contraseña', CambiarContraseñaF);
+
+// COMPONENTES OPCIONALES
+if (ConfirmRole) {
+    registerComponent('lulada-confirm-role', ConfirmRole);
+}
+
+// USUARIO (nombres corregidos)
+registerComponent('lulada-user-info', UserInfo);
+registerComponent('lulada-user-profile', UserSelftProfile);
+registerComponent('user-profile', UserSelftProfile); // Alias para compatibilidad
+registerComponent('lulada-user-edit', UserEdit);
+registerComponent('lulada-edit-profile-modal', EditProfileModal);
+registerComponent('lulada-restaurant-info', restaurantInfo);
+
+// PUBLICACIONES
+registerComponent('lulada-publication', Publication);
+registerComponent('lulada-review', Review);
+registerComponent('lulada-reviews-container', ReviewsContainer);
+
+// EXPLORACIÓN (nombres corregidos)
+registerComponent('lulada-explore-container', ExploreContainer);
+registerComponent('explore-container', ExploreContainer); // Alias para compatibilidad
+registerComponent('lulada-images-explore', ImagesExplore);
+registerComponent('images-explore', ImagesExplore); // Alias para compatibilidad
+registerComponent('lulada-text-card', TextCard);
+registerComponent('text-card', TextCard); // Alias para compatibilidad
+
+// OTROS
+registerComponent('lulada-suggestions', LuladaSuggestions);
+registerComponent('lulada-card-notifications', CardNotifications);
+
+// LOGIN
+registerComponent('login-form', LoginForm);
+registerComponent('lulada-caja-de-texto', CajaDeTexto);
+registerComponent('lulada-boton-login', BotonLogin);
+
+// NEW ACCOUNT
+registerComponent('lulada-box-text', BoxText);
+registerComponent('button-new-account', ButtonNewAccount);
+
+// SETTINGS COMPONENTS
+registerComponent('cajon-texto', CajonTexto);
+registerComponent('cajon-list', CajonList);
+registerComponent('cajon-list-interactive', CajonListInteractive);
+registerComponent('cambiar-nombre-usuario', CambiarNU);
+registerComponent('cambiar-correo-electronico', Cambiarco);
+registerComponent('cambiar-contrasena', CambiarContra);
+registerComponent('cambiar-correo-simple', CambiarCorreoSimple);
+registerComponent('cambiar-nombre-simple', CambiarNombreSimple);
+registerComponent('cambiar-contrasena-simple', CambiarContrasenaSimple);
+
+// ANTOJAR (OPCIONAL)
+if (LuladaAntojar) {
+    registerComponent('lulada-antojar', LuladaAntojar);
+}
+
+if (LuladaAntojarBoton) {
+    registerComponent('lulada-antojar-boton', LuladaAntojarBoton);
+}
+
+// ===========================
+// ASIGNACIÓN GLOBAL SEGURA
+// ===========================
 if (typeof window !== 'undefined') {
-    if (!window.debugSuggestions) {
-        window.debugSuggestions = (): void => {
-            console.log('🔍 === DEBUG SUGGESTIONS ===');
-            const suggestions = document.querySelectorAll('lulada-suggestions');
-            console.log('Componentes suggestions encontrados:', suggestions.length);
-            console.log('=== FIN DEBUG SUGGESTIONS ===');
-        };
+    const globalWindow = window as WindowWithGlobal;
+    
+    // UserActions
+    if (!globalWindow.UserActions) {
+        globalWindow.UserActions = UserActionsImplementation;
+    }
+    
+    // AntojarPopupService (usar el real si está disponible, sino el simple)
+    if (!globalWindow.AntojarPopupService) {
+        if (AntojarPopupService) {
+            globalWindow.AntojarPopupService = AntojarPopupService as { getInstance(): unknown };
+        } else {
+            globalWindow.AntojarPopupService = {
+                getInstance: () => SimpleAntojarService.getInstance()
+            };
+        }
     }
 
-    if (!window.debugUserInfo) {
-        window.debugUserInfo = (): void => {
-            console.log('🔍 === DEBUG USER INFO ===');
-            console.log('Usuario actual:', localStorage.getItem('currentUser'));
-            console.log('Estado de autenticación:', localStorage.getItem('isAuthenticated'));
-            console.log('=== FIN DEBUG USER INFO ===');
-        };
-    }
-
-    if (!window.debugHome) {
-        window.debugHome = (): void => {
-            console.log('🔍 === DEBUG HOME ===');
-            const homeComponents = document.querySelectorAll('lulada-home');
-            console.log('Componentes home encontrados:', homeComponents.length);
-            console.log('=== FIN DEBUG HOME ===');
-        };
-    }
-
-    if (!window.debugLoadPage) {
-        window.debugLoadPage = (): void => {
+    // Funciones de debug (solo si no existen)
+    if (!globalWindow.debugLoadPage) {
+        globalWindow.debugLoadPage = () => {
+            const loadPage = document.querySelector('load-pages');
             console.log('🔍 === DEBUG LOAD PAGE ===');
-            const loadPages = document.querySelectorAll('load-pages');
-            console.log('LoadPages activos:', loadPages.length);
+            console.log('LoadPages en DOM:', !!loadPage);
             console.log('Ruta actual:', window.location.pathname);
-            console.log('=== FIN DEBUG LOAD PAGE ===');
+            console.log('Autenticado:', localStorage.getItem('isAuthenticated'));
+            console.log('===========================');
         };
     }
 
-    if (!window.debugRestaurantNav) {
-        window.debugRestaurantNav = (): void => {
-            console.log('🔍 === DEBUG RESTAURANT NAV ===');
-            console.log('Navegación de restaurante debuggeada');
-            console.log('=== FIN DEBUG RESTAURANT NAV ===');
+    if (!globalWindow.luladaStatus) {
+        globalWindow.luladaStatus = () => {
+            console.log('📊 === STATUS LULADA ===');
+            console.log('✅ Componentes críticos:');
+            console.log('- RootComponent:', !!customElements.get('root-component'));
+            console.log('- LoadPage:', !!customElements.get('load-pages'));
+            console.log('- Home:', !!customElements.get('lulada-home'));
+            console.log('- Login:', !!customElements.get('login-page'));
+            console.log('- NewAccount:', !!customElements.get('register-new-account'));
+            
+            console.log('🔧 Servicios:');
+            console.log('- UserActions:', !!globalWindow.UserActions);
+            console.log('- AntojarPopupService:', !!globalWindow.AntojarPopupService);
+            
+            console.log('🌐 DOM:');
+            console.log('- root-component en DOM:', !!document.querySelector('root-component'));
+            console.log('- load-pages en DOM:', !!document.querySelector('load-pages'));
+            
+            console.log('🔐 Auth:');
+            console.log('- Autenticado:', localStorage.getItem('isAuthenticated'));
+            console.log('- Usuario:', !!localStorage.getItem('currentUser'));
+            
+            console.log('====================');
         };
     }
 
-    if (!window.luladaStatus) {
-        window.luladaStatus = (): void => {
-            console.log('=== 🚀 LULADA STATUS ===');
-            console.log('📱 Usuario:', localStorage.getItem('currentUser'));
-            console.log('🔐 Autenticado:', localStorage.getItem('isAuthenticated'));
-            console.log('⚙️ UserActions:', !!window.UserActions);
-            console.log('🍽️ AntojarPopupService:', !!window.AntojarPopupService);
-            console.log('🌐 URL actual:', window.location.href);
-            console.log('=== FIN STATUS ===');
-        };
-    }
-
-    if (!window.luladaLogout) {
-        window.luladaLogout = (): void => {
+    if (!globalWindow.luladaLogout) {
+        globalWindow.luladaLogout = () => {
             const confirmed = confirm('¿Estás seguro de que quieres cerrar sesión?');
             if (confirmed) {
                 localStorage.clear();
@@ -401,8 +536,8 @@ if (typeof window !== 'undefined') {
         };
     }
 
-    if (!window.luladaEmergencyLogout) {
-        window.luladaEmergencyLogout = (): void => {
+    if (!globalWindow.luladaEmergencyLogout) {
+        globalWindow.luladaEmergencyLogout = () => {
             console.log('🚨 === LOGOUT DE EMERGENCIA ===');
             localStorage.clear();
             sessionStorage.clear();
@@ -411,8 +546,8 @@ if (typeof window !== 'undefined') {
         };
     }
 
-    if (!window.saveUserRole) {
-        window.saveUserRole = (role: 'persona' | 'restaurante'): void => {
+    if (!globalWindow.saveUserRole) {
+        globalWindow.saveUserRole = (role: 'persona' | 'restaurante') => {
             const currentUser = localStorage.getItem('currentUser');
             if (currentUser) {
                 try {
@@ -431,150 +566,57 @@ if (typeof window !== 'undefined') {
 }
 
 // ===========================
-// REGISTRO DE COMPONENTES SEGURO
+// INICIALIZACIÓN FINAL
 // ===========================
-function registerComponent(name: string, component: ComponentConstructor): boolean {
+
+// Inicializar AntojarService
+if (typeof window !== 'undefined') {
     try {
-        if (customElements.get(name)) {
-            console.log(`⚠️ ${name} ya registrado, saltando...`);
-            return true;
+        const service = (window as WindowWithGlobal).AntojarPopupService?.getInstance();
+        if (service && typeof (service as any).initialize === 'function') {
+            (service as any).initialize();
         }
-        
-        customElements.define(name, component);
-        console.log(`✅ ${name} registrado`);
-        return true;
     } catch (error) {
-        console.error(`❌ Error registrando ${name}:`, error);
-        return false;
+        console.log('Info: AntojarService simple en uso');
     }
 }
 
-console.log('🚀 Iniciando registro de componentes...');
-
-// ===========================
-// ORDEN CRÍTICO DE REGISTRO
-// ===========================
-
-// CORE (SIEMPRE PRIMERO)
-registerComponent('root-component', RootComponent);
-registerComponent('load-pages', LoadPage);
-
-// USUARIO (antes de usarlos en otros componentes)
-registerComponent('lulada-user-info', UserInfo);
-registerComponent('lulada-user-edit', UserEdit);
-registerComponent('lulada-edit-profile-modal', EditProfileModal);
-registerComponent('lulada-user-profile', UserSelftProfile);
-
-// PÁGINAS
-registerComponent('lulada-home', Home);
-registerComponent('lulada-explore', LuladaExplore);
-registerComponent('lulada-puser', PUser);
-registerComponent('lulada-restaurant-profile', RestaurantProfile);
-registerComponent('lulada-save', Save);
-registerComponent('lulada-login', LoginPage);
-registerComponent('lulada-settings', LuladaSettings);
-registerComponent('lulada-notifications', LuladaNotifications);
-registerComponent('lulada-new-account', NewAccount);
-registerComponent('lulada-confirm-role', ConfirmRole);
-
-// SETTINGS PAGES
-registerComponent('cambiar-correo-f', CambiarCorreoF);
-registerComponent('cambiar-nombre-f', NombreUsuraio);
-registerComponent('cambiar-contrasena-f', CambiarContraseñaF);
-
-// NAVEGACIÓN
-registerComponent('lulada-navigation', Navigation);
-registerComponent('lulada-sidebar', LuladaSidebar);
-
-// HEADERS
-registerComponent('lulada-header-completo', HeaderCompleto);
-registerComponent('lulada-header-home', HeaderHome);
-registerComponent('lulada-logo', Lulada);
-registerComponent('lulada-header-explorer', HeaderExplorer);
-
-// PUBLICACIONES
-registerComponent('lulada-publication', Publication);
-registerComponent('lulada-review', Review);
-registerComponent('lulada-reviews-container', ReviewsContainer);
-
-// EXPLORACIÓN
-registerComponent('lulada-explore-container', ExploreContainer);
-registerComponent('lulada-images-explore', ImagesExplore);
-registerComponent('lulada-text-card', TextCard);
-
-// RESTAURANT
-registerComponent('lulada-restaurant-info', restaurantInfo);
-
-// OTROS
-registerComponent('lulada-suggestions', LuladaSuggestions);
-registerComponent('lulada-card-notifications', CardNotifications);
-
-// LOGIN
-registerComponent('lulada-login-form', LoginForm);
-registerComponent('lulada-caja-de-texto', CajaDeTexto);
-registerComponent('lulada-boton-login', BotonLogin);
-
-// NEW ACCOUNT
-registerComponent('lulada-box-text', BoxText);
-registerComponent('lulada-button-new-account', ButtonNewAccount);
-
-// SETTINGS
-registerComponent('cajon-texto', CajonTexto);
-registerComponent('cajon-list', CajonList);
-registerComponent('cajon-list-interactive', CajonListInteractive);
-registerComponent('cambiar-nu', CambiarNU);
-registerComponent('cambiar-co', Cambiarco);
-registerComponent('cambiar-contra', CambiarContra);
-registerComponent('cambiar-correo-simple', CambiarCorreoSimple);
-registerComponent('cambiar-nombre-simple', CambiarNombreSimple);
-registerComponent('cambiar-contrasena-simple', CambiarContrasenaSimple);
-
-// ===========================
-// INICIALIZACIÓN CRÍTICA
-// ===========================
-console.log('✅ Registro de componentes completado');
-
-// Auto-inicializar AntojarService
-window.AntojarPopupService.getInstance().initialize();
-
-// ===========================
-// VERIFICACIÓN DE INICIO
-// ===========================
+// Crear root-component automáticamente
 setTimeout(() => {
-    console.log('🔍 Verificando inicio de la app...');
-    
-    let rootComponent = document.querySelector('root-component');
-    if (!rootComponent) {
-        console.log('🚑 EMERGENCIA: Creando root-component...');
-        rootComponent = document.createElement('root-component');
-        document.body.appendChild(rootComponent);
+    if (!document.querySelector('root-component')) {
+        const root = document.createElement('root-component');
+        document.body.appendChild(root);
+        console.log('✅ Root component creado automáticamente');
     }
-    
-    // Diagnóstico disponible desde consola
-    if (!(window as any).diagnosticStartup) {
-        (window as any).diagnosticStartup = () => {
-            console.log('🔍 === DIAGNÓSTICO COMPLETO ===');
-            console.log('root-component existe:', !!document.querySelector('root-component'));
-            console.log('load-pages existe:', !!document.querySelector('load-pages'));
-            console.log('UserActions disponible:', !!window.UserActions);
-            console.log('AntojarPopupService disponible:', !!window.AntojarPopupService);
-            console.log('Autenticado:', localStorage.getItem('isAuthenticated'));
-            console.log('Usuario actual:', localStorage.getItem('currentUser'));
-            console.log('=== FIN DIAGNÓSTICO ===');
-        };
-    }
-    
-    // Verificar carga después de 2 segundos
-    setTimeout(() => {
-        const loadPages = document.querySelector('load-pages');
-        if (!loadPages) {
-            console.error('❌ CRÍTICO: load-pages no encontrado después de 2s');
-            console.log('🔧 Ejecuta window.diagnosticStartup() para más detalles');
-        } else {
-            console.log('✅ App cargada exitosamente');
-        }
-    }, 2000);
-    
 }, 100);
 
-export { };
+// Verificación de salud de la app
+setTimeout(() => {
+    const loadPages = document.querySelector('load-pages');
+    if (!loadPages) {
+        console.error('❌ CRÍTICO: load-pages no encontrado después de 2s');
+        console.log('🔧 Ejecuta window.luladaStatus() para diagnóstico');
+    } else {
+        console.log('✅ App cargada exitosamente');
+    }
+}, 2000);
+
+console.log('✅ === APLICACIÓN LULADA INICIALIZADA CORRECTAMENTE ===');
+
+// ===========================
+// EXPORTS (para compatibilidad)
+// ===========================
+export {
+    Home,
+    LuladaExplore,
+    PUser,
+    RestaurantProfile,
+    Save,
+    LoginPage,
+    LuladaSettings,
+    LuladaNotifications,
+    HeaderCompleto,
+    LuladaSidebar,
+    Publication,
+    ReviewsContainer
+};

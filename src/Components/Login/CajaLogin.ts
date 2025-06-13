@@ -1,6 +1,10 @@
-// src/Components/Login/CajaLogin.ts - CON AUTENTICACIÓN FIREBASE
+// src/Components/Login/CajaLogin.ts - CON AUTENTICACIÓN FIREBASE Y ESTILO ORIGINAL
+import { loginUser, registerUser } from '../../Services/firebase/Authservice';
+import { UserData } from '../../flux/UserActions';
+
 class LoginForm extends HTMLElement {
     private isLoading = false;
+    private isLoginMode = true;
 
     constructor() {
         super();
@@ -13,10 +17,10 @@ class LoginForm extends HTMLElement {
         this.checkExistingAuth();
     }
 
-    // NUEVO: Verificar si ya está autenticado al cargar
+    // Verificar si ya está autenticado al cargar
     private async checkExistingAuth(): Promise<void> {
         try {
-            // Intentar importar Firebase Auth
+            // Importar Firebase Auth
             const { getCurrentUser, isAuthenticated } = await import('../../Services/firebase/Authservice');
             
             if (isAuthenticated()) {
@@ -106,6 +110,27 @@ class LoginForm extends HTMLElement {
                         font-weight: 400;
                     }
 
+                    /* Campos de registro */
+                    .register-fields {
+                        display: none;
+                        animation: fadeIn 0.3s ease;
+                    }
+
+                    .register-fields.show {
+                        display: block;
+                    }
+
+                    @keyframes fadeIn {
+                        from { 
+                            opacity: 0; 
+                            transform: translateY(-10px); 
+                        }
+                        to { 
+                            opacity: 1; 
+                            transform: translateY(0); 
+                        }
+                    }
+
                     .login-button {
                         width: 100%;
                         padding: 16px 24px;
@@ -178,6 +203,7 @@ class LoginForm extends HTMLElement {
                         transition: all 0.3s ease;
                         margin-bottom: 30px;
                         font-weight: 500;
+                        display: block;
                     }
 
                     .forgot-password:hover {
@@ -212,14 +238,19 @@ class LoginForm extends HTMLElement {
                         font-weight: 500;
                     }
 
-                    .register-link a {
+                    .register-link .toggle-link {
                         color: #AAAB54;
                         text-decoration: none;
                         font-weight: 600;
                         transition: all 0.3s ease;
+                        cursor: pointer;
+                        border: none;
+                        background: none;
+                        font-size: inherit;
+                        font-family: inherit;
                     }
 
-                    .register-link a:hover {
+                    .register-link .toggle-link:hover {
                         color: #999A4A;
                         text-decoration: underline;
                     }
@@ -278,8 +309,8 @@ class LoginForm extends HTMLElement {
                 </style>
 
                 <div class="login-container">
-                    <h2 class="login-title">¡Bienvenido de vuelta!</h2>
-                    <p class="login-subtitle">Ingresa a tu cuenta para continuar</p>
+                    <h2 class="login-title" id="form-title">¡Bienvenido de vuelta!</h2>
+                    <p class="login-subtitle" id="form-subtitle">Ingresa a tu cuenta para continuar</p>
                     
                     <!-- Mensajes de error y éxito -->
                     <div class="error-message" id="error-message"></div>
@@ -311,19 +342,63 @@ class LoginForm extends HTMLElement {
                                 minlength="6"
                             >
                         </div>
+
+                        <!-- Campos de registro (inicialmente ocultos) -->
+                        <div class="register-fields" id="register-fields">
+                            <div class="form-group">
+                                <label class="form-label" for="nombre">Nombre completo</label>
+                                <input 
+                                    type="text" 
+                                    id="nombre" 
+                                    class="form-input" 
+                                    placeholder="Tu nombre completo"
+                                    autocomplete="name"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="nombreDeUsuario">Nombre de usuario</label>
+                                <input 
+                                    type="text" 
+                                    id="nombreDeUsuario" 
+                                    class="form-input" 
+                                    placeholder="usuario123 (sin @)"
+                                    autocomplete="username"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="descripcion">Descripción (opcional)</label>
+                                <input 
+                                    type="text" 
+                                    id="descripcion" 
+                                    class="form-input" 
+                                    placeholder="Cuéntanos un poco sobre ti..."
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="rol">Tipo de cuenta</label>
+                                <select id="rol" class="form-input">
+                                    <option value="persona">Usuario Personal</option>
+                                    <option value="restaurante">Restaurante</option>
+                                </select>
+                            </div>
+                        </div>
                         
                         <button type="submit" class="login-button" id="login-button">
                             <div class="loading-spinner"></div>
-                            <span class="button-text">Iniciar Sesión</span>
+                            <span class="button-text" id="button-text">Iniciar Sesión</span>
                         </button>
                     </form>
                     
-                    <p class="forgot-password" id="forgot-password">¿Olvidaste tu contraseña?</p>
+                    <div class="forgot-password" id="forgot-password">¿Olvidaste tu contraseña?</div>
                     
                     <div class="divider"></div>
                     
                     <p class="register-link">
-                        ¿No tienes cuenta? <a href="#" id="register-link">Regístrate aquí</a>
+                        <span id="toggle-text">¿No tienes cuenta?</span> 
+                        <button class="toggle-link" id="register-link">Regístrate aquí</button>
                     </p>
                 </div>
             `;
@@ -332,19 +407,19 @@ class LoginForm extends HTMLElement {
 
     private setupEventListeners(): void {
         const form = this.shadowRoot?.getElementById('login-form') as HTMLFormElement;
-        const registerLink = this.shadowRoot?.getElementById('register-link') as HTMLAnchorElement;
+        const registerLink = this.shadowRoot?.getElementById('register-link') as HTMLButtonElement;
         const forgotPassword = this.shadowRoot?.getElementById('forgot-password') as HTMLElement;
 
         // Envío del formulario
         form?.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleLogin();
+            this.handleSubmit();
         });
 
-        // Enlace de registro
+        // Toggle entre login y registro
         registerLink?.addEventListener('click', (e) => {
             e.preventDefault();
-            this.navigateToRegister();
+            this.toggleAuthMode();
         });
 
         // Olvidaste contraseña
@@ -353,8 +428,51 @@ class LoginForm extends HTMLElement {
         });
     }
 
-    // NUEVO: Método principal de login con Firebase
-    private async handleLogin(): Promise<void> {
+    private toggleAuthMode(): void {
+        this.isLoginMode = !this.isLoginMode;
+        
+        const formTitle = this.shadowRoot?.getElementById('form-title');
+        const formSubtitle = this.shadowRoot?.getElementById('form-subtitle');
+        const registerFields = this.shadowRoot?.getElementById('register-fields');
+        const toggleText = this.shadowRoot?.getElementById('toggle-text');
+        const registerLink = this.shadowRoot?.getElementById('register-link');
+        const buttonText = this.shadowRoot?.getElementById('button-text');
+
+        if (this.isLoginMode) {
+            // Modo Login
+            if (formTitle) formTitle.textContent = '¡Bienvenido de vuelta!';
+            if (formSubtitle) formSubtitle.textContent = 'Ingresa a tu cuenta para continuar';
+            if (registerFields) registerFields.classList.remove('show');
+            if (toggleText) toggleText.textContent = '¿No tienes cuenta?';
+            if (registerLink) registerLink.textContent = 'Regístrate aquí';
+            if (buttonText) buttonText.textContent = 'Iniciar Sesión';
+            
+            this.setFieldsRequired(false);
+        } else {
+            // Modo Registro
+            if (formTitle) formTitle.textContent = '¡Únete a Lulada!';
+            if (formSubtitle) formSubtitle.textContent = 'Crea tu cuenta y descubre sabores únicos';
+            if (registerFields) registerFields.classList.add('show');
+            if (toggleText) toggleText.textContent = '¿Ya tienes cuenta?';
+            if (registerLink) registerLink.textContent = 'Inicia sesión';
+            if (buttonText) buttonText.textContent = 'Crear Cuenta';
+            
+            this.setFieldsRequired(true);
+        }
+
+        this.hideMessage();
+    }
+
+    private setFieldsRequired(required: boolean): void {
+        const nombre = this.shadowRoot?.getElementById('nombre') as HTMLInputElement;
+        const nombreDeUsuario = this.shadowRoot?.getElementById('nombreDeUsuario') as HTMLInputElement;
+        
+        if (nombre) nombre.required = required;
+        if (nombreDeUsuario) nombreDeUsuario.required = required;
+    }
+
+    // Método principal de autenticación con Firebase
+    private async handleSubmit(): Promise<void> {
         if (this.isLoading) return;
 
         const emailInput = this.shadowRoot?.getElementById('email') as HTMLInputElement;
@@ -379,84 +497,105 @@ class LoginForm extends HTMLElement {
             return;
         }
 
+        // Validaciones adicionales para registro
+        if (!this.isLoginMode) {
+            const nombreInput = this.shadowRoot?.getElementById('nombre') as HTMLInputElement;
+            const nombreDeUsuarioInput = this.shadowRoot?.getElementById('nombreDeUsuario') as HTMLInputElement;
+            
+            const nombre = nombreInput?.value.trim();
+            const nombreDeUsuario = nombreDeUsuarioInput?.value.trim();
+
+            if (!nombre || !nombreDeUsuario) {
+                this.showError('Nombre y nombre de usuario son requeridos');
+                return;
+            }
+        }
+
         // Mostrar loading
         this.setLoading(true);
 
         try {
-            // NUEVO: Intentar login con Firebase primero
-            const firebaseSuccess = await this.attemptFirebaseLogin(email, password);
-            
-            if (firebaseSuccess) {
-                this.showSuccess('¡Inicio de sesión exitoso con Firebase!');
-                setTimeout(() => this.navigateToHome(), 1000);
-                return;
+            if (this.isLoginMode) {
+                await this.attemptFirebaseLogin(email, password);
+            } else {
+                await this.attemptFirebaseRegister(email, password);
             }
-
-            // Fallback: Login local (simulado)
-            await this.attemptLocalLogin(email, password);
             
         } catch (error) {
-            console.error('Error en login:', error);
-            this.showError('Error al iniciar sesión. Verifica tus credenciales.');
+            console.error('Error en autenticación:', error);
+            this.showError('Error al procesar la solicitud. Intenta de nuevo.');
         } finally {
             this.setLoading(false);
         }
     }
 
-    // NUEVO: Intentar login con Firebase
-    private async attemptFirebaseLogin(email: string, password: string): Promise<boolean> {
-        try {
-            const { loginUser } = await import('../../Services/firebase/Authservice');
-            
-            const result = await loginUser(email, password);
-            
-            if (result.success && result.user) {
-                console.log('✅ Login exitoso con Firebase:', result.user.email);
-                
-                // Guardar en localStorage para compatibilidad
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('currentUser', JSON.stringify({
-                    email: result.user.email,
-                    name: result.user.displayName || 'Usuario',
-                    uid: result.user.uid
-                }));
-                
-                return true;
-            } else {
-                if (result.error) {
-                    this.showError(result.error);
-                }
-                return false;
-            }
-            
-        } catch (_error) {
-            console.log('⚠️ Firebase no disponible, intentando login local');
-            return false;
-        }
-    }
-
-    // NUEVO: Login local como fallback
-    private async attemptLocalLogin(email: string, password: string): Promise<void> {
-        // Simulación de login local
-        await new Promise(resolve => setTimeout(resolve, 1500));
+    // Login con Firebase
+    private async attemptFirebaseLogin(email: string, password: string): Promise<void> {
+        console.log('🔐 Intentando login con Firebase...');
         
-        // Verificar credenciales básicas (demo)
-        if (email === 'demo@lulada.com' && password === '123456') {
+        const result = await loginUser(email, password);
+        
+        if (result.success && result.user) {
+            console.log('✅ Login exitoso con Firebase:', result.user.email);
+            
+            // Guardar en localStorage para compatibilidad
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('currentUser', JSON.stringify({
-                email: email,
-                name: 'Usuario Demo',
-                uid: 'demo-user'
+                email: result.user.email,
+                name: result.user.displayName || 'Usuario',
+                uid: result.user.uid
             }));
             
             this.showSuccess('¡Inicio de sesión exitoso!');
             setTimeout(() => this.navigateToHome(), 1000);
         } else {
-            throw new Error('Credenciales inválidas');
+            this.showError(result.error || 'Error al iniciar sesión. Verifica tus credenciales.');
         }
     }
 
-    // NUEVO: Navegación a home
+    // Registro con Firebase
+    private async attemptFirebaseRegister(email: string, password: string): Promise<void> {
+        console.log('🔐 Intentando registro con Firebase...');
+        
+        const nombreInput = this.shadowRoot?.getElementById('nombre') as HTMLInputElement;
+        const nombreDeUsuarioInput = this.shadowRoot?.getElementById('nombreDeUsuario') as HTMLInputElement;
+        const descripcionInput = this.shadowRoot?.getElementById('descripcion') as HTMLInputElement;
+        const rolSelect = this.shadowRoot?.getElementById('rol') as HTMLSelectElement;
+
+        const userData: UserData = {
+            foto: "https://randomuser.me/api/portraits/women/44.jpg",
+            nombreDeUsuario: this.formatUsername(nombreDeUsuarioInput?.value || ''),
+            nombre: nombreInput?.value || '',
+            descripcion: descripcionInput?.value || "Nuevo usuario de Lulada",
+            rol: (rolSelect?.value as UserData['rol']) || 'persona'
+        };
+
+        const result = await registerUser(email, password, userData);
+        
+        if (result.success && result.user) {
+            console.log('✅ Registro exitoso con Firebase:', result.user.email);
+            
+            // Guardar en localStorage para compatibilidad
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('currentUser', JSON.stringify({
+                email: result.user.email,
+                name: result.user.displayName || userData.nombre,
+                uid: result.user.uid
+            }));
+            
+            this.showSuccess('¡Cuenta creada exitosamente! Bienvenido a Lulada');
+            setTimeout(() => this.navigateToHome(), 1500);
+        } else {
+            this.showError(result.error || 'Error al crear la cuenta. Intenta de nuevo.');
+        }
+    }
+
+    private formatUsername(username: string): string {
+        if (!username) return '@usuario';
+        return username.startsWith('@') ? username : `@${username}`;
+    }
+
+    // Navegación a home
     private navigateToHome(): void {
         const navEvent = new CustomEvent('navigate', {
             detail: '/home',
@@ -466,17 +605,8 @@ class LoginForm extends HTMLElement {
         this.dispatchEvent(navEvent);
     }
 
-    private navigateToRegister(): void {
-        const navEvent = new CustomEvent('navigate', {
-            detail: '/register',
-            bubbles: true,
-            composed: true
-        });
-        this.dispatchEvent(navEvent);
-    }
-
     private handleForgotPassword(): void {
-        alert('Funcionalidad de recuperación de contraseña próximamente');
+        this.showError('Funcionalidad de recuperación de contraseña próximamente');
     }
 
     private setLoading(loading: boolean): void {
@@ -512,10 +642,21 @@ class LoginForm extends HTMLElement {
         }
     }
 
+    private hideMessage(): void {
+        const errorEl = this.shadowRoot?.getElementById('error-message') as HTMLElement;
+        const successEl = this.shadowRoot?.getElementById('success-message') as HTMLElement;
+        
+        if (errorEl) errorEl.classList.remove('show');
+        if (successEl) successEl.classList.remove('show');
+    }
+
     private isValidEmail(email: string): boolean {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
 }
+
+// Registrar el componente
+customElements.define('login-form', LoginForm);
 
 export default LoginForm;
