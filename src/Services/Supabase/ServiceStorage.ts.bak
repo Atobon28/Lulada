@@ -1,5 +1,5 @@
 
-import { supabase } from "../Supabase/Supabaseconfig";
+import { supabase } from "./Supabaseconfig.ts.bak";
 
 export interface LuladaFile {
   id: string;

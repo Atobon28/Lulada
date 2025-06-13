@@ -1,0 +1,143 @@
+// src/Services/Supabase/Supabaseconfig.ts - SOLUCIÓN TEMPORAL COMPLETA
+
+// OPCIÓN 1: Si Supabase no está disponible, usar implementación mock
+// Comentar el import problemático y usar mock:
+
+/*
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://jamzxbrhoaklixbhdcht.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphbXp4YnJob2FrbGl4YmhkY2h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NDMwNjksImV4cCI6MjA2NDQxOTA2OX0.Az2yIB4fumzTa0kkGTd61zuPgIZkQkvSLyJ66GS6EXA';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+*/
+
+// OPCIÓN 2: Implementación mock temporal COMPLETA (USAR ESTA MIENTRAS SE ARREGLA)
+interface MockSupabaseClient {
+    auth: {
+        signUp: (credentials: { email: string; password: string }) => Promise<{ data: any; error: any }>;
+        signIn: (credentials: { email: string; password: string }) => Promise<{ data: any; error: any }>;
+        signOut: () => Promise<{ error: any }>;
+        getUser: () => Promise<{ data: { user: any }; error: any }>;
+    };
+    from: (table: string) => {
+        select: (columns: string) => {
+            eq: (column: string, value: any) => {
+                single: () => Promise<{ data: any; error: any }>;
+            };
+        };
+        insert: (data: any) => Promise<{ data: any; error: any }>;
+        update: (data: any) => {
+            eq: (column: string, value: any) => Promise<{ data: any; error: any }>;
+        };
+        delete: () => {
+            eq: (column: string, value: any) => Promise<{ data: any; error: any }>;
+        };
+    };
+    // AGREGADO: Propiedades storage para ServiceStorage.ts
+    storage: {
+        from: (bucket: string) => {
+            upload: (path: string, file: File) => Promise<{ data: any; error: any }>;
+            download: (path: string) => Promise<{ data: any; error: any }>;
+            remove: (paths: string[]) => Promise<{ data: any; error: any }>;
+            createSignedUrl: (path: string, expiresIn: number) => Promise<{ data: any; error: any }>;
+            list: (path?: string) => Promise<{ data: any; error: any }>;
+        };
+    };
+}
+
+// Mock temporal de Supabase COMPLETO
+const createMockSupabaseClient = (): MockSupabaseClient => {
+    console.warn('⚠️ Usando cliente mock de Supabase - Instala @supabase/supabase-js para funcionalidad completa');
+    
+    return {
+        auth: {
+            signUp: async (credentials) => {
+                console.log('Mock signUp:', credentials.email);
+                return { data: { user: { id: 'mock-user', email: credentials.email } }, error: null };
+            },
+            signIn: async (credentials) => {
+                console.log('Mock signIn:', credentials.email);
+                return { data: { user: { id: 'mock-user', email: credentials.email } }, error: null };
+            },
+            signOut: async () => {
+                console.log('Mock signOut');
+                return { error: null };
+            },
+            getUser: async () => {
+                console.log('Mock getUser');
+                return { data: { user: null }, error: null };
+            }
+        },
+        from: (table: string) => ({
+            select: (columns: string) => ({
+                eq: (column: string, value: any) => ({
+                    single: async () => {
+                        console.log(`Mock select from ${table}:`, { columns, column, value });
+                        return { data: null, error: null };
+                    }
+                })
+            }),
+            insert: async (data: any) => {
+                console.log(`Mock insert to ${table}:`, data);
+                return { data, error: null };
+            },
+            update: (data: any) => ({
+                eq: (column: string, value: any) => {
+                    console.log(`Mock update in ${table}:`, { data, column, value });
+                    return Promise.resolve({ data, error: null });
+                }
+            }),
+            delete: () => ({
+                eq: (column: string, value: any) => {
+                    console.log(`Mock delete from ${table}:`, { column, value });
+                    return Promise.resolve({ data: null, error: null });
+                }
+            })
+        }),
+        // AGREGADO: Mock completo de storage
+        storage: {
+            from: (bucket: string) => ({
+                upload: async (path: string, file: File) => {
+                    console.log(`Mock storage upload to ${bucket}/${path}:`, file.name);
+                    return { data: { path, fullPath: `${bucket}/${path}` }, error: null };
+                },
+                download: async (path: string) => {
+                    console.log(`Mock storage download from ${bucket}/${path}`);
+                    return { data: new Blob(['mock data']), error: null };
+                },
+                remove: async (paths: string[]) => {
+                    console.log(`Mock storage remove from ${bucket}:`, paths);
+                    return { data: paths, error: null };
+                },
+                createSignedUrl: async (path: string, expiresIn: number) => {
+                    console.log(`Mock storage signed URL for ${bucket}/${path}, expires in ${expiresIn}s`);
+                    return { data: { signedUrl: `https://mock.supabase.co/${bucket}/${path}` }, error: null };
+                },
+                list: async (path?: string) => {
+                    console.log(`Mock storage list in ${bucket}/${path || ''}`);
+                    return { data: [], error: null };
+                }
+            })
+        }
+    };
+};
+
+// Exportar el cliente (mock por ahora)
+export const supabase = createMockSupabaseClient();
+
+// Interfaces para mantener compatibilidad
+export interface SupabaseUser {
+    id: string;
+    email: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SupabaseAuthResponse {
+    user: SupabaseUser | null;
+    error: Error | null;
+}
+
+// Export por defecto
+export default supabase;

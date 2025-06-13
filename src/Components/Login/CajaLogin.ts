@@ -1,6 +1,4 @@
-// CajaLogin.ts - VERSIÓN CORREGIDA CON IDS CORRECTOS
-// =====================================================
-
+// src/Components/Login/CajaLogin.ts - CON AUTENTICACIÓN FIREBASE
 class LoginForm extends HTMLElement {
     private isLoading = false;
 
@@ -12,6 +10,26 @@ class LoginForm extends HTMLElement {
 
     connectedCallback() {
         this.setupEventListeners();
+        this.checkExistingAuth();
+    }
+
+    // NUEVO: Verificar si ya está autenticado al cargar
+    private async checkExistingAuth(): Promise<void> {
+        try {
+            // Intentar importar Firebase Auth
+            const { getCurrentUser, isAuthenticated } = await import('../../Services/firebase/Authservice');
+            
+            if (isAuthenticated()) {
+                const currentUser = getCurrentUser();
+                console.log('✅ Usuario ya autenticado:', currentUser?.email);
+                
+                // Navegar directamente a home
+                this.navigateToHome();
+            }
+        } catch (error) {
+            // Firebase no disponible, continuar con login normal
+            console.log('⚠️ Firebase no disponible, usando login local');
+        }
     }
 
     private render(): void {
@@ -27,81 +45,99 @@ class LoginForm extends HTMLElement {
 
                     .login-container {
                         width: 100%;
-                        padding: 30px;
-                        background: white;
-                        border-radius: 15px;
-                        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+                        padding: 0;
+                        background: transparent;
                         text-align: center;
                         box-sizing: border-box;
                     }
 
                     .login-title {
-                        font-size: 24px;
-                        font-weight: bold;
+                        font-size: 32px;
+                        font-weight: 700;
                         color: #333;
-                        margin-bottom: 25px;
+                        margin-bottom: 10px;
                         font-family: 'Poppins', sans-serif;
+                        letter-spacing: -0.5px;
+                    }
+
+                    .login-subtitle {
+                        font-size: 16px;
+                        color: #666;
+                        margin-bottom: 40px;
+                        font-weight: 400;
                     }
 
                     .form-group {
-                        margin-bottom: 20px;
+                        margin-bottom: 25px;
                         text-align: left;
                     }
 
                     .form-label {
                         display: block;
                         margin-bottom: 8px;
-                        font-weight: 500;
+                        font-weight: 600;
                         color: #333;
                         font-size: 14px;
+                        letter-spacing: 0.5px;
                     }
 
                     .form-input {
                         width: 100%;
-                        padding: 12px 15px;
-                        border: 2px solid #ddd;
-                        border-radius: 8px;
+                        padding: 15px 18px;
+                        border: 2px solid #e1e5e9;
+                        border-radius: 12px;
                         font-size: 16px;
                         font-family: inherit;
-                        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+                        transition: all 0.3s ease;
                         box-sizing: border-box;
+                        background: #fafbfc;
                     }
 
                     .form-input:focus {
                         outline: none;
                         border-color: #AAAB54;
                         box-shadow: 0 0 0 3px rgba(170, 171, 84, 0.1);
+                        background: white;
+                        transform: translateY(-1px);
                     }
 
-                    .form-input:disabled {
-                        background-color: #f5f5f5;
-                        cursor: not-allowed;
+                    .form-input::placeholder {
+                        color: #9ca3af;
+                        font-weight: 400;
                     }
 
                     .login-button {
                         width: 100%;
-                        padding: 14px;
-                        background: linear-gradient(135deg, #AAAB54, #9a9b4a);
-                        border: none;
+                        padding: 16px 24px;
+                        background: linear-gradient(135deg, #AAAB54, #999A4A);
                         color: white;
-                        border-radius: 8px;
+                        border: none;
+                        border-radius: 12px;
                         font-size: 16px;
                         font-weight: 600;
                         cursor: pointer;
                         transition: all 0.3s ease;
-                        margin-bottom: 15px;
+                        margin-bottom: 20px;
                         position: relative;
                         overflow: hidden;
+                        letter-spacing: 0.5px;
+                        box-shadow: 0 4px 15px rgba(170, 171, 84, 0.2);
                     }
 
                     .login-button:hover:not(:disabled) {
-                        background: linear-gradient(135deg, #9a9b4a, #8a8b3a);
-                        transform: translateY(-1px);
-                        box-shadow: 0 4px 12px rgba(170, 171, 84, 0.3);
+                        background: linear-gradient(135deg, #999A4A, #8a8b3a);
+                        transform: translateY(-2px);
+                        box-shadow: 0 8px 25px rgba(170, 171, 84, 0.3);
+                    }
+
+                    .login-button:active {
+                        transform: translateY(0);
+                        box-shadow: 0 4px 15px rgba(170, 171, 84, 0.2);
                     }
 
                     .login-button:disabled {
-                        background: #ccc;
+                        background: #e5e7eb;
+                        color: #9ca3af;
                         cursor: not-allowed;
                         transform: none;
                         box-shadow: none;
@@ -111,18 +147,18 @@ class LoginForm extends HTMLElement {
                         display: none;
                         width: 20px;
                         height: 20px;
-                        border: 2px solid #ffffff40;
-                        border-top: 2px solid #ffffff;
+                        border: 2px solid transparent;
+                        border-top: 2px solid currentColor;
                         border-radius: 50%;
                         animation: spin 1s linear infinite;
                         margin-right: 10px;
                     }
 
-                    .login-button.loading .loading-spinner {
+                    .loading .loading-spinner {
                         display: inline-block;
                     }
 
-                    .login-button.loading .button-text {
+                    .loading .button-text {
                         opacity: 0.7;
                     }
 
@@ -131,12 +167,17 @@ class LoginForm extends HTMLElement {
                         100% { transform: rotate(360deg); }
                     }
 
+                    .button-text {
+                        transition: opacity 0.3s ease;
+                    }
+
                     .forgot-password {
-                        font-size: 14px;
                         color: #666;
-                        margin: 15px 0;
+                        font-size: 14px;
                         cursor: pointer;
-                        transition: color 0.3s ease;
+                        transition: all 0.3s ease;
+                        margin-bottom: 30px;
+                        font-weight: 500;
                     }
 
                     .forgot-password:hover {
@@ -145,104 +186,100 @@ class LoginForm extends HTMLElement {
                     }
 
                     .divider {
-                        width: 100%;
                         height: 1px;
-                        background: linear-gradient(to right, transparent, #ddd, transparent);
-                        margin: 20px 0;
+                        background: linear-gradient(to right, transparent, #e1e5e9, transparent);
+                        margin: 30px 0;
                         position: relative;
                     }
 
                     .divider::after {
-                        content: 'o';
+                        content: 'O';
                         position: absolute;
                         top: 50%;
                         left: 50%;
                         transform: translate(-50%, -50%);
                         background: white;
                         padding: 0 15px;
-                        color: #999;
-                        font-size: 14px;
+                        color: #9ca3af;
+                        font-size: 12px;
+                        font-weight: 600;
                     }
 
-                    .register-button {
-                        width: 100%;
-                        padding: 12px;
-                        background: linear-gradient(135deg, #F4B400, #E09E00);
-                        border: none;
-                        color: white;
-                        border-radius: 8px;
-                        font-size: 16px;
+                    .register-link {
+                        color: #666;
+                        font-size: 14px;
+                        text-align: center;
+                        font-weight: 500;
+                    }
+
+                    .register-link a {
+                        color: #AAAB54;
+                        text-decoration: none;
                         font-weight: 600;
-                        cursor: pointer;
                         transition: all 0.3s ease;
                     }
 
-                    .register-button:hover {
-                        background: linear-gradient(135deg, #E09E00, #CC8E00);
-                        transform: translateY(-1px);
-                        box-shadow: 0 4px 12px rgba(244, 180, 0, 0.3);
+                    .register-link a:hover {
+                        color: #999A4A;
+                        text-decoration: underline;
+                    }
+
+                    .error-message, .success-message {
+                        padding: 12px 16px;
+                        border-radius: 8px;
+                        margin-bottom: 20px;
+                        font-size: 14px;
+                        font-weight: 500;
+                        text-align: center;
+                        opacity: 0;
+                        transform: translateY(-10px);
+                        transition: all 0.3s ease;
+                    }
+
+                    .error-message.show, .success-message.show {
+                        opacity: 1;
+                        transform: translateY(0);
                     }
 
                     .error-message {
-                        background: #ffebee;
-                        color: #c62828;
-                        padding: 12px;
-                        border-radius: 6px;
-                        margin-bottom: 15px;
-                        font-size: 14px;
-                        border-left: 4px solid #f44336;
-                        text-align: left;
-                        display: none;
+                        background: #fef2f2;
+                        color: #dc2626;
+                        border: 1px solid #fecaca;
                     }
 
                     .success-message {
-                        background: #e8f5e8;
-                        color: #2e7d32;
-                        padding: 12px;
-                        border-radius: 6px;
-                        margin-bottom: 15px;
-                        font-size: 14px;
-                        border-left: 4px solid #4caf50;
-                        text-align: left;
-                        display: none;
+                        background: #f0fdf4;
+                        color: #16a34a;
+                        border: 1px solid #bbf7d0;
                     }
 
-                    .show-message {
-                        display: block !important;
-                        animation: slideIn 0.3s ease-out;
-                    }
-
-                    @keyframes slideIn {
-                        from {
-                            opacity: 0;
-                            transform: translateY(-10px);
-                        }
-                        to {
-                            opacity: 1;
-                            transform: translateY(0);
-                        }
-                    }
-
-                    /* Responsive design */
+                    /* Responsive */
                     @media (max-width: 480px) {
-                        .login-container {
-                            padding: 20px;
-                            margin: 0 10px;
-                        }
-                        
                         .login-title {
-                            font-size: 20px;
-                            margin-bottom: 20px;
+                            font-size: 28px;
+                            margin-bottom: 8px;
                         }
-                        
-                        .form-input, .login-button, .register-button {
+
+                        .login-subtitle {
                             font-size: 14px;
+                            margin-bottom: 30px;
+                        }
+
+                        .form-input {
+                            padding: 14px 16px;
+                            font-size: 16px;
+                        }
+
+                        .login-button {
+                            padding: 15px 20px;
+                            font-size: 15px;
                         }
                     }
                 </style>
-                
+
                 <div class="login-container">
-                    <h2 class="login-title">Iniciar Sesión</h2>
+                    <h2 class="login-title">¡Bienvenido de vuelta!</h2>
+                    <p class="login-subtitle">Ingresa a tu cuenta para continuar</p>
                     
                     <!-- Mensajes de error y éxito -->
                     <div class="error-message" id="error-message"></div>
@@ -275,7 +312,6 @@ class LoginForm extends HTMLElement {
                             >
                         </div>
                         
-                        <!-- ✅ CORRECCIÓN: ID corregido de 'login-btn' a 'login-button' -->
                         <button type="submit" class="login-button" id="login-button">
                             <div class="loading-spinner"></div>
                             <span class="button-text">Iniciar Sesión</span>
@@ -286,84 +322,46 @@ class LoginForm extends HTMLElement {
                     
                     <div class="divider"></div>
                     
-                    <!-- ✅ CORRECCIÓN: ID corregido de 'register-btn' a 'register-button' -->
-                    <button class="register-button" id="register-button">
-                        Crear Cuenta Nueva
-                    </button>
+                    <p class="register-link">
+                        ¿No tienes cuenta? <a href="#" id="register-link">Regístrate aquí</a>
+                    </p>
                 </div>
             `;
         }
     }
 
     private setupEventListeners(): void {
-        if (!this.shadowRoot) return;
+        const form = this.shadowRoot?.getElementById('login-form') as HTMLFormElement;
+        const registerLink = this.shadowRoot?.getElementById('register-link') as HTMLAnchorElement;
+        const forgotPassword = this.shadowRoot?.getElementById('forgot-password') as HTMLElement;
 
-        const form = this.shadowRoot.getElementById('login-form') as HTMLFormElement;
-        const emailInput = this.shadowRoot.getElementById('email') as HTMLInputElement;
-        const passwordInput = this.shadowRoot.getElementById('password') as HTMLInputElement;
-        
-        // ✅ CORRECCIÓN: Usando los IDs correctos
-        const loginBtn = this.shadowRoot.getElementById('login-button') as HTMLButtonElement;
-        const registerBtn = this.shadowRoot.getElementById('register-button') as HTMLButtonElement;
-        const forgotPassword = this.shadowRoot.getElementById('forgot-password') as HTMLElement;
-
-        // Verificar que todos los elementos existan
-        if (!form || !emailInput || !passwordInput || !loginBtn || !registerBtn || !forgotPassword) {
-            console.error('LoginForm: No se encontraron todos los elementos necesarios');
-            return;
-        }
-
-        // Manejar envío del formulario
-        form.addEventListener('submit', async (e) => {
+        // Envío del formulario
+        form?.addEventListener('submit', (e) => {
             e.preventDefault();
-            await this.handleLogin();
+            this.handleLogin();
         });
 
-        // Manejar navegación a registro
-        registerBtn.addEventListener('click', (e) => {
+        // Enlace de registro
+        registerLink?.addEventListener('click', (e) => {
             e.preventDefault();
             this.navigateToRegister();
         });
 
-        // Manejar "olvidé mi contraseña"
-        forgotPassword.addEventListener('click', (e) => {
-            e.preventDefault();
+        // Olvidaste contraseña
+        forgotPassword?.addEventListener('click', () => {
             this.handleForgotPassword();
-        });
-
-        // Limpiar mensajes de error cuando el usuario empiece a escribir
-        [emailInput, passwordInput].forEach(input => {
-            input.addEventListener('input', () => {
-                this.clearMessages();
-            });
-        });
-
-        // Manejar Enter en los inputs
-        [emailInput, passwordInput].forEach(input => {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !this.isLoading) {
-                    this.handleLogin();
-                }
-            });
         });
     }
 
+    // NUEVO: Método principal de login con Firebase
     private async handleLogin(): Promise<void> {
         if (this.isLoading) return;
 
         const emailInput = this.shadowRoot?.getElementById('email') as HTMLInputElement;
         const passwordInput = this.shadowRoot?.getElementById('password') as HTMLInputElement;
-        
-        // ✅ CORRECCIÓN: Usando el ID correcto
-        const loginBtn = this.shadowRoot?.getElementById('login-button') as HTMLButtonElement;
 
-        if (!emailInput || !passwordInput || !loginBtn) {
-            console.error('No se encontraron los elementos del formulario');
-            return;
-        }
-
-        const email = emailInput.value.trim();
-        const password = passwordInput.value.trim();
+        const email = emailInput?.value.trim();
+        const password = passwordInput?.value;
 
         // Validaciones básicas
         if (!email || !password) {
@@ -372,7 +370,7 @@ class LoginForm extends HTMLElement {
         }
 
         if (!this.isValidEmail(email)) {
-            this.showError('Por favor, ingresa un correo electrónico válido');
+            this.showError('Por favor, ingresa un email válido');
             return;
         }
 
@@ -381,197 +379,143 @@ class LoginForm extends HTMLElement {
             return;
         }
 
-        // Iniciar proceso de login
+        // Mostrar loading
         this.setLoading(true);
-        this.clearMessages();
 
         try {
-            console.log('Iniciando proceso de login...');
-
-            // Importar y usar el servicio de autenticación de Firebase
-            const { loginUser } = await import('../../Services/firebase/Authservice');
-            const result = await loginUser(email, password);
-
-            if (result.success && result.user && result.userData) {
-                console.log('✅ Login exitoso:', result.user.email);
-                
-                // Guardar datos de autenticación en localStorage
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('currentUser', JSON.stringify(result.userData));
-
-                // Mostrar mensaje de éxito
-                this.showSuccess('¡Bienvenido! Redirigiendo...');
-
-                // Disparar evento de autenticación exitosa
-                document.dispatchEvent(new CustomEvent('auth-success', {
-                    detail: {
-                        user: result.user,
-                        userData: result.userData
-                    },
-                    bubbles: true,
-                    composed: true
-                }));
-
-                // Redirigir a home después de un breve delay
-                setTimeout(() => {
-                    document.dispatchEvent(new CustomEvent('navigate', {
-                        detail: '/home',
-                        bubbles: true,
-                        composed: true
-                    }));
-                }, 1500);
-
-            } else {
-                console.error('❌ Error en login:', result.error);
-                this.showError(result.error || 'Error al iniciar sesión. Verifica tus credenciales.');
+            // NUEVO: Intentar login con Firebase primero
+            const firebaseSuccess = await this.attemptFirebaseLogin(email, password);
+            
+            if (firebaseSuccess) {
+                this.showSuccess('¡Inicio de sesión exitoso con Firebase!');
+                setTimeout(() => this.navigateToHome(), 1000);
+                return;
             }
 
+            // Fallback: Login local (simulado)
+            await this.attemptLocalLogin(email, password);
+            
         } catch (error) {
-            console.error('❌ Error inesperado en login:', error);
-            this.showError('Error inesperado. Verifica tu conexión e intenta de nuevo.');
+            console.error('Error en login:', error);
+            this.showError('Error al iniciar sesión. Verifica tus credenciales.');
         } finally {
             this.setLoading(false);
         }
     }
 
+    // NUEVO: Intentar login con Firebase
+    private async attemptFirebaseLogin(email: string, password: string): Promise<boolean> {
+        try {
+            const { loginUser } = await import('../../Services/firebase/Authservice');
+            
+            const result = await loginUser(email, password);
+            
+            if (result.success && result.user) {
+                console.log('✅ Login exitoso con Firebase:', result.user.email);
+                
+                // Guardar en localStorage para compatibilidad
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('currentUser', JSON.stringify({
+                    email: result.user.email,
+                    name: result.user.displayName || 'Usuario',
+                    uid: result.user.uid
+                }));
+                
+                return true;
+            } else {
+                if (result.error) {
+                    this.showError(result.error);
+                }
+                return false;
+            }
+            
+        } catch (error) {
+            console.log('⚠️ Firebase no disponible, intentando login local');
+            return false;
+        }
+    }
+
+    // NUEVO: Login local como fallback
+    private async attemptLocalLogin(email: string, password: string): Promise<void> {
+        // Simulación de login local
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Verificar credenciales básicas (demo)
+        if (email === 'demo@lulada.com' && password === '123456') {
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('currentUser', JSON.stringify({
+                email: email,
+                name: 'Usuario Demo',
+                uid: 'demo-user'
+            }));
+            
+            this.showSuccess('¡Inicio de sesión exitoso!');
+            setTimeout(() => this.navigateToHome(), 1000);
+        } else {
+            throw new Error('Credenciales inválidas');
+        }
+    }
+
+    // NUEVO: Navegación a home
+    private navigateToHome(): void {
+        const navEvent = new CustomEvent('navigate', {
+            detail: '/home',
+            bubbles: true,
+            composed: true
+        });
+        this.dispatchEvent(navEvent);
+    }
+
     private navigateToRegister(): void {
-        console.log('Navegando a registro...');
-        document.dispatchEvent(new CustomEvent('navigate', {
+        const navEvent = new CustomEvent('navigate', {
             detail: '/register',
             bubbles: true,
             composed: true
-        }));
+        });
+        this.dispatchEvent(navEvent);
     }
 
     private handleForgotPassword(): void {
-        // Por ahora, mostrar un mensaje
-        this.showError('Función de recuperación de contraseña en desarrollo. Contacta al administrador.');
+        alert('Funcionalidad de recuperación de contraseña próximamente');
     }
 
     private setLoading(loading: boolean): void {
         this.isLoading = loading;
+        const loginButton = this.shadowRoot?.getElementById('login-button') as HTMLButtonElement;
         
-        // ✅ CORRECCIÓN: Usando el ID correcto
-        const loginBtn = this.shadowRoot?.getElementById('login-button') as HTMLButtonElement;
-        const emailInput = this.shadowRoot?.getElementById('email') as HTMLInputElement;
-        const passwordInput = this.shadowRoot?.getElementById('password') as HTMLInputElement;
-        const registerBtn = this.shadowRoot?.getElementById('register-button') as HTMLButtonElement;
-
-        if (loginBtn) {
-            loginBtn.disabled = loading;
-            if (loading) {
-                loginBtn.classList.add('loading');
-            } else {
-                loginBtn.classList.remove('loading');
-            }
+        if (loading) {
+            loginButton?.classList.add('loading');
+            loginButton.disabled = true;
+        } else {
+            loginButton?.classList.remove('loading');
+            loginButton.disabled = false;
         }
-
-        // Deshabilitar inputs durante el loading
-        [emailInput, passwordInput, registerBtn].forEach(element => {
-            if (element) {
-                element.disabled = loading;
-            }
-        });
     }
 
     private showError(message: string): void {
-        this.clearMessages();
-        const errorElement = this.shadowRoot?.getElementById('error-message');
-        if (errorElement) {
-            errorElement.textContent = message;
-            errorElement.classList.add('show-message');
-        }
+        this.showMessage(message, 'error');
     }
 
     private showSuccess(message: string): void {
-        this.clearMessages();
-        const successElement = this.shadowRoot?.getElementById('success-message');
-        if (successElement) {
-            successElement.textContent = message;
-            successElement.classList.add('show-message');
-        }
+        this.showMessage(message, 'success');
     }
 
-    private clearMessages(): void {
-        const errorElement = this.shadowRoot?.getElementById('error-message');
-        const successElement = this.shadowRoot?.getElementById('success-message');
-        
-        [errorElement, successElement].forEach(element => {
-            if (element) {
-                element.classList.remove('show-message');
-                element.textContent = '';
-            }
-        });
+    private showMessage(message: string, type: 'error' | 'success'): void {
+        const messageEl = this.shadowRoot?.getElementById(`${type}-message`) as HTMLElement;
+        if (messageEl) {
+            messageEl.textContent = message;
+            messageEl.classList.add('show');
+
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 4000);
+        }
     }
 
     private isValidEmail(email: string): boolean {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
-
-    // Método público para limpiar el formulario
-    public clearForm(): void {
-        const emailInput = this.shadowRoot?.getElementById('email') as HTMLInputElement;
-        const passwordInput = this.shadowRoot?.getElementById('password') as HTMLInputElement;
-        
-        if (emailInput) emailInput.value = '';
-        if (passwordInput) passwordInput.value = '';
-        
-        this.clearMessages();
-    }
-
-    // Método público para enfocar el primer input
-    public focusFirstInput(): void {
-        const emailInput = this.shadowRoot?.getElementById('email') as HTMLInputElement;
-        if (emailInput) {
-            emailInput.focus();
-        }
-    }
-
-    // Método para debug
-    public debug(): void {
-        console.log('🔍 LoginForm Debug Info:');
-        console.log('- isLoading:', this.isLoading);
-        console.log('- shadowRoot:', !!this.shadowRoot);
-        
-        const emailInput = this.shadowRoot?.getElementById('email') as HTMLInputElement;
-        const passwordInput = this.shadowRoot?.getElementById('password') as HTMLInputElement;
-        
-        console.log('- Email value:', emailInput?.value || 'N/A');
-        console.log('- Password length:', passwordInput?.value?.length || 0);
-        console.log('- Form valid:', this.isFormValid());
-        
-        // Verificar que todos los elementos existan
-        const elements = {
-            'login-form': !!this.shadowRoot?.getElementById('login-form'),
-            'email': !!this.shadowRoot?.getElementById('email'),
-            'password': !!this.shadowRoot?.getElementById('password'),
-            'login-button': !!this.shadowRoot?.getElementById('login-button'),
-            'register-button': !!this.shadowRoot?.getElementById('register-button'),
-            'forgot-password': !!this.shadowRoot?.getElementById('forgot-password'),
-            'error-message': !!this.shadowRoot?.getElementById('error-message'),
-            'success-message': !!this.shadowRoot?.getElementById('success-message')
-        };
-        
-        console.log('- Elementos encontrados:', elements);
-    }
-
-    private isFormValid(): boolean {
-        const emailInput = this.shadowRoot?.getElementById('email') as HTMLInputElement;
-        const passwordInput = this.shadowRoot?.getElementById('password') as HTMLInputElement;
-        
-        if (!emailInput || !passwordInput) return false;
-        
-        const email = emailInput.value.trim();
-        const password = passwordInput.value.trim();
-        
-        return this.isValidEmail(email) && password.length >= 6;
-    }
-}
-
-// Definir el custom element
-if (!customElements.get('login-form')) {
-    customElements.define('login-form', LoginForm);
 }
 
 export default LoginForm;
