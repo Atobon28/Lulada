@@ -7,7 +7,16 @@ class Home extends HTMLElement {
     }
 
     connectedCallback() {
-        console.log('🏠 Home component conectado');
+        // PREVENIR DUPLICACIÓN - Verificar si ya está conectado
+        if (this.hasAttribute('data-connected')) {
+            console.log('⚠️ Home ya conectado, evitando duplicación');
+            return;
+        }
+        
+        // Marcar como conectado
+        this.setAttribute('data-connected', 'true');
+        console.log('🏠 Home component conectado por primera vez');
+        
         this.render();
         this.setupEventListeners();
         window.addEventListener('resize', this.handleResize.bind(this));
@@ -15,11 +24,19 @@ class Home extends HTMLElement {
     }
 
     disconnectedCallback() {
+        // Limpiar el atributo al desconectar
+        this.removeAttribute('data-connected');
         window.removeEventListener('resize', this.handleResize.bind(this));
     }
 
     // Dibuja el HTML y CSS del componente
     render() {
+        // PREVENIR RENDERIZADO MÚLTIPLE
+        if (this.shadowRoot && this.shadowRoot.innerHTML.trim() !== '') {
+            console.log('⚠️ Home ya renderizado, evitando duplicación');
+            return;
+        }
+
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = `
             <style>
@@ -62,100 +79,32 @@ class Home extends HTMLElement {
                     top: 120px;
                     height: fit-content;
                 }
-
-                .medium-content {
-                    flex-grow: 1;
-                    display: flex; 
-                    flex-direction: column;
-                    max-width: calc(100% - 500px);
-                }
-
+                
                 .content {
-                    flex-grow: 1;
-                    display: flex; 
+                    flex: 1;
                     padding: 20px;
+                    display: flex;
+                    flex-direction: column;
                     gap: 20px;
                 }
                 
                 .reviews-section {
-                    background-color: white;
-                    flex-grow: 1;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    padding: 20px;
-                }
-
-                .suggestions-section {
-                    width: 250px;
                     background: white;
-                    border-left: 1px solid #e0e0e0;
-                    position: sticky;
-                    top: 120px;
-                    height: fit-content;
+                    border-radius: 12px;
+                    padding: 20px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                }
+                
+                .suggestions-section {
+                    width: 300px;
                     padding: 20px;
                 }
-
-                .welcome-message {
-                    background: linear-gradient(135deg, #AAAB54, #999A4A);
-                    color: white;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin-bottom: 20px;
-                    text-align: center;
+                
+                .responsive-bar {
+                    display: none;
                 }
-
-                .welcome-message h2 {
-                    margin: 0 0 10px 0;
-                    font-size: 24px;
-                }
-
-                .welcome-message p {
-                    margin: 0;
-                    opacity: 0.9;
-                }
-
-                .quick-actions {
-                    margin-bottom: 20px;
-                }
-
-                .action-button {
-                    width: 100%;
-                    padding: 12px;
-                    margin-bottom: 10px;
-                    background: #AAAB54;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-weight: 500;
-                    transition: background-color 0.2s;
-                }
-
-                .action-button:hover {
-                    background: #999A4A;
-                }
-
-                .action-button.secondary {
-                    background: #f8f9fa;
-                    color: #666;
-                    border: 1px solid #dee2e6;
-                }
-
-                .action-button.secondary:hover {
-                    background: #e9ecef;
-                }
-
-                /* Estilos responsivos */
-                @media (max-width: 1024px) {
-                    .suggestions-section {
-                        display: none;
-                    }
-                    
-                    .medium-content {
-                        max-width: 100%;
-                    }
-                }
-
+                
+                /* Responsive */
                 @media (max-width: 768px) {
                     .responsive-header {
                         display: block;
@@ -165,98 +114,78 @@ class Home extends HTMLElement {
                         display: none;
                     }
                     
-                    .header-section {
-                        display: none;
-                    }
-                    
                     .main-layout {
                         flex-direction: column;
-                        margin: 0;
-                        max-width: 100%;
-                    }
-                    
-                    .sidebar {
-                        width: 100%;
-                        order: 3;
-                        position: static;
-                        border-right: none;
-                        border-top: 1px solid #e0e0e0;
-                    }
-                    
-                    .content {
-                        order: 2;
                         padding: 10px;
                     }
                     
-                    .reviews-section {
-                        margin: 0;
-                    }
-                }
-
-                @media (max-width: 480px) {
-                    .content {
-                        padding: 5px;
+                    .sidebar {
+                        display: none;
                     }
                     
-                    .welcome-message h2 {
-                        font-size: 20px;
+                    .suggestions-section {
+                        display: none;
+                    }
+                    
+                    .responsive-bar {
+                        display: block;
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        background: white;
+                        border-top: 1px solid #e0e0e0;
+                        z-index: 100;
+                    }
+                    
+                    .content {
+                        padding-bottom: 80px;
+                    }
+                }
+                
+                @media (max-width: 900px) {
+                    .suggestions-section {
+                        display: none;
+                    }
+                    
+                    .content {
+                        padding-right: 10px;
                     }
                 }
             </style>
-
-            <!-- Header para dispositivos móviles -->
+            
+            <!-- Header responsivo para móvil -->
             <div class="responsive-header">
                 <lulada-responsive-header></lulada-responsive-header>
             </div>
-
-            <!-- Header principal con logo y navegación -->
-            <div class="header-section">
-                <div class="desktop-logo">
-                    <lulada-header-home></lulada-header-home>
-                </div>
+            
+            <!-- Header principal para escritorio -->
+            <div class="header-section desktop-logo">
+                <lulada-header-home></lulada-header-home>
             </div>
-
-            <!-- Layout principal con sidebar, contenido y sugerencias -->
+            
+            <!-- Layout principal -->
             <div class="main-layout">
                 <!-- Sidebar izquierdo -->
                 <div class="sidebar">
                     <lulada-sidebar></lulada-sidebar>
                 </div>
-
+                
                 <!-- Contenido principal -->
-                <div class="medium-content">
-                    <div class="content">
-                        <div class="reviews-section">
-                            <!-- Mensaje de bienvenida -->
-                            <div class="welcome-message">
-                                <h2>¡Bienvenido a Lulada! 🍽️</h2>
-                                <p>Descubre los mejores restaurantes de Cali y comparte tus experiencias</p>
-                            </div>
-
-                            <!-- Acciones rápidas -->
-                            <div class="quick-actions">
-                                <button class="action-button" id="antojar-btn">
-                                    📝 Escribir una reseña
-                                </button>
-                                <button class="action-button secondary" id="explore-btn">
-                                    🔍 Explorar restaurantes
-                                </button>
-                            </div>
-
-                            <!-- Contenedor de reseñas -->
-                            <lulada-reviews-container></lulada-reviews-container>
-                        </div>
+                <div class="content">
+                    <div class="reviews-section">
+                        <lulada-reviews-container></lulada-reviews-container>
                     </div>
                 </div>
-
-                <!-- Panel de sugerencias derecho -->
+                
+                <!-- Sugerencias -->
                 <div class="suggestions-section">
                     <lulada-suggestions></lulada-suggestions>
                 </div>
             </div>
-
-            <!-- Barra de navegación inferior para móviles -->
-            <div class="responsive-header">
+            
+            <!-- Barra responsiva inferior -->
+            <div class="responsive-bar">
                 <lulada-responsive-bar></lulada-responsive-bar>
             </div>
             `;
@@ -265,56 +194,91 @@ class Home extends HTMLElement {
 
     // Configurar event listeners
     private setupEventListeners() {
-        if (!this.shadowRoot) return;
+        // Escuchar eventos de navegación
+        this.addEventListener('navigate', this.handleNavigation.bind(this));
+        
+        // Escuchar eventos del botón "antojar"
+        document.addEventListener('antojar-clicked', this.handleAntojarClick.bind(this));
+        
+        // Escuchar eventos del botón "explore"
+        document.addEventListener('explore-clicked', this.handleExploreClick.bind(this));
+        
+        console.log('👂 Event listeners configurados en Home');
+    }
 
-        // Botón para abrir el popup de Antojar
-        const antojarBtn = this.shadowRoot.querySelector('#antojar-btn');
-        antojarBtn?.addEventListener('click', () => {
-            this.handleAntojarClick();
-        });
-
-        // Botón para navegar a Explore
-        const exploreBtn = this.shadowRoot.querySelector('#explore-btn');
-        exploreBtn?.addEventListener('click', () => {
-            this.handleExploreClick();
-        });
-
-        // Escuchar eventos de usuario actualizado
-        document.addEventListener('userDataUpdated', (event: any) => {
-            console.log('🔄 Datos de usuario actualizados en Home:', event.detail);
-        });
+    // Manejar navegación interna
+    private handleNavigation(event: Event) {
+        const customEvent = event as CustomEvent;
+        console.log('🧭 Home recibió evento de navegación:', customEvent.detail);
     }
 
     // Manejar clic en botón Antojar
     private handleAntojarClick() {
-        console.log('📝 Abriendo popup de Antojar...');
+        console.log('📝 Botón Antojar clickeado desde Home');
         
+        // Verificar si AntojarPopupService está disponible
         if (window.AntojarPopupService) {
-            window.AntojarPopupService.getInstance().showPopup();
-        } else {
-            console.warn('⚠️ AntojarPopupService no está disponible');
-            
-            // Fallback: mostrar mensaje temporal
-            const tempMessage = document.createElement('div');
-            tempMessage.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #AAAB54;
-                color: white;
-                padding: 16px;
-                border-radius: 8px;
-                z-index: 10000;
-            `;
-            tempMessage.textContent = '📝 Función de escribir reseña próximamente...';
-            document.body.appendChild(tempMessage);
-            
-            setTimeout(() => {
-                if (document.body.contains(tempMessage)) {
-                    document.body.removeChild(tempMessage);
+            try {
+                const service = window.AntojarPopupService.getInstance();
+                if (service && typeof service.showPopup === 'function') {
+                    service.showPopup();
+                } else {
+                    this.showTemporaryMessage('📝 Función de escribir reseña próximamente...');
                 }
-            }, 3000);
+            } catch (error) {
+                console.error('Error abriendo popup Antojar:', error);
+                this.showTemporaryMessage('📝 Función de escribir reseña próximamente...');
+            }
+        } else {
+            // Mostrar mensaje temporal
+            this.showTemporaryMessage('📝 Función de escribir reseña próximamente...');
         }
+    }
+
+    // Mostrar mensaje temporal
+    private showTemporaryMessage(message: string) {
+        const tempMessage = document.createElement('div');
+        tempMessage.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #AAAB54;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        `;
+        tempMessage.textContent = message;
+        
+        // Agregar animación CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(tempMessage);
+        
+        setTimeout(() => {
+            if (document.body.contains(tempMessage)) {
+                tempMessage.style.transform = 'translateX(100%)';
+                tempMessage.style.opacity = '0';
+                setTimeout(() => {
+                    if (document.body.contains(tempMessage)) {
+                        document.body.removeChild(tempMessage);
+                    }
+                }, 300);
+            }
+            if (document.head.contains(style)) {
+                document.head.removeChild(style);
+            }
+        }, 3000);
     }
 
     // Manejar clic en botón Explore
@@ -334,7 +298,14 @@ class Home extends HTMLElement {
         const isMobile = window.innerWidth <= 768;
         console.log(`📱 Modo ${isMobile ? 'móvil' : 'escritorio'} activado`);
         
-        // Aquí puedes agregar lógica específica para responsive si es necesario
+        // Actualizar clases CSS si es necesario
+        if (isMobile) {
+            this.classList.add('mobile-mode');
+            this.classList.remove('desktop-mode');
+        } else {
+            this.classList.add('desktop-mode');
+            this.classList.remove('mobile-mode');
+        }
     }
 
     // Método público para refrescar el contenido
@@ -351,6 +322,8 @@ class Home extends HTMLElement {
         if (suggestions && typeof suggestions.refresh === 'function') {
             suggestions.refresh();
         }
+
+        console.log('✅ Refresh de Home completado');
     }
 
     // Método para debugging
@@ -358,6 +331,7 @@ class Home extends HTMLElement {
         console.log('🔍 Home Debug Info:');
         console.log('- Componente conectado:', this.isConnected);
         console.log('- ShadowRoot existe:', !!this.shadowRoot);
+        console.log('- Atributo data-connected:', this.hasAttribute('data-connected'));
         console.log('- Usuario autenticado:', localStorage.getItem('isAuthenticated'));
         console.log('- Datos de usuario:', localStorage.getItem('currentUser'));
         
@@ -375,6 +349,14 @@ class Home extends HTMLElement {
             const element = this.shadowRoot?.querySelector(comp);
             console.log(`  ${comp}: ${element ? '✅' : '❌'}`);
         });
+
+        // Verificar duplicados en el DOM global
+        const globalHomeElements = document.querySelectorAll('lulada-home');
+        console.log(`- Elementos Home en DOM global: ${globalHomeElements.length}`);
+        
+        if (globalHomeElements.length > 1) {
+            console.warn('⚠️ DUPLICADOS DETECTADOS - Hay múltiples elementos Home');
+        }
     }
 }
 
@@ -384,6 +366,8 @@ if (typeof window !== 'undefined') {
         const homeComponent = document.querySelector('lulada-home') as Home;
         if (homeComponent) {
             homeComponent.debug();
+        } else {
+            console.log('❌ No se encontró componente Home');
         }
     };
     
@@ -391,6 +375,25 @@ if (typeof window !== 'undefined') {
         const homeComponent = document.querySelector('lulada-home') as Home;
         if (homeComponent) {
             homeComponent.refresh();
+        } else {
+            console.log('❌ No se encontró componente Home');
+        }
+    };
+    
+    // Función para limpiar duplicados manualmente
+    (window as any).cleanHomeComponents = () => {
+        const homeElements = document.querySelectorAll('lulada-home');
+        console.log(`🔍 Encontrados ${homeElements.length} elementos Home`);
+        
+        if (homeElements.length > 1) {
+            console.log('🧹 Limpiando duplicados...');
+            for (let i = 1; i < homeElements.length; i++) {
+                homeElements[i].remove();
+                console.log(`🗑️ Eliminado duplicado ${i}`);
+            }
+            console.log('✅ Duplicados eliminados');
+        } else {
+            console.log('✅ No hay duplicados');
         }
     };
 }

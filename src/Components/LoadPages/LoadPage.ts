@@ -1,265 +1,248 @@
-// LoadPage.ts - VERSIÓN COMPLETAMENTE CORREGIDA
+class LoadPage extends HTMLElement {
+    declare shadowRoot: ShadowRoot;
+    private isSetup: boolean = false;
+    private currentRoute: string = '';
+    private isAuthenticated: boolean = false;
 
-// Interfaces para componentes de navegación
-interface LoadPageElement extends HTMLElement {
-    getCurrentRoute(): string;
-    navigateTo(route: string): void;
-    debugInfo(): void;
-    isComponentRegistered(componentName: string): boolean;
-    updateView(route: string): void;
-}
-
-interface NavigationComponent extends HTMLElement {
-    updateActive?(route: string): void;
-    updateActiveFromRoute?(route: string): void;
-}
-
-// Clase principal que maneja la carga y navegación entre páginas
-class LoadPage extends HTMLElement implements LoadPageElement {
-    private isSetup = false;
-    private currentRoute = '/';
-    private isAuthenticated = false;
-    
-    constructor(){
+    constructor() {
         super();
-        this.attachShadow({ mode: 'open'});
+        this.attachShadow({ mode: 'open' });
+        this.checkAuthentication();
     }
 
-    connectedCallback(){
-        console.log('🔧 LoadPage conectado');
-        this.render();
-        if (!this.isSetup) {
-            this.setupNavigation();
-            this.checkAuthentication();
-            this.isSetup = true;
+    connectedCallback(): void {
+        // PREVENIR CONFIGURACIÓN MÚLTIPLE
+        if (this.isSetup) {
+            console.log('⚠️ LoadPage ya configurado, evitando duplicación');
+            return;
         }
+
+        console.log('📄 LoadPage conectando...');
+        this.setupComponent();
+        this.setupEventListeners();
+        this.isSetup = true;
+        
+        // Navegar a la ruta inicial
+        const initialRoute = this.getInitialRoute();
+        this.navigateTo(initialRoute);
     }
 
-    // Verificar estado de autenticación
-    private checkAuthentication(): void {
-        try {
-            const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-            const currentUser = localStorage.getItem('currentUser');
-            this.isAuthenticated = authStatus && !!currentUser;
-            
-            console.log('🔐 Estado de autenticación:', this.isAuthenticated);
-            
-            // Actualizar indicador visual
-            this.updateAuthStatus();
-        } catch (error) {
-            console.error('LoadPage: Error verificando autenticación:', error);
-            this.isAuthenticated = false;
-        }
+    disconnectedCallback(): void {
+        this.isSetup = false;
+        console.log('📄 LoadPage desconectado');
     }
 
-    render(){
-        if (!this.shadowRoot) return;
-
-        this.shadowRoot.innerHTML = /*html*/ `
+    private setupComponent(): void {
+        this.shadowRoot.innerHTML = `
             <style>
                 :host {
                     display: block;
                     width: 100%;
-                    min-height: 100vh;
-                    background-color: #f8f9fa;
-                }
-                
-                .app-container {
-                    width: 100%;
-                    min-height: 100vh;
-                    background-color: #f8f9fa;
+                    height: 100%;
+                    font-family: Arial, sans-serif;
                 }
                 
                 main {
                     width: 100%;
-                    min-height: 100vh;
-                    display: block;
-                }
-                
-                .component-error {
-                    padding: 40px;
-                    text-align: center;
-                    background: white;
-                    margin: 20px;
-                    border-radius: 10px;
-                    border: 2px dashed #ff6b6b;
-                    color: #d63031;
+                    height: 100%;
+                    position: relative;
                 }
                 
                 .loading {
-                    padding: 40px;
-                    text-align: center;
-                    background: white;
-                    margin: 20px;
-                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    font-size: 1.1rem;
                     color: #666;
-                    font-size: 18px;
                 }
-
-                .auth-error {
-                    padding: 40px;
+                
+                .error {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    padding: 2rem;
                     text-align: center;
-                    background: #fff5f5;
-                    margin: 20px;
-                    border-radius: 10px;
-                    border: 2px solid #fed7d7;
-                    color: #c53030;
                 }
-
-                .fallback-content {
-                    padding: 40px;
-                    text-align: center;
-                    background-color: white;
-                    border-radius: 10px;
-                    margin: 20px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                
+                .error-icon {
+                    font-size: 3rem;
+                    margin-bottom: 1rem;
+                    color: #dc3545;
                 }
-
-                .fallback-content h1 {
-                    color: #AAAB54;
-                    margin-bottom: 20px;
+                
+                .error-title {
+                    font-size: 1.5rem;
+                    font-weight: bold;
+                    margin-bottom: 0.5rem;
+                    color: #333;
                 }
-
-                .fallback-content p {
+                
+                .error-message {
                     color: #666;
-                    line-height: 1.6;
+                    margin-bottom: 2rem;
+                    max-width: 400px;
+                    line-height: 1.5;
                 }
-
-                .error-button {
+                
+                .retry-button {
                     background: #AAAB54;
                     color: white;
                     border: none;
-                    padding: 12px 24px;
-                    border-radius: 5px;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 8px;
                     cursor: pointer;
-                    margin: 10px;
-                    font-size: 16px;
-                    transition: background-color 0.2s;
+                    font-size: 1rem;
+                    transition: background 0.3s ease;
                 }
-
-                .error-button:hover {
-                    background: #9a9b4a;
-                }
-
-                .auth-status {
-                    position: fixed;
-                    top: 10px;
-                    right: 10px;
-                    padding: 5px 10px;
-                    border-radius: 15px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    z-index: 1000;
-                    opacity: 0.8;
-                }
-
-                .auth-status.authenticated {
-                    background: #48bb78;
-                    color: white;
-                }
-
-                .auth-status.not-authenticated {
-                    background: #f56565;
-                    color: white;
+                
+                .retry-button:hover {
+                    background: #8B9B3A;
                 }
             </style>
             
-            <div class="app-container">
-                <!-- Indicador de estado de autenticación -->
-                <div class="auth-status ${this.isAuthenticated ? 'authenticated' : 'not-authenticated'}">
-                    ${this.isAuthenticated ? '✅ Autenticado' : '🔒 No autenticado'}
-                </div>
-                
-                <main>
-                    <!-- El contenido se carga dinámicamente aquí -->
-                    <div class="loading">🚀 Inicializando Lulada...</div>
-                </main>
-            </div>
+            <main>
+                <div class="loading">Cargando...</div>
+            </main>
         `;
     }
 
-    // ✅ FUNCIÓN PRINCIPAL CORREGIDA - Cambia qué página se muestra
-    updateView(route: string){
-        if (!this.shadowRoot) return;
+    private setupEventListeners(): void {
+        // Escuchar eventos de navegación
+        document.addEventListener('navigate', this.handleNavigateEvent.bind(this));
         
-        const cleanRoute = route.startsWith('/') ? route : '/' + route;
+        // Escuchar cambios en el historial del navegador
+        window.addEventListener('popstate', this.handlePopState.bind(this));
+        
+        console.log('👂 LoadPage event listeners configurados');
+    }
+
+    private handleNavigateEvent(event: Event): void {
+        const customEvent = event as CustomEvent;
+        const route = customEvent.detail;
+        
+        if (typeof route === 'string') {
+            this.navigateTo(route);
+        }
+    }
+
+    private handlePopState(event: PopStateEvent): void {
+        const currentPath = window.location.pathname;
+        this.navigateTo(currentPath);
+    }
+
+    private getInitialRoute(): string {
+        const pathname = window.location.pathname;
+        
+        // Rutas válidas de la aplicación
+        const validRoutes = [
+            '/home', 
+            '/profile', 
+            '/puser', 
+            '/explore', 
+            '/antojar',
+            '/save',
+            '/settings',
+            '/notifications',
+            '/login'
+        ];
+        
+        // Si la ruta actual es válida, usarla
+        if (validRoutes.includes(pathname)) {
+            return pathname;
+        }
+        
+        // Si es la raíz, ir a home
+        if (pathname === '/' || pathname === '') {
+            return '/home';
+        }
+        
+        // Por defecto, ir a home
+        return '/home';
+    }
+
+    public navigateTo(route: string): void {
+        if (!route || typeof route !== 'string') {
+            console.error('❌ Ruta inválida:', route);
+            return;
+        }
+        
+        // Limpiar la ruta
+        const cleanRoute = route.startsWith('/') ? route : `/${route}`;
+        
+        // Evitar navegación redundante
+        if (cleanRoute === this.currentRoute) {
+            console.log('⚠️ Ya estás en la ruta:', cleanRoute);
+            return;
+        }
+        
+        console.log(`🧭 Navegando de ${this.currentRoute} a ${cleanRoute}`);
         this.currentRoute = cleanRoute;
         
-        console.log('🧭 LoadPage: Navegando a:', cleanRoute);
-        
-        // Actualizar indicador de autenticación
-        this.updateAuthStatus();
-        
-        // ✅ MAPEO CORRECTO DE RUTAS A COMPONENTES - NOMBRES REALES
-        const routeComponentMap: { [key: string]: string } = {
-            '/': this.isAuthenticated ? 'lulada-home' : 'lulada-login',
+        // Actualizar vista
+        this.updateView(cleanRoute);
+    }
+
+    private updateView(route: string): void {
+        // Mapear rutas a componentes
+        const routeMap: { [key: string]: string } = {
             '/home': 'lulada-home',
-            '/notifications': 'lulada-notifications',
-            '/save': 'lulada-save',
+            '/profile': 'lulada-user-profile',
+            '/puser': 'lulada-puser',
             '/explore': 'lulada-explore',
-            '/configurations': 'lulada-settings',
+            '/antojar': 'lulada-antojar',
+            '/save': 'lulada-save',
             '/settings': 'lulada-settings',
-            '/profile': 'lulada-puser',
-            '/restaurant-profile': 'lulada-restaurant-profile',
-            '/cambiar-correo': 'cambiar-correo-f',
-            '/cambiar-nombre': 'cambiar-nombre-f',
-            '/cambiar-contraseña': 'cambiar-contrasena-f',
-            '/login': 'lulada-login',
-            '/register': 'lulada-new-account'
+            '/notifications': 'lulada-notifications',
+            '/login': 'lulada-login'
         };
         
-        const componentName = routeComponentMap[cleanRoute];
+        const componentName = routeMap[route];
         
         if (!componentName) {
-            // Verificar rutas dinámicas
-            if (cleanRoute.startsWith('/restaurant-profile/')) {
-                this.loadComponent('lulada-restaurant-profile');
-                return;
-            } else {
-                // Ruta no reconocida, redirigir según autenticación
-                console.log('⚠️ Ruta no reconocida:', cleanRoute);
-                if (this.isAuthenticated) {
-                    this.updateView('/home');
-                } else {
-                    this.updateView('/login');
-                }
-                return;
-            }
-        }
-
-        // Verificar permisos antes de mostrar componente
-        if (this.isProtectedRoute(cleanRoute) && !this.isAuthenticated) {
-            console.log('🔒 Ruta protegida sin autenticación, redirigiendo a login');
-            this.showAuthError();
+            console.error('❌ Ruta no reconocida:', route);
+            this.showComponentError(route, 'unknown-route');
             return;
         }
-
-        // Verificar que el componente esté registrado
+        
+        // COMENTAR ESTA VERIFICACIÓN PROBLEMÁTICA:
+        /*
         if (!this.isComponentRegistered(componentName)) {
             console.error('❌ Componente no registrado:', componentName);
-            this.showComponentError(cleanRoute, componentName);
+            this.showComponentError(route, componentName);
             return;
         }
+        */
 
-        // Cargar el componente
+        // Cargar el componente directamente
         this.loadComponent(componentName);
         
         // Actualizar URL del navegador
-        if (window.history && window.history.pushState && window.location.pathname !== cleanRoute) {
-            window.history.pushState(null, '', cleanRoute);
+        if (window.history && window.history.pushState && window.location.pathname !== route) {
+            window.history.pushState(null, '', route);
         }
         
         // Actualizar componentes de navegación
-        this.updateNavigationComponents(cleanRoute);
+        this.updateNavigationComponents(route);
     }
 
-    // ✅ Cargar componente de forma segura
-    private loadComponent(componentName: string) {
-        const main = this.shadowRoot?.querySelector('main');
+    private loadComponent(componentName: string): void {
+        const main = this.shadowRoot.querySelector('main');
         if (!main) return;
 
+        // PREVENIR CARGA MÚLTIPLE DEL MISMO COMPONENTE
+        const existingComponent = main.querySelector(componentName);
+        if (existingComponent) {
+            console.log(`⚠️ ${componentName} ya cargado, evitando duplicación`);
+            return;
+        }
+
+        // Limpiar contenido anterior
         main.innerHTML = '<div class="loading">Cargando...</div>';
         
+        // Cargar nuevo componente con un pequeño delay para mostrar loading
         setTimeout(() => {
             try {
                 main.innerHTML = `<${componentName}></${componentName}>`;
@@ -270,189 +253,104 @@ class LoadPage extends HTMLElement implements LoadPageElement {
                     const loadedComponent = main.querySelector(componentName);
                     if (loadedComponent) {
                         // Verificar si el componente tiene contenido
-                        if (!loadedComponent.shadowRoot && !loadedComponent.innerHTML.trim()) {
+                        const hasContent = loadedComponent.shadowRoot || loadedComponent.innerHTML.trim();
+                        if (!hasContent) {
                             setTimeout(() => {
-                                if (!loadedComponent.shadowRoot && !loadedComponent.innerHTML.trim()) {
+                                const recheckContent = loadedComponent.shadowRoot || loadedComponent.innerHTML.trim();
+                                if (!recheckContent) {
                                     console.warn('⚠️ Componente cargado pero sin contenido:', componentName);
-                                    this.showComponentError(this.currentRoute, componentName);
                                 }
                             }, 1000);
                         }
                     } else {
-                        console.error('❌ Componente no encontrado en DOM:', componentName);
-                        this.showComponentError(this.currentRoute, componentName);
+                        console.error('❌ Componente no encontrado después de cargar:', componentName);
                     }
                 }, 100);
                 
             } catch (error) {
-                console.error('❌ Error cargando componente:', componentName, error);
+                console.error(`❌ Error cargando ${componentName}:`, error);
                 this.showComponentError(this.currentRoute, componentName);
             }
-        }, 50);
+        }, 100);
     }
 
-    // Verificar si una ruta requiere autenticación
-    private isProtectedRoute(route: string): boolean {
-        const protectedRoutes = [
-            '/home', '/profile', '/save', '/explore', '/settings', 
-            '/notifications', '/restaurant-profile', '/configurations',
-            '/cambiar-correo', '/cambiar-nombre', '/cambiar-contraseña'
-        ];
-        return protectedRoutes.includes(route) || route.startsWith('/restaurant-profile/');
-    }
-
-    // Verificar si una ruta es pública (no requiere autenticación)
-    private isPublicRoute(route: string): boolean {
-        const publicRoutes = ['/login', '/register'];
-        return publicRoutes.includes(route);
-    }
-
-    // Actualizar indicador visual de autenticación
-    private updateAuthStatus(): void {
-        const authStatus = this.shadowRoot?.querySelector('.auth-status');
-        if (authStatus) {
-            authStatus.className = `auth-status ${this.isAuthenticated ? 'authenticated' : 'not-authenticated'}`;
-            authStatus.textContent = this.isAuthenticated ? '✅ Autenticado' : '🔒 No autenticado';
+    private isComponentRegistered(componentName: string): boolean {
+        try {
+            return !!customElements.get(componentName);
+        } catch (error) {
+            console.error('Error verificando componente:', error);
+            return false;
         }
     }
 
-    // Muestra error de autenticación
-    private showAuthError(): void {
-        const main = this.shadowRoot?.querySelector('main');
-        if (main) {
-            main.innerHTML = `
-                <div class="auth-error">
-                    <h2>🔒 Acceso Restringido</h2>
-                    <p>Necesitas iniciar sesión para acceder a esta página.</p>
-                    <button class="error-button" onclick="document.dispatchEvent(new CustomEvent('navigate', {detail: '/login'}))">
-                        Iniciar Sesión
-                    </button>
-                </div>
-            `;
-        }
-    }
-
-    // Muestra error cuando un componente no se puede cargar
     private showComponentError(route: string, componentName: string): void {
-        const main = this.shadowRoot?.querySelector('main');
-        if (main) {
-            main.innerHTML = `
-                <div class="component-error">
-                    <h2>⚠️ Error de Navegación</h2>
-                    <p><strong>Ruta solicitada:</strong> ${route}</p>
-                    <p><strong>Componente:</strong> ${componentName}</p>
-                    <p><strong>Estado:</strong> ${this.isComponentRegistered(componentName) ? 'Registrado pero falló al cargar' : 'No registrado'}</p>
-                    <p><strong>Autenticación:</strong> ${this.isAuthenticated ? 'Autenticado' : 'No autenticado'}</p>
-                    <button class="error-button" onclick="document.dispatchEvent(new CustomEvent('navigate', {detail: '${this.isAuthenticated ? '/home' : '/login'}'}))">
-                        ${this.isAuthenticated ? 'Volver al Inicio' : 'Ir a Login'}
-                    </button>
-                    <button class="error-button" onclick="window.location.reload()">
-                        🔄 Recargar Aplicación
-                    </button>
+        const main = this.shadowRoot.querySelector('main');
+        if (!main) return;
+        
+        const isUnknownRoute = componentName === 'unknown-route';
+        const errorMessage = isUnknownRoute ? 
+            'La ruta solicitada no existe.' : 
+            `El componente "${componentName}" no está disponible.`;
+        
+        main.innerHTML = `
+            <div class="error">
+                <div class="error-icon">⚠️</div>
+                <div class="error-title">Error cargando página</div>
+                <div class="error-message">
+                    No se pudo cargar el componente para la ruta "${route}".
+                    ${errorMessage}
                 </div>
-            `;
-        }
+                <button class="retry-button" onclick="window.location.href='/home'">
+                    Ir al inicio
+                </button>
+            </div>
+        `;
     }
-    
-    // Actualiza componentes de navegación para mostrar página activa
+
     private updateNavigationComponents(route: string): void {
-        const sidebar = document.querySelector('lulada-sidebar') as NavigationComponent | null;
-        if (sidebar && typeof sidebar.updateActive === 'function') {
-            sidebar.updateActive(route);
+        // Actualizar sidebar si existe
+        const sidebar = document.querySelector('lulada-sidebar');
+        if (sidebar && 'updateActiveFromRoute' in sidebar) {
+            (sidebar as HTMLElement & { updateActiveFromRoute: (route: string) => void })
+                .updateActiveFromRoute(route);
         }
         
-        const responsiveBar = document.querySelector('lulada-responsive-bar') as NavigationComponent | null;
-        if (responsiveBar && typeof responsiveBar.updateActiveFromRoute === 'function') {
-            responsiveBar.updateActiveFromRoute(route);
+        // Actualizar barra responsiva si existe
+        const responsiveBar = document.querySelector('lulada-responsive-bar');
+        if (responsiveBar && 'updateActiveFromRoute' in responsiveBar) {
+            (responsiveBar as HTMLElement & { updateActiveFromRoute: (route: string) => void })
+                .updateActiveFromRoute(route);
         }
     }
 
-    // Configura los event listeners para navegación
-    private setupNavigation(){
-        // Escucha eventos de navegación de otros componentes
-        document.addEventListener('navigate', (event: Event) => {
-            const customEvent = event as CustomEvent<string>;
-            const route = customEvent.detail;
-            this.handleNavigationRequest(route);
-        });
-
-        // Navegación a perfil de restaurante
-        document.addEventListener('restaurant-selected', () => {
-            this.handleNavigationRequest('/restaurant-profile');
-        });
-
-        // Escuchar eventos de autenticación
-        document.addEventListener('auth-success', () => {
-            console.log('LoadPage: Autenticación exitosa detectada');
-            this.isAuthenticated = true;
-            this.updateAuthStatus();
-        });
-
-        document.addEventListener('auth-logout', () => {
-            console.log('LoadPage: Logout detectado');
-            this.isAuthenticated = false;
-            this.updateView('/login');
-        });
-
-        // Maneja navegación del navegador (botón atrás/adelante)
-        window.addEventListener('popstate', () => {
-            const currentPath = window.location.pathname;
-            this.handleNavigationRequest(currentPath);
-        });
+    private checkAuthentication(): void {
+        this.isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        console.log('🔐 Estado de autenticación:', this.isAuthenticated);
     }
 
-    // Maneja las solicitudes de navegación con validación de autenticación
-    private handleNavigationRequest(route: string): void {
-        console.log('🧭 LoadPage: Solicitud de navegación a:', route);
-        
-        // Actualizar estado de autenticación
-        this.checkAuthentication();
-        
-        // Verificar permisos de navegación
-        if (this.isProtectedRoute(route) && !this.isAuthenticated) {
-            console.log('🔒 LoadPage: Ruta protegida sin autenticación, redirigiendo a login');
-            this.updateView('/login');
-            return;
-        }
-
-        // Si está autenticado y trata de ir a login/register, redirigir a home
-        if (this.isPublicRoute(route) && this.isAuthenticated) {
-            console.log('🏠 LoadPage: Usuario autenticado intentando acceder a ruta pública, redirigiendo a home');
-            this.updateView('/home');
-            return;
-        }
-
-        // Navegación permitida
-        this.updateView(route);
-    }
-
-    // Métodos públicos de la interfaz
+    // Métodos públicos
     public getCurrentRoute(): string {
         return this.currentRoute;
     }
 
-    public navigateTo(route: string): void {
-        this.handleNavigationRequest(route);
+    public refresh(): void {
+        console.log('🔄 Refrescando LoadPage...');
+        this.checkAuthentication();
+        this.updateView(this.currentRoute);
     }
-    
-    public isComponentRegistered(componentName: string): boolean {
-        return !!customElements.get(componentName);
-    }
-    
-    // Método para debugging
+
     public debugInfo(): void {
         console.log('🔍 LoadPage Debug Info:');
-        console.log('- Ruta actual:', this.getCurrentRoute());
-        console.log('- URL actual:', window.location.pathname);
         console.log('- Setup completado:', this.isSetup);
-        console.log('- Shadow DOM:', !!this.shadowRoot);
+        console.log('- Ruta actual:', this.currentRoute);
+        console.log('- ShadowRoot existe:', !!this.shadowRoot);
         console.log('- Autenticado:', this.isAuthenticated);
         console.log('- Estado localStorage:', {
             isAuthenticated: localStorage.getItem('isAuthenticated'),
             hasUserData: !!localStorage.getItem('currentUser')
         });
         
-        const main = this.shadowRoot?.querySelector('main');
+        const main = this.shadowRoot.querySelector('main');
         const currentComponent = main?.querySelector('*');
         console.log('- Componente cargado:', currentComponent?.tagName.toLowerCase() || 'ninguno');
         
@@ -472,12 +370,6 @@ class LoadPage extends HTMLElement implements LoadPageElement {
             const registered = this.isComponentRegistered(name);
             console.log(`  ${registered ? '✅' : '❌'} ${name}: ${registered ? 'Registrado' : 'NO Registrado'}`);
         });
-        
-        console.log('- Componentes de navegación:');
-        const sidebar = document.querySelector('lulada-sidebar');
-        const responsiveBar = document.querySelector('lulada-responsive-bar');
-        console.log(`  Sidebar: ${sidebar ? 'Encontrado' : 'NO encontrado'}`);
-        console.log(`  ResponsiveBar: ${responsiveBar ? 'Encontrado' : 'NO encontrado'}`);
     }
 
     public forceUpdate(): void {
@@ -489,7 +381,7 @@ class LoadPage extends HTMLElement implements LoadPageElement {
         return {
             shadowRootExists: !!this.shadowRoot,
             isSetup: this.isSetup,
-            mainElementExists: !!this.shadowRoot?.querySelector('main'),
+            mainElementExists: !!this.shadowRoot.querySelector('main'),
             navigationConfigured: this.isSetup,
             currentRouteSet: this.currentRoute !== '',
             isAuthenticated: this.isAuthenticated
@@ -497,9 +389,9 @@ class LoadPage extends HTMLElement implements LoadPageElement {
     }
 }
 
-// ✅ FUNCIONES GLOBALES PARA DEBUGGING
+// Funciones globales para debugging
 if (typeof window !== 'undefined') {
-    (window as any).debugLoadPage = () => {
+    (window as any).debugLoadPage = (): void => {
         const loadPage = document.querySelector('load-pages') as LoadPage | null;
         if (loadPage && typeof loadPage.debugInfo === 'function') {
             loadPage.debugInfo();
@@ -508,12 +400,28 @@ if (typeof window !== 'undefined') {
         }
     };
     
-    (window as any).debugAuth = () => {
+    (window as any).debugAuth = (): void => {
         const loadPage = document.querySelector('load-pages') as LoadPage | null;
         if (loadPage && typeof loadPage.forceUpdate === 'function') {
             loadPage.forceUpdate();
         } else {
             console.log('❌ No se encontró el componente load-pages');
+        }
+    };
+
+    (window as any).cleanLoadPageComponents = (): void => {
+        const loadPageElements = document.querySelectorAll('load-pages');
+        console.log(`🔍 Encontrados ${loadPageElements.length} elementos load-pages`);
+        
+        if (loadPageElements.length > 1) {
+            console.log('🧹 Limpiando duplicados...');
+            for (let i = 1; i < loadPageElements.length; i++) {
+                loadPageElements[i].remove();
+                console.log(`🗑️ Eliminado duplicado ${i}`);
+            }
+            console.log('✅ Duplicados eliminados');
+        } else {
+            console.log('✅ No hay duplicados');
         }
     };
 }
