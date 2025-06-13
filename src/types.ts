@@ -2,35 +2,39 @@
 
 // Solo importar los tipos que realmente necesitamos para las interfaces
 import type PublicationsService from './Services/PublicationsService';
-import type AntojarPopupService from './Components/Home/Antojar/antojar-popup';
+
+// ✅ CORRECCIÓN: Interfaz AntojarServiceType actualizada para coincidir con la implementación
+export interface AntojarServiceType {
+    initialize(): void;
+    showPopup(): void;
+    hidePopup(): void;
+    togglePopup(): void;
+    // ✅ Propiedades adicionales que requiere la implementación
+    popupContainer?: HTMLDivElement | null;
+    antojarComponent?: HTMLElement | null;
+    createAndShowComponent?(): void;
+    showSuccessMessage?(): void;
+    cleanup?(): void;
+    isVisible?(): boolean;
+}
 
 // Interface para LuladaServices
 export interface LuladaServicesType {
     publicationsService: PublicationsService;
-    antojarService: AntojarPopupService;
+    antojarService: AntojarServiceType;
 }
 
 // Interface para LuladaDebug
 export interface LuladaDebugType {
     services: {
         publications: PublicationsService;
-        antojar: AntojarPopupService;
+        antojar: AntojarServiceType;
     };
     components: {
         registered: Array<{
             name: string;
             registered: boolean;
         }>;
-    };
-}
-
-// Interface para AntojarService - ACTUALIZADA
-export interface AntojarServiceType {
-    getInstance(): {
-        initialize(): void;
-        showPopup(): void;
-        hidePopup(): void;
-        togglePopup(): void;
     };
 }
 
@@ -78,14 +82,19 @@ export interface UserActionsType {
     resetProfile(): void;
 }
 
+// ✅ CORRECCIÓN: Interface para AntojarPopupService en window
+export interface WindowAntojarServiceType {
+    getInstance(): AntojarServiceType;
+}
+
 // DECLARACIONES GLOBALES PARA WINDOW
 declare global {
     interface Window {
         // Servicios de Usuario
         UserActions: UserActionsType;
         
-        // Servicios de Antojar
-        AntojarPopupService: AntojarServiceType;
+        // ✅ CORRECCIÓN: Servicios de Antojar con tipo correcto
+        AntojarPopupService: WindowAntojarServiceType;
         
         // Funciones de debug
         debugSuggestions(): void;

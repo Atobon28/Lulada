@@ -91,11 +91,15 @@ import './Services/PublicationsService';
 type ComponentConstructor = new () => HTMLElement;
 
 // ===========================
-// IMPLEMENTACIÓN DEL ANTOJAR SERVICE
+// IMPLEMENTACIÓN DEL ANTOJAR SERVICE - CORREGIDA
 // ===========================
-class AntojarServiceImplementation {
+class AntojarServiceImplementation implements AntojarServiceType {
     private static instance: AntojarServiceImplementation;
     private isInitialized: boolean = false;
+    
+    // ✅ Propiedades requeridas por la interfaz
+    public popupContainer: HTMLDivElement | null = null;
+    public antojarComponent: HTMLElement | null = null;
 
     private constructor() {}
 
@@ -146,6 +150,7 @@ class AntojarServiceImplementation {
         const overlay = document.createElement('div');
         overlay.id = 'antojar-overlay';
         overlay.className = 'antojar-popup-overlay';
+        this.popupContainer = overlay;
 
         // Crear popup
         const popup = document.createElement('div');
@@ -230,6 +235,7 @@ class AntojarServiceImplementation {
 
         overlay.appendChild(popup);
         document.body.appendChild(overlay);
+        this.antojarComponent = popup;
     }
 
     public hidePopup(): void {
@@ -244,6 +250,9 @@ class AntojarServiceImplementation {
                 }
             }, 200);
         }
+        
+        this.popupContainer = null;
+        this.antojarComponent = null;
         
         // Agregar animación de salida si no existe
         if (!document.querySelector('#fadeOutAnimation')) {
@@ -267,6 +276,55 @@ class AntojarServiceImplementation {
         } else {
             this.showPopup();
         }
+    }
+
+    // ✅ Métodos opcionales requeridos por la interfaz
+    public createAndShowComponent(): void {
+        this.showPopup();
+    }
+
+    public showSuccessMessage(): void {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            z-index: 10001;
+            font-family: Arial, sans-serif;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.4s ease;
+        `;
+        toast.textContent = '🎉 ¡Operación exitosa!';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 100);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 400);
+        }, 3000);
+    }
+
+    public cleanup(): void {
+        this.hidePopup();
+        this.popupContainer = null;
+        this.antojarComponent = null;
+    }
+
+    public isVisible(): boolean {
+        return !!document.getElementById('antojar-overlay');
     }
 }
 
@@ -346,7 +404,7 @@ window.UserActions = {
         }
     },
     
-    updatePassword: (newPassword: string): void => {
+    updatePassword: (_newPassword: string): void => {
         console.log('🔐 Actualizando contraseña...');
         
         // Simulación de actualización de contraseña

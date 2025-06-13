@@ -26,7 +26,7 @@ class LoginForm extends HTMLElement {
                 // Navegar directamente a home
                 this.navigateToHome();
             }
-        } catch (error) {
+        } catch (_error) {
             // Firebase no disponible, continuar con login normal
             console.log('⚠️ Firebase no disponible, usando login local');
         }
@@ -429,7 +429,7 @@ class LoginForm extends HTMLElement {
                 return false;
             }
             
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️ Firebase no disponible, intentando login local');
             return false;
         }

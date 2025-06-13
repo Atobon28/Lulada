@@ -1,8 +1,37 @@
-// Settings.ts - Versión simplificada que funciona perfectamente
+// Settings.ts - Versión sin any con tipos seguros
+
+// ✅ Interfaces para tipado seguro
+interface UserData {
+    foto: string;
+    nombreDeUsuario: string;
+    nombre: string;
+    descripcion: string;
+    rol: string;
+}
+
+interface AuthState {
+    isAuthenticated: boolean;
+    user?: FirebaseUser | null;
+}
+
+interface FirebaseUser {
+    photoURL?: string | null;
+    displayName?: string | null;
+    email?: string | null;
+}
+
+interface FirebaseService {
+    subscribe(callback: (authState: AuthState) => void): () => void;
+}
+
+interface Publication {
+    username: string;
+    [key: string]: unknown;
+}
 
 class LuladaSettings extends HTMLElement {
-    private currentUser: any = null;
-    private firebaseService: any = null;
+    private currentUser: UserData | null = null;
+    private firebaseService: FirebaseService | null = null;
     private unsubscribe?: () => void;
 
     constructor() {
@@ -61,10 +90,10 @@ class LuladaSettings extends HTMLElement {
 
     private loadUserProfile(): void {
         try {
-            let userData = localStorage.getItem('currentUser');
+            const userData = localStorage.getItem('currentUser');
             
             if (!userData) {
-                const defaultUser = {
+                const defaultUser: UserData = {
                     nombre: 'Usuario de Lulada',
                     nombreDeUsuario: '@usuario',
                     foto: 'https://randomuser.me/api/portraits/women/44.jpg',
@@ -76,7 +105,7 @@ class LuladaSettings extends HTMLElement {
                 localStorage.setItem('isAuthenticated', 'true');
                 this.currentUser = defaultUser;
             } else {
-                this.currentUser = JSON.parse(userData);
+                this.currentUser = JSON.parse(userData) as UserData;
             }
             
             console.log('✅ Perfil cargado:', this.currentUser);
@@ -109,8 +138,9 @@ class LuladaSettings extends HTMLElement {
         try {
             if (!this.currentUser) return;
             
-            const allPublications = JSON.parse(sessionStorage.getItem('lulada_publications') || '[]');
-            const userPublications = allPublications.filter((pub: any) => {
+            const publicationsData = sessionStorage.getItem('lulada_publications') || '[]';
+            const allPublications: Publication[] = JSON.parse(publicationsData);
+            const userPublications = allPublications.filter((pub: Publication) => {
                 return pub.username === this.currentUser?.nombreDeUsuario;
             });
             
@@ -170,28 +200,28 @@ class LuladaSettings extends HTMLElement {
     // ===========================
     private async initializeFirebase(): Promise<void> {
         try {
-            const { FirebaseUserService } = await import('../../Services/firebase/FirebaseUserService');
-            this.firebaseService = FirebaseUserService.getInstance();
+            const firebaseModule = await import('../../Services/firebase/FirebaseUserService');
+            this.firebaseService = firebaseModule.FirebaseUserService.getInstance() as FirebaseService;
             
-            this.unsubscribe = this.firebaseService.subscribe((authState: any) => {
+            this.unsubscribe = this.firebaseService.subscribe((authState: AuthState) => {
                 this.handleAuthStateChange(authState);
             });
             
             console.log('✅ Firebase inicializado');
-        } catch (error) {
+        } catch (_error: unknown) {
             console.log('ℹ Firebase no disponible');
         }
     }
 
-    private handleAuthStateChange(authState: any): void {
+    private handleAuthStateChange(authState: AuthState): void {
         if (authState.isAuthenticated && authState.user) {
             this.syncFirebaseToLocal(authState.user);
             this.render();
         }
     }
 
-    private syncFirebaseToLocal(firebaseUser: any): void {
-        const userData = {
+    private syncFirebaseToLocal(firebaseUser: FirebaseUser): void {
+        const userData: UserData = {
             foto: firebaseUser.photoURL || 'https://randomuser.me/api/portraits/women/44.jpg',
             nombreDeUsuario: `@${firebaseUser.displayName?.replace(/\s+/g, '').toLowerCase() || firebaseUser.email?.split('@')[0] || 'usuario'}`,
             nombre: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuario',
@@ -210,11 +240,12 @@ class LuladaSettings extends HTMLElement {
     private render(): void {
         if (!this.shadowRoot) return;
 
-        const userDisplay = this.currentUser || {
+        const userDisplay: UserData = this.currentUser || {
             nombre: 'Usuario',
             nombreDeUsuario: '@usuario',
             foto: 'https://randomuser.me/api/portraits/women/44.jpg',
-            descripcion: 'Usuario de Lulada'
+            descripcion: 'Usuario de Lulada',
+            rol: 'persona'
         };
 
         this.shadowRoot.innerHTML = `
@@ -455,8 +486,8 @@ class LuladaSettings extends HTMLElement {
 
                 // Logout de Firebase si está disponible
                 if (this.firebaseService) {
-                    const { logoutUser } = await import('../../Services/firebase/Authservice');
-                    await logoutUser();
+                    const authModule = await import('../../Services/firebase/Authservice');
+                    await authModule.logoutUser();
                 }
 
                 // Limpiar datos

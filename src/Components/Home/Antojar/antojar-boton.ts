@@ -70,4 +70,9 @@ export class LuladaAntojarBoton extends HTMLElement {
     }
 }
 
+// ✅ VERIFICACIÓN PARA EVITAR DUPLICADOS
+if (!customElements.get('lulada-antojar-boton')) {
+    customElements.define('lulada-antojar-boton', LuladaAntojarBoton);
+}
+
 export default LuladaAntojarBoton;

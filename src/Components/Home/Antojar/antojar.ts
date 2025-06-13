@@ -764,7 +764,7 @@ export class LuladaAntojar extends HTMLElement {
         }, 4000);
     }
 
-    // Resto de métodos (sin cambios)
+    // ✅ MÉTODO CORREGIDO SIN USO DE ANY
     handlePhotoSelection(file: File) {
         if (!file.type.startsWith('image/')) {
             alert('Por favor selecciona un archivo de imagen válido.');
@@ -779,11 +779,13 @@ export class LuladaAntojar extends HTMLElement {
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            const base64 = e.target?.result as string;
-            this.selectedPhoto = base64;
-            this.showPhotoPreview(base64);
-            this.updatePhotoIcon(true);
-            this.updatePublishButton();
+            const result = e.target?.result;
+            if (typeof result === 'string') {
+                this.selectedPhoto = result;
+                this.showPhotoPreview(result);
+                this.updatePhotoIcon(true);
+                this.updatePublishButton();
+            }
         };
 
         reader.onerror = () => {
@@ -878,6 +880,7 @@ export class LuladaAntojar extends HTMLElement {
     }
 }
 
+// ✅ VERIFICACIÓN PARA EVITAR DUPLICADOS
 if (!customElements.get('lulada-antojar')) {
     customElements.define('lulada-antojar', LuladaAntojar);
 }

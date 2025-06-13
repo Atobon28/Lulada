@@ -3,8 +3,10 @@ import { LuladaAntojar } from './antojar';
 // Servicio para manejar el popup de reseñas
 export class AntojarPopupService {
     static instance: AntojarPopupService;
-    popupContainer: HTMLDivElement | null = null;
-    antojarComponent: LuladaAntojar | null = null;
+    
+    // ✅ Propiedades públicas requeridas
+    public popupContainer: HTMLDivElement | null = null;
+    public antojarComponent: HTMLElement | null = null;
 
     constructor() {
         // Constructor vacío
@@ -72,10 +74,13 @@ export class AntojarPopupService {
         }
     }
 
-    // Crear y mostrar el componente
-    private createAndShowComponent(): void {
+    // ✅ Crear y mostrar el componente - PÚBLICO
+    public createAndShowComponent(): void {
         if (!this.antojarComponent) {
-            this.antojarComponent = document.createElement('lulada-antojar') as LuladaAntojar;
+            const luladaAntojarComponent = document.createElement('lulada-antojar') as LuladaAntojar;
+            
+            // ✅ Asignar como HTMLElement para cumplir con la interfaz
+            this.antojarComponent = luladaAntojarComponent;
 
             this.antojarComponent.style.cssText = `
                 width: 100%;
@@ -88,12 +93,12 @@ export class AntojarPopupService {
                 box-sizing: border-box;
             `;
 
-            // Eventos del componente
-            this.antojarComponent.addEventListener('antojar-cerrado', () => {
+            // Eventos del componente usando la referencia tipada
+            luladaAntojarComponent.addEventListener('antojar-cerrado', () => {
                 this.hidePopup();
             });
 
-            this.antojarComponent.addEventListener('resena-publicada', (e: Event) => {
+            luladaAntojarComponent.addEventListener('resena-publicada', (e: Event) => {
                 const detail = (e as CustomEvent).detail;
                 
                 this.hidePopup();
@@ -142,8 +147,17 @@ export class AntojarPopupService {
         }
     }
 
-    // Mensaje de éxito
-    private showSuccessMessage(): void {
+    // Alternar visibilidad del popup
+    public togglePopup(): void {
+        if (this.isVisible()) {
+            this.hidePopup();
+        } else {
+            this.showPopup();
+        }
+    }
+
+    // ✅ Mensaje de éxito - PÚBLICO
+    public showSuccessMessage(): void {
         const toast = document.createElement('div');
         
         toast.style.cssText = `
@@ -198,9 +212,17 @@ export class AntojarPopupService {
     }
 }
 
-// Disponible globalmente - SIN DECLARACIÓN DE TIPOS DUPLICADA
+// ✅ ASIGNACIÓN SIN ANY - USANDO EXTENSIÓN DE INTERFAZ
+interface WindowWithAntojar extends Window {
+    AntojarPopupService: {
+        getInstance(): AntojarPopupService;
+    };
+}
+
 if (typeof window !== 'undefined') {
-    window.AntojarPopupService = AntojarPopupService;
+    (window as WindowWithAntojar).AntojarPopupService = {
+        getInstance: () => AntojarPopupService.getInstance()
+    };
 }
 
 export default AntojarPopupService;

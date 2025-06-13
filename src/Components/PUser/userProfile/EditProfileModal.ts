@@ -434,8 +434,13 @@ class EditProfileModal extends HTMLElement {
     this.showSuccess("Perfil actualizado correctamente");
 
     // Actualizar store
-    if (typeof window !== 'undefined' && (window as any).UserActions) {
-      (window as any).UserActions.updateUserData(newUserData);
+    // Define an interface for UserActions
+    interface UserActions {
+      updateUserData: (userData: UserData) => void;
+    }
+    
+    if (typeof window !== 'undefined' && (window as unknown as { UserActions?: UserActions }).UserActions) {
+      (window as unknown as { UserActions: UserActions }).UserActions.updateUserData(newUserData);
     }
 
     setTimeout(() => {

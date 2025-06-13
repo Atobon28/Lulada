@@ -74,7 +74,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
             };
             
             this.firebaseUnsubscribe = service.subscribe(this.handleFirebaseAuthChange.bind(this));
-        } catch (error) {
+        } catch (_error) {
             // Firebase no disponible, continuar solo con Flux
             console.log('Firebase no disponible, usando solo sistema Flux');
         }
@@ -519,7 +519,7 @@ class UserInfo extends HTMLElement implements UserInfoElement {
 
     private openEditModal(): void {
         // Buscar modal existente o crearlo
-        let modal = document.querySelector('edit-profile-modal') as any;
+        let modal = document.querySelector('edit-profile-modal') as HTMLElement & { setUser?: (user: UserData) => void; show?: () => void };
         
         if (!modal) {
             modal = document.createElement('edit-profile-modal');

@@ -419,7 +419,7 @@ class ButtonNewAccount extends HTMLElement {
 
     private validateStep(step: number): boolean {
         switch (step) {
-            case 1:
+            case 1: {
                 const firstName = (this.shadowRoot?.getElementById('firstName') as HTMLInputElement)?.value.trim();
                 const lastName = (this.shadowRoot?.getElementById('lastName') as HTMLInputElement)?.value.trim();
                 const email = (this.shadowRoot?.getElementById('email') as HTMLInputElement)?.value.trim();
@@ -434,8 +434,9 @@ class ButtonNewAccount extends HTMLElement {
                     return false;
                 }
                 break;
+            }
 
-            case 2:
+            case 2: {
                 const password = (this.shadowRoot?.getElementById('password') as HTMLInputElement)?.value;
                 const confirmPassword = (this.shadowRoot?.getElementById('confirmPassword') as HTMLInputElement)?.value;
 
@@ -454,6 +455,7 @@ class ButtonNewAccount extends HTMLElement {
                     return false;
                 }
                 break;
+            }
         }
 
         return true;
@@ -532,8 +534,8 @@ class ButtonNewAccount extends HTMLElement {
             // Fallback: registro local
             await this.attemptLocalRegistration(formData);
             
-        } catch (error) {
-            console.error('Error en registro:', error);
+        } catch (_error) {
+            console.error('Error en registro:', _error);
             this.showError('Error al crear la cuenta. Intenta de nuevo.');
         } finally {
             this.setLoading(false);
@@ -596,7 +598,7 @@ class ButtonNewAccount extends HTMLElement {
                 return false;
             }
             
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️ Firebase no disponible, usando registro local');
             return false;
         }

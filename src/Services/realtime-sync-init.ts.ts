@@ -7,7 +7,7 @@ console.log('🚀 Inicializando sistema de sincronización...');
 async function initRealTimeSync(): Promise<void> {
   try {
     console.log('✅ Sistema de sincronización inicializado');
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️ Sistema de sincronización no disponible');
   }
 }

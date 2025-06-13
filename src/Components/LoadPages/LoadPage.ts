@@ -15,14 +15,18 @@ interface NavigationComponent extends HTMLElement {
     updateActiveFromRoute?(route: string): void;
 }
 
-// ✅ AÑADIR INTERFAZ PARA WINDOW CON FUNCIONES DE DEBUG
+// ✅ INTERFAZ PARA WINDOW CON FUNCIONES DE DEBUG - SIN DUPLICADOS
 declare global {
     interface Window {
-        debugLoadPage?: () => void;
-        debugRestaurantNav?: () => void;
-        debugAuth?: () => void;
+        debugLoadPage: () => void;
+        debugRestaurantNav: () => void;
+        debugAuth: () => void;
     }
 }
+
+// ✅ VARIABLES DE DEBUG - DECLARACIÓN ÚNICA
+export const debugLoadPage = true;
+export const debugRestaurantNav = true;
 
 // Clase principal que maneja la carga y navegación entre páginas
 class LoadPage extends HTMLElement implements LoadPageElement {
@@ -94,7 +98,8 @@ class LoadPage extends HTMLElement implements LoadPageElement {
 
         // Escucha eventos de navegación de otros componentes
         document.addEventListener('navigate', (event: Event) => {
-            const route = (event as CustomEvent<string>).detail;
+            const customEvent = event as CustomEvent<string>;
+            const route = customEvent.detail;
             this.handleNavigationRequest(route);
         });
 
@@ -288,22 +293,23 @@ class LoadPage extends HTMLElement implements LoadPageElement {
         this.updateAuthStatus();
         
         // Mapeo de rutas a componentes
-        const routeComponentMap: { [key: string]: string } = {
-            '/': this.isAuthenticated ? '<lulada-home></lulada-home>' : '<login-page></login-page>',
-            '/home': '<lulada-home></lulada-home>',
-            '/notifications': '<lulada-notifications></lulada-notifications>',
-            '/save': '<save-page></save-page>',
-            '/explore': '<lulada-explore></lulada-explore>',
-            '/configurations': '<lulada-settings></lulada-settings>',
-            '/settings': '<lulada-settings></lulada-settings>',
-            '/profile': '<puser-page></puser-page>',
-            '/restaurant-profile': '<restaurant-profile></restaurant-profile>',
-            '/cambiar-correo': '<lulada-cambiar-correo></lulada-cambiar-correo>',
-            '/cambiar-nombre': '<lulada-cambiar-nombre></lulada-cambiar-nombre>',
-            '/cambiar-contraseña': '<lulada-cambiar-contraseña></lulada-cambiar-contraseña>',
-            '/login': '<login-page></login-page>',
-            '/register': '<register-new-account></register-new-account>'
-        };
+        // ✅ MAPEO CORREGIDO - USA LOS NOMBRES REALES:
+const routeComponentMap: { [key: string]: string } = {
+    '/': this.isAuthenticated ? '<lulada-home></lulada-home>' : '<lulada-login></lulada-login>',
+    '/home': '<lulada-home></lulada-home>',
+    '/notifications': '<lulada-notifications></lulada-notifications>',
+    '/save': '<lulada-save></lulada-save>',
+    '/explore': '<lulada-explore></lulada-explore>',
+    '/configurations': '<lulada-settings></lulada-settings>',
+    '/settings': '<lulada-settings></lulada-settings>',
+    '/profile': '<lulada-puser></lulada-puser>',
+    '/restaurant-profile': '<lulada-restaurant-profile></lulada-restaurant-profile>',
+    '/cambiar-correo': '<cambiar-correo-f></cambiar-correo-f>',
+    '/cambiar-nombre': '<cambiar-nombre-f></cambiar-nombre-f>',
+    '/cambiar-contraseña': '<cambiar-contrasena-f></cambiar-contrasena-f>',
+    '/login': '<lulada-login></lulada-login>',
+    '/register': '<lulada-new-account></lulada-new-account>'
+};
         
         let newComponent = routeComponentMap[cleanRoute];
         let componentName = '';
@@ -412,7 +418,7 @@ class LoadPage extends HTMLElement implements LoadPageElement {
                     <button class="error-button" onclick="document.dispatchEvent(new CustomEvent('navigate', {detail: '${this.isAuthenticated ? '/home' : '/login'}'}))">
                         ${this.isAuthenticated ? 'Volver al Inicio' : 'Ir a Login'}
                     </button>
-                    <button class="error-button" onclick="window.debugLoadPage?.()">
+                    <button class="error-button" onclick="window.debugLoadPage()">
                         Debug Info
                     </button>
                 </div>
@@ -570,41 +576,34 @@ class LoadPage extends HTMLElement implements LoadPageElement {
     }
 }
 
-// ✅ FUNCIONES GLOBALES PARA DEBUGGING - VERSIÓN CORREGIDA
+// ✅ FUNCIONES GLOBALES PARA DEBUGGING - VERSIÓN CORREGIDA SIN ANY
 if (typeof window !== 'undefined') {
-    if (!window.debugLoadPage) {
-        window.debugLoadPage = () => {
-            const loadPage = document.querySelector('load-pages') as LoadPageElement | null;
-            if (loadPage && typeof loadPage.debugInfo === 'function') {
-                loadPage.debugInfo();
-            } else {
-                console.log('❌ No se encontró el componente load-pages o no tiene método debugInfo');
-            }
-        };
-    }
+    window.debugLoadPage = () => {
+        const loadPage = document.querySelector('load-pages') as LoadPageElement | null;
+        if (loadPage && typeof loadPage.debugInfo === 'function') {
+            loadPage.debugInfo();
+        } else {
+            console.log('❌ No se encontró el componente load-pages o no tiene método debugInfo');
+        }
+    };
     
-    if (!window.debugRestaurantNav) {
-        window.debugRestaurantNav = () => {
-            const loadPage = document.querySelector('load-pages') as LoadPage | null;
-            if (loadPage && typeof loadPage.debugRestaurantNavigation === 'function') {
-                loadPage.debugRestaurantNavigation();
-            } else {
-                console.log('❌ No se encontró el componente load-pages');
-            }
-        };
-    }
+    window.debugRestaurantNav = () => {
+        const loadPage = document.querySelector('load-pages') as LoadPage | null;
+        if (loadPage && typeof loadPage.debugRestaurantNavigation === 'function') {
+            loadPage.debugRestaurantNavigation();
+        } else {
+            console.log('❌ No se encontró el componente load-pages');
+        }
+    };
 
-    // ✅ CORRECCIÓN: Nueva función para debug de autenticación - SINTAXIS CORRECTA
-    if (!window.debugAuth) {
-        window.debugAuth = () => {
-            const loadPage = document.querySelector('load-pages') as LoadPage | null;
-            if (loadPage && typeof loadPage.forceAuthCheck === 'function') {
-                loadPage.forceAuthCheck();
-            } else {
-                console.log('❌ No se encontró el componente load-pages');
-            }
-        };
-    }
+    window.debugAuth = () => {
+        const loadPage = document.querySelector('load-pages') as LoadPage | null;
+        if (loadPage && typeof loadPage.forceAuthCheck === 'function') {
+            loadPage.forceAuthCheck();
+        } else {
+            console.log('❌ No se encontró el componente load-pages');
+        }
+    };
 }
 
 export default LoadPage;
