@@ -1,5 +1,4 @@
-// LoadPage.ts - VERSIÓN CORREGIDA CON ERRORES DE SINTAXIS SOLUCIONADOS
-// ========================================================================
+// LoadPage.ts - VERSIÓN COMPLETAMENTE CORREGIDA
 
 // Interfaces para componentes de navegación
 interface LoadPageElement extends HTMLElement {
@@ -15,19 +14,6 @@ interface NavigationComponent extends HTMLElement {
     updateActiveFromRoute?(route: string): void;
 }
 
-// ✅ INTERFAZ PARA WINDOW CON FUNCIONES DE DEBUG - SIN DUPLICADOS
-declare global {
-    interface Window {
-        debugLoadPage: () => void;
-        debugRestaurantNav: () => void;
-        debugAuth: () => void;
-    }
-}
-
-// ✅ VARIABLES DE DEBUG - DECLARACIÓN ÚNICA
-export const debugLoadPage = true;
-export const debugRestaurantNav = true;
-
 // Clase principal que maneja la carga y navegación entre páginas
 class LoadPage extends HTMLElement implements LoadPageElement {
     private isSetup = false;
@@ -40,6 +26,7 @@ class LoadPage extends HTMLElement implements LoadPageElement {
     }
 
     connectedCallback(){
+        console.log('🔧 LoadPage conectado');
         this.render();
         if (!this.isSetup) {
             this.setupNavigation();
@@ -55,107 +42,18 @@ class LoadPage extends HTMLElement implements LoadPageElement {
             const currentUser = localStorage.getItem('currentUser');
             this.isAuthenticated = authStatus && !!currentUser;
             
-            console.log('LoadPage: Estado de autenticación:', this.isAuthenticated);
+            console.log('🔐 Estado de autenticación:', this.isAuthenticated);
             
-            // Si no está autenticado, ir a login
-            if (!this.isAuthenticated && !this.isPublicRoute(window.location.pathname)) {
-                console.log('LoadPage: Usuario no autenticado, redirigiendo a login');
-                this.updateView('/login');
-            }
+            // Actualizar indicador visual
+            this.updateAuthStatus();
         } catch (error) {
             console.error('LoadPage: Error verificando autenticación:', error);
             this.isAuthenticated = false;
         }
     }
 
-    // Verificar si una ruta es pública (no requiere autenticación)
-    private isPublicRoute(route: string): boolean {
-        const publicRoutes = ['/login', '/register'];
-        return publicRoutes.includes(route);
-    }
-
-    // Verificar si una ruta requiere autenticación
-    private isProtectedRoute(route: string): boolean {
-        const protectedRoutes = [
-            '/home', '/profile', '/save', '/explore', '/settings', 
-            '/notifications', '/restaurant-profile', '/configurations',
-            '/cambiar-correo', '/cambiar-nombre', '/cambiar-contraseña'
-        ];
-        return protectedRoutes.includes(route) || route.startsWith('/restaurant-profile/');
-    }
-
-    // Configura los event listeners para navegación
-    private setupNavigation(){
-        // Intercepta clicks en enlaces
-        this.shadowRoot!.addEventListener('click', (e) => {
-            const target = e.target as HTMLElement;
-            const link = target.closest('a');
-
-            if (link && link.href) {
-                e.preventDefault();
-            }
-        });
-
-        // Escucha eventos de navegación de otros componentes
-        document.addEventListener('navigate', (event: Event) => {
-            const customEvent = event as CustomEvent<string>;
-            const route = customEvent.detail;
-            this.handleNavigationRequest(route);
-        });
-
-        // Navegación a perfil de restaurante
-        document.addEventListener('restaurant-selected', () => {
-            this.handleNavigationRequest('/restaurant-profile');
-        });
-
-        // Escuchar eventos de autenticación
-        document.addEventListener('auth-success', () => {
-            console.log('LoadPage: Autenticación exitosa detectada');
-            this.isAuthenticated = true;
-        });
-
-        document.addEventListener('auth-logout', () => {
-            console.log('LoadPage: Logout detectado');
-            this.isAuthenticated = false;
-            this.updateView('/login');
-        });
-
-        // Maneja navegación del navegador (botón atrás/adelante)
-        window.addEventListener('popstate', () => {
-            const currentPath = window.location.pathname;
-            this.handleNavigationRequest(currentPath);
-        });
-    }
-
-    // Maneja las solicitudes de navegación con validación de autenticación
-    private handleNavigationRequest(route: string): void {
-        console.log('LoadPage: Solicitud de navegación a:', route);
-        
-        // Actualizar estado de autenticación
-        this.checkAuthentication();
-        
-        // Verificar permisos de navegación
-        if (this.isProtectedRoute(route) && !this.isAuthenticated) {
-            console.log('LoadPage: Ruta protegida sin autenticación, redirigiendo a login');
-            this.updateView('/login');
-            return;
-        }
-
-        // Si está autenticado y trata de ir a login/register, redirigir a home
-        if (this.isPublicRoute(route) && this.isAuthenticated) {
-            console.log('LoadPage: Usuario autenticado intentando acceder a ruta pública, redirigiendo a home');
-            this.updateView('/home');
-            return;
-        }
-
-        // Navegación permitida
-        this.updateView(route);
-    }
-
     render(){
-        if (!this.shadowRoot) {
-            return;
-        }
+        if (!this.shadowRoot) return;
 
         this.shadowRoot.innerHTML = /*html*/ `
             <style>
@@ -195,6 +93,7 @@ class LoadPage extends HTMLElement implements LoadPageElement {
                     margin: 20px;
                     border-radius: 10px;
                     color: #666;
+                    font-size: 18px;
                 }
 
                 .auth-error {
@@ -230,11 +129,12 @@ class LoadPage extends HTMLElement implements LoadPageElement {
                     background: #AAAB54;
                     color: white;
                     border: none;
-                    padding: 10px 20px;
+                    padding: 12px 24px;
                     border-radius: 5px;
                     cursor: pointer;
-                    margin-top: 15px;
-                    margin-right: 10px;
+                    margin: 10px;
+                    font-size: 16px;
+                    transition: background-color 0.2s;
                 }
 
                 .error-button:hover {
@@ -272,55 +172,52 @@ class LoadPage extends HTMLElement implements LoadPageElement {
                 
                 <main>
                     <!-- El contenido se carga dinámicamente aquí -->
-                    <div class="loading">Inicializando aplicación...</div>
+                    <div class="loading">🚀 Inicializando Lulada...</div>
                 </main>
             </div>
         `;
     }
 
-    // Función principal: cambia qué página se muestra
+    // ✅ FUNCIÓN PRINCIPAL CORREGIDA - Cambia qué página se muestra
     updateView(route: string){
-        if (!this.shadowRoot) {
-            return;
-        }
+        if (!this.shadowRoot) return;
         
         const cleanRoute = route.startsWith('/') ? route : '/' + route;
         this.currentRoute = cleanRoute;
         
-        console.log('LoadPage: Actualizando vista a:', cleanRoute);
+        console.log('🧭 LoadPage: Navegando a:', cleanRoute);
         
         // Actualizar indicador de autenticación
         this.updateAuthStatus();
         
-        // Mapeo de rutas a componentes
-        // ✅ MAPEO CORREGIDO - USA LOS NOMBRES REALES:
-const routeComponentMap: { [key: string]: string } = {
-    '/': this.isAuthenticated ? '<lulada-home></lulada-home>' : '<lulada-login></lulada-login>',
-    '/home': '<lulada-home></lulada-home>',
-    '/notifications': '<lulada-notifications></lulada-notifications>',
-    '/save': '<lulada-save></lulada-save>',
-    '/explore': '<lulada-explore></lulada-explore>',
-    '/configurations': '<lulada-settings></lulada-settings>',
-    '/settings': '<lulada-settings></lulada-settings>',
-    '/profile': '<lulada-puser></lulada-puser>',
-    '/restaurant-profile': '<lulada-restaurant-profile></lulada-restaurant-profile>',
-    '/cambiar-correo': '<cambiar-correo-f></cambiar-correo-f>',
-    '/cambiar-nombre': '<cambiar-nombre-f></cambiar-nombre-f>',
-    '/cambiar-contraseña': '<cambiar-contrasena-f></cambiar-contrasena-f>',
-    '/login': '<lulada-login></lulada-login>',
-    '/register': '<lulada-new-account></lulada-new-account>'
-};
+        // ✅ MAPEO CORRECTO DE RUTAS A COMPONENTES - NOMBRES REALES
+        const routeComponentMap: { [key: string]: string } = {
+            '/': this.isAuthenticated ? 'lulada-home' : 'lulada-login',
+            '/home': 'lulada-home',
+            '/notifications': 'lulada-notifications',
+            '/save': 'lulada-save',
+            '/explore': 'lulada-explore',
+            '/configurations': 'lulada-settings',
+            '/settings': 'lulada-settings',
+            '/profile': 'lulada-puser',
+            '/restaurant-profile': 'lulada-restaurant-profile',
+            '/cambiar-correo': 'cambiar-correo-f',
+            '/cambiar-nombre': 'cambiar-nombre-f',
+            '/cambiar-contraseña': 'cambiar-contrasena-f',
+            '/login': 'lulada-login',
+            '/register': 'lulada-new-account'
+        };
         
-        let newComponent = routeComponentMap[cleanRoute];
-        let componentName = '';
+        const componentName = routeComponentMap[cleanRoute];
         
-        // Verificar rutas dinámicas
-        if (!newComponent) {
+        if (!componentName) {
+            // Verificar rutas dinámicas
             if (cleanRoute.startsWith('/restaurant-profile/')) {
-                newComponent = '<restaurant-profile></restaurant-profile>';
-                componentName = 'restaurant-profile';
+                this.loadComponent('lulada-restaurant-profile');
+                return;
             } else {
                 // Ruta no reconocida, redirigir según autenticación
+                console.log('⚠️ Ruta no reconocida:', cleanRoute);
                 if (this.isAuthenticated) {
                     this.updateView('/home');
                 } else {
@@ -328,55 +225,86 @@ const routeComponentMap: { [key: string]: string } = {
                 }
                 return;
             }
-        } else {
-            const match = newComponent.match(/<([^>\s]+)/);
-            componentName = match ? match[1] : '';
         }
-        
+
         // Verificar permisos antes de mostrar componente
         if (this.isProtectedRoute(cleanRoute) && !this.isAuthenticated) {
+            console.log('🔒 Ruta protegida sin autenticación, redirigiendo a login');
             this.showAuthError();
             return;
         }
-        
+
         // Verificar que el componente esté registrado
-        if (componentName && !this.isComponentRegistered(componentName)) {
+        if (!this.isComponentRegistered(componentName)) {
+            console.error('❌ Componente no registrado:', componentName);
             this.showComponentError(cleanRoute, componentName);
             return;
         }
-        
-        const main = this.shadowRoot.querySelector('main');
-        if (main) {
-            main.innerHTML = '<div class="loading">Cargando...</div>';
-            
-            setTimeout(() => {
-                main.innerHTML = newComponent;
-                
-                setTimeout(() => {
-                    const loadedComponent = main.querySelector('*');
-                    if (loadedComponent) {
-                        if (!loadedComponent.shadowRoot && !loadedComponent.innerHTML.trim()) {
-                            setTimeout(() => {
-                                if (!loadedComponent.shadowRoot && !loadedComponent.innerHTML.trim()) {
-                                    this.showComponentError(cleanRoute, componentName);
-                                }
-                            }, 1000);
-                        }
-                    } else {
-                        this.showComponentError(cleanRoute, componentName);
-                    }
-                }, 100);
-            }, 50);
-        }
-        
-        window.scrollTo(0, 0);
+
+        // Cargar el componente
+        this.loadComponent(componentName);
         
         // Actualizar URL del navegador
         if (window.history && window.history.pushState && window.location.pathname !== cleanRoute) {
             window.history.pushState(null, '', cleanRoute);
         }
         
+        // Actualizar componentes de navegación
         this.updateNavigationComponents(cleanRoute);
+    }
+
+    // ✅ Cargar componente de forma segura
+    private loadComponent(componentName: string) {
+        const main = this.shadowRoot?.querySelector('main');
+        if (!main) return;
+
+        main.innerHTML = '<div class="loading">Cargando...</div>';
+        
+        setTimeout(() => {
+            try {
+                main.innerHTML = `<${componentName}></${componentName}>`;
+                console.log(`✅ ${componentName} cargado exitosamente`);
+                
+                // Verificar que se cargó correctamente
+                setTimeout(() => {
+                    const loadedComponent = main.querySelector(componentName);
+                    if (loadedComponent) {
+                        // Verificar si el componente tiene contenido
+                        if (!loadedComponent.shadowRoot && !loadedComponent.innerHTML.trim()) {
+                            setTimeout(() => {
+                                if (!loadedComponent.shadowRoot && !loadedComponent.innerHTML.trim()) {
+                                    console.warn('⚠️ Componente cargado pero sin contenido:', componentName);
+                                    this.showComponentError(this.currentRoute, componentName);
+                                }
+                            }, 1000);
+                        }
+                    } else {
+                        console.error('❌ Componente no encontrado en DOM:', componentName);
+                        this.showComponentError(this.currentRoute, componentName);
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('❌ Error cargando componente:', componentName, error);
+                this.showComponentError(this.currentRoute, componentName);
+            }
+        }, 50);
+    }
+
+    // Verificar si una ruta requiere autenticación
+    private isProtectedRoute(route: string): boolean {
+        const protectedRoutes = [
+            '/home', '/profile', '/save', '/explore', '/settings', 
+            '/notifications', '/restaurant-profile', '/configurations',
+            '/cambiar-correo', '/cambiar-nombre', '/cambiar-contraseña'
+        ];
+        return protectedRoutes.includes(route) || route.startsWith('/restaurant-profile/');
+    }
+
+    // Verificar si una ruta es pública (no requiere autenticación)
+    private isPublicRoute(route: string): boolean {
+        const publicRoutes = ['/login', '/register'];
+        return publicRoutes.includes(route);
     }
 
     // Actualizar indicador visual de autenticación
@@ -418,8 +346,8 @@ const routeComponentMap: { [key: string]: string } = {
                     <button class="error-button" onclick="document.dispatchEvent(new CustomEvent('navigate', {detail: '${this.isAuthenticated ? '/home' : '/login'}'}))">
                         ${this.isAuthenticated ? 'Volver al Inicio' : 'Ir a Login'}
                     </button>
-                    <button class="error-button" onclick="window.debugLoadPage()">
-                        Debug Info
+                    <button class="error-button" onclick="window.location.reload()">
+                        🔄 Recargar Aplicación
                     </button>
                 </div>
             `;
@@ -439,6 +367,66 @@ const routeComponentMap: { [key: string]: string } = {
         }
     }
 
+    // Configura los event listeners para navegación
+    private setupNavigation(){
+        // Escucha eventos de navegación de otros componentes
+        document.addEventListener('navigate', (event: Event) => {
+            const customEvent = event as CustomEvent<string>;
+            const route = customEvent.detail;
+            this.handleNavigationRequest(route);
+        });
+
+        // Navegación a perfil de restaurante
+        document.addEventListener('restaurant-selected', () => {
+            this.handleNavigationRequest('/restaurant-profile');
+        });
+
+        // Escuchar eventos de autenticación
+        document.addEventListener('auth-success', () => {
+            console.log('LoadPage: Autenticación exitosa detectada');
+            this.isAuthenticated = true;
+            this.updateAuthStatus();
+        });
+
+        document.addEventListener('auth-logout', () => {
+            console.log('LoadPage: Logout detectado');
+            this.isAuthenticated = false;
+            this.updateView('/login');
+        });
+
+        // Maneja navegación del navegador (botón atrás/adelante)
+        window.addEventListener('popstate', () => {
+            const currentPath = window.location.pathname;
+            this.handleNavigationRequest(currentPath);
+        });
+    }
+
+    // Maneja las solicitudes de navegación con validación de autenticación
+    private handleNavigationRequest(route: string): void {
+        console.log('🧭 LoadPage: Solicitud de navegación a:', route);
+        
+        // Actualizar estado de autenticación
+        this.checkAuthentication();
+        
+        // Verificar permisos de navegación
+        if (this.isProtectedRoute(route) && !this.isAuthenticated) {
+            console.log('🔒 LoadPage: Ruta protegida sin autenticación, redirigiendo a login');
+            this.updateView('/login');
+            return;
+        }
+
+        // Si está autenticado y trata de ir a login/register, redirigir a home
+        if (this.isPublicRoute(route) && this.isAuthenticated) {
+            console.log('🏠 LoadPage: Usuario autenticado intentando acceder a ruta pública, redirigiendo a home');
+            this.updateView('/home');
+            return;
+        }
+
+        // Navegación permitida
+        this.updateView(route);
+    }
+
+    // Métodos públicos de la interfaz
     public getCurrentRoute(): string {
         return this.currentRoute;
     }
@@ -470,22 +458,19 @@ const routeComponentMap: { [key: string]: string } = {
         
         // Verificar componentes críticos
         const componentes = [
-            'login-page',
-            'register-new-account',
             'lulada-home',
-            'lulada-notifications', 
-            'save-page',
+            'lulada-login',
+            'lulada-puser', 
             'lulada-explore',
             'lulada-settings',
-            'puser-page',
-            'restaurant-profile'
+            'lulada-save',
+            'lulada-notifications'
         ];
         
         console.log('- Componentes críticos:');
         componentes.forEach(name => {
             const registered = this.isComponentRegistered(name);
-            const inDOM = !!document.querySelector(name);
-            console.log(`  ${registered ? '✅' : '❌'} ${name}: ${registered ? 'Registrado' : 'NO Registrado'} | ${inDOM ? 'En DOM' : 'NO en DOM'}`);
+            console.log(`  ${registered ? '✅' : '❌'} ${name}: ${registered ? 'Registrado' : 'NO Registrado'}`);
         });
         
         console.log('- Componentes de navegación:');
@@ -493,18 +478,6 @@ const routeComponentMap: { [key: string]: string } = {
         const responsiveBar = document.querySelector('lulada-responsive-bar');
         console.log(`  Sidebar: ${sidebar ? 'Encontrado' : 'NO encontrado'}`);
         console.log(`  ResponsiveBar: ${responsiveBar ? 'Encontrado' : 'NO encontrado'}`);
-        
-        try {
-            const restaurantInfo = sessionStorage.getItem('selectedRestaurant');
-            if (restaurantInfo) {
-                const parsed = JSON.parse(restaurantInfo);
-                console.log('- Información de restaurante seleccionado:', parsed);
-            } else {
-                console.log('- No hay restaurante seleccionado en sessionStorage');
-            }
-        } catch (error) {
-            console.log('- Error leyendo información de restaurante:', error);
-        }
     }
 
     public forceUpdate(): void {
@@ -519,67 +492,15 @@ const routeComponentMap: { [key: string]: string } = {
             mainElementExists: !!this.shadowRoot?.querySelector('main'),
             navigationConfigured: this.isSetup,
             currentRouteSet: this.currentRoute !== '',
-            isAuthenticated: this.isAuthenticated,
-            loginComponentRegistered: this.isComponentRegistered('login-page'),
-            homeComponentRegistered: this.isComponentRegistered('lulada-home'),
-            registerComponentRegistered: this.isComponentRegistered('register-new-account'),
-            notificationsComponentRegistered: this.isComponentRegistered('lulada-notifications'),
-            settingsComponentRegistered: this.isComponentRegistered('lulada-settings'),
-            exploreComponentRegistered: this.isComponentRegistered('lulada-explore'),
-            profileComponentRegistered: this.isComponentRegistered('puser-page'),
-            saveComponentRegistered: this.isComponentRegistered('save-page'),
-            restaurantProfileRegistered: this.isComponentRegistered('restaurant-profile')
+            isAuthenticated: this.isAuthenticated
         };
-    }
-
-    public debugRestaurantNavigation(): void {
-        console.log('🔍 LoadPage: Debug de navegación de restaurantes');
-        
-        const isRegistered = this.isComponentRegistered('restaurant-profile');
-        console.log('- restaurant-profile registrado:', isRegistered);
-        
-        try {
-            const restaurantInfo = sessionStorage.getItem('selectedRestaurant');
-            if (restaurantInfo) {
-                const parsed = JSON.parse(restaurantInfo);
-                console.log('- Restaurante en sessionStorage:', parsed);
-                console.log('- Tiempo desde selección:', Date.now() - parsed.timestamp, 'ms');
-            } else {
-                console.log('- No hay restaurante en sessionStorage');
-            }
-        } catch (error) {
-            console.error('- Error leyendo sessionStorage:', error);
-        }
-        
-        const isRestaurantRoute = this.currentRoute.includes('restaurant-profile');
-        console.log('- En ruta de restaurante:', isRestaurantRoute);
-        console.log('- Ruta actual:', this.currentRoute);
-        console.log('- Autenticado:', this.isAuthenticated);
-        
-        const main = this.shadowRoot?.querySelector('main');
-        const restaurantComponent = main?.querySelector('restaurant-profile');
-        console.log('- Componente restaurant-profile en DOM:', !!restaurantComponent);
-    }
-
-    // Método público para forzar re-autenticación
-    public forceAuthCheck(): void {
-        console.log('LoadPage: Forzando verificación de autenticación');
-        this.checkAuthentication();
-        this.updateAuthStatus();
-        
-        // Si la ruta actual no es válida para el estado de autenticación, redirigir
-        if (this.isProtectedRoute(this.currentRoute) && !this.isAuthenticated) {
-            this.updateView('/login');
-        } else if (this.isPublicRoute(this.currentRoute) && this.isAuthenticated) {
-            this.updateView('/home');
-        }
     }
 }
 
-// ✅ FUNCIONES GLOBALES PARA DEBUGGING - VERSIÓN CORREGIDA SIN ANY
+// ✅ FUNCIONES GLOBALES PARA DEBUGGING
 if (typeof window !== 'undefined') {
-    window.debugLoadPage = () => {
-        const loadPage = document.querySelector('load-pages') as LoadPageElement | null;
+    (window as any).debugLoadPage = () => {
+        const loadPage = document.querySelector('load-pages') as LoadPage | null;
         if (loadPage && typeof loadPage.debugInfo === 'function') {
             loadPage.debugInfo();
         } else {
@@ -587,19 +508,10 @@ if (typeof window !== 'undefined') {
         }
     };
     
-    window.debugRestaurantNav = () => {
+    (window as any).debugAuth = () => {
         const loadPage = document.querySelector('load-pages') as LoadPage | null;
-        if (loadPage && typeof loadPage.debugRestaurantNavigation === 'function') {
-            loadPage.debugRestaurantNavigation();
-        } else {
-            console.log('❌ No se encontró el componente load-pages');
-        }
-    };
-
-    window.debugAuth = () => {
-        const loadPage = document.querySelector('load-pages') as LoadPage | null;
-        if (loadPage && typeof loadPage.forceAuthCheck === 'function') {
-            loadPage.forceAuthCheck();
+        if (loadPage && typeof loadPage.forceUpdate === 'function') {
+            loadPage.forceUpdate();
         } else {
             console.log('❌ No se encontró el componente load-pages');
         }

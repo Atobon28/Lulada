@@ -56,73 +56,44 @@ class UserEditButton extends HTMLElement {
                 fill: currentColor;
             }
 
-            /* RESPONSIVE: Tablets */
-            @media (max-width: 768px) {
-                .userEditar {
-                    text-align: center;
-                    padding: 0.5rem;
-                }
-                
-                .userEditar button {
-                    width: auto;
-                    min-width: 5rem;
-                    font-size: 0.9rem;
-                    padding: 0.5rem 1rem;
-                    height: 2.5rem;
-                }
-            }
-
-            /* RESPONSIVE: Móviles */
-            @media (max-width: 480px) {
-                .userEditar button {
-                    font-size: 0.8rem;
-                    padding: 0.4rem 0.8rem;
-                    height: 2.2rem;
-                    width: 100%;
-                    max-width: 120px;
-                }
-            }
-
             .userEditar button:disabled {
                 background-color: #ccc;
                 cursor: not-allowed;
                 transform: none;
-                box-shadow: none;
             }
 
-            /* Estado de carga */
             .userEditar button.loading {
-                position: relative;
-                color: transparent;
+                opacity: 0.7;
             }
 
-            .userEditar button.loading::after {
-                content: '';
-                position: absolute;
+            .loading-spinner {
                 width: 16px;
                 height: 16px;
-                top: 50%;
-                left: 50%;
-                margin-left: -8px;
-                margin-top: -8px;
-                border: 2px solid #ffffff;
+                border: 2px solid #ffffff40;
+                border-top: 2px solid #ffffff;
                 border-radius: 50%;
-                border-top-color: transparent;
                 animation: spin 1s linear infinite;
             }
 
             @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            .userEditar button.loading .edit-icon {
+                display: none;
+            }
+
+            .userEditar button:not(.loading) .loading-spinner {
+                display: none;
             }
             </style>
             
             <div class="userEditar">
-                <button id="edit-btn">
-                    <svg class="edit-icon" viewBox="0 0 24 24">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                <button type="button" id="edit-btn">
+                    <div class="loading-spinner"></div>
+                    <svg class="edit-icon" viewBox="0 0 20 20">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
                     </svg>
                     Editar
                 </button>
@@ -133,36 +104,29 @@ class UserEditButton extends HTMLElement {
 
     connectedCallback(): void {
         this.setupEventListeners();
-        this.createModal();
     }
 
     disconnectedCallback(): void {
-        this.removeModal();
-    }
-
-    // Crea el modal de edición de perfil
-    private createModal(): void {
-        const existingModal = document.querySelector('edit-profile-modal') as EditProfileModal | null;
-        
-        if (existingModal) {
-            this.modal = existingModal;
-            return;
-        }
-
-        const newModal = document.createElement('edit-profile-modal') as EditProfileModal;
-        document.body.appendChild(newModal);
-        this.modal = newModal;
-    }
-
-    // Elimina el modal del DOM
-    private removeModal(): void {
+        // Limpiar modal si existe
         if (this.modal && document.body.contains(this.modal)) {
             document.body.removeChild(this.modal);
-            this.modal = null;
         }
     }
 
-    // Configura los eventos del botón
+    // Crear el modal de edición
+    private createModal(): void {
+        if (this.modal && document.body.contains(this.modal)) {
+            document.body.removeChild(this.modal);
+        }
+
+        this.modal = document.createElement('lulada-edit-profile-modal') as EditProfileModal;
+        
+        if (this.modal) {
+            document.body.appendChild(this.modal);
+        }
+    }
+
+    // Configurar event listeners
     private setupEventListeners(): void {
         const editBtn = this.shadowRoot?.querySelector('#edit-btn');
         
@@ -198,14 +162,13 @@ class UserEditButton extends HTMLElement {
                 button.classList.remove('loading');
             }, 300);
 
-            } catch (error) {
-                console.error('Error al abrir el editor de perfil:', error);
-                alert('Error al abrir el editor de perfil');
+        } catch (error) {
+            console.error('Error al abrir el editor de perfil:', error);
+            alert('Error al abrir el editor de perfil');
 
-                button.disabled = false;
-                button.classList.remove('loading');
-            }
-
+            button.disabled = false;
+            button.classList.remove('loading');
+        }
     }
 
     // Verifica si un elemento tiene el método 'show'
@@ -225,7 +188,7 @@ class UserEditButton extends HTMLElement {
 
     // Método para depuración
     public debugInfo(): void {
-        console.log(' UserEditButton Debug:');
+        console.log('🔍 UserEditButton Debug:');
         console.log('- Modal exists:', !!this.modal);
         console.log('- Modal in DOM:', this.modal ? document.body.contains(this.modal) : false);
         console.log('- Modal has show method:', this.modal ? this.hasShowMethod(this.modal) : false);
@@ -233,11 +196,6 @@ class UserEditButton extends HTMLElement {
     }
 }
 
-// CORREGIDO: Registrar automáticamente y exportar como default
-customElements.define('user-edit', UserEditButton);
-
-// CORREGIDO: Export default
+// ✅ SIN REGISTRO AUTOMÁTICO - se registra desde index.ts
 export default UserEditButton;
-
-// AGREGADO: También export nombrado para flexibilidad
 export { UserEditButton };

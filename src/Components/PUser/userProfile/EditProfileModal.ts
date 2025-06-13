@@ -1,163 +1,108 @@
-// src/Components/PUser/userProfile/EditProfileModal.ts - CORREGIDO
-import { userStore, UserState } from "../../../Services/flux/UserStore";
-import { UserData } from "../../../Services/flux/UserActions";
+import { UserData } from '../../../Services/flux/UserActions';
 
-// Modal para editar el perfil del usuario
+const FIXED_PROFILE_PHOTO = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+
 class EditProfileModal extends HTMLElement {
   private currentUser: UserData | null = null;
-  private storeListener = this.handleStoreChange.bind(this);
   private _isVisible = false;
-  private keyDownHandler: ((e: KeyboardEvent) => void) | null = null;
 
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
-  }
-
-  /* ------------------------------------------------------------------
-   * Ciclo de vida del componente
-   * ------------------------------------------------------------------ */
-  connectedCallback() {
-    userStore.subscribe(this.storeListener);
-
-    const currentUser = userStore.getCurrentUser();
-    if (currentUser) {
-      this.currentUser = { ...currentUser };
-    }
-
+    this.attachShadow({ mode: 'open' });
     this.render();
+  }
+
+  connectedCallback(): void {
     this.setupEventListeners();
-    this.updateFormFields();
   }
 
-  disconnectedCallback() {
-    userStore.unsubscribe(this.storeListener);
-
-    if (this.keyDownHandler) {
-      document.removeEventListener("keydown", this.keyDownHandler);
-    }
+  disconnectedCallback(): void {
+    this.removeEventListeners();
   }
 
-  /* ------------------------------------------------------------------
-   * Manejo del estado del store
-   * ------------------------------------------------------------------ */
-  private handleStoreChange(state: UserState): void {
-    const newUser = state.currentUser;
-    if (JSON.stringify(this.currentUser) !== JSON.stringify(newUser)) {
-      this.currentUser = newUser ? { ...newUser } : null;
-      this.updateFormFields();
-    }
-  }
-
-  /* ------------------------------------------------------------------
-   * Control de visibilidad
-   * ------------------------------------------------------------------ */
-  public show(): void {
-    if (this._isVisible) return;
-
-    this._isVisible = true;
-    const modal = this.shadowRoot?.querySelector(
-      ".modal-container"
-    ) as HTMLElement;
-    if (modal) {
-      modal.style.display = "flex";
-      document.body.style.overflow = "hidden";
-
-      // Focus en el primer input
-      setTimeout(() => {
-        const firstInput = this.shadowRoot?.querySelector(
-          "input"
-        ) as HTMLInputElement;
-        firstInput?.focus();
-      }, 100);
-    }
-  }
-
-  public hide(): void {
-    if (!this._isVisible) return;
-
-    this._isVisible = false;
-    const modal = this.shadowRoot?.querySelector(
-      ".modal-container"
-    ) as HTMLElement;
-    if (modal) {
-      modal.style.display = "none";
-      document.body.style.overflow = "";
-    }
-  }
-
-  public toggle(): void {
-    this._isVisible ? this.hide() : this.show();
-  }
-
-  public get isVisible(): boolean {
-    return this._isVisible;
-  }
-
-  /* ------------------------------------------------------------------
-   * Renderizado
-   * ------------------------------------------------------------------ */
   private render(): void {
     if (!this.shadowRoot) return;
 
-    this.shadowRoot.innerHTML = `
+    this.shadowRoot.innerHTML = /*html*/ `
       <style>
-        .modal-container {
+        :host {
           position: fixed;
           top: 0;
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(8px);
+          z-index: 1000;
           display: none;
-          justify-content: center;
           align-items: center;
-          z-index: 10000;
+          justify-content: center;
           padding: 20px;
           box-sizing: border-box;
         }
 
-        .modal-content {
+        :host(.visible) {
+          display: flex;
+        }
+
+        .modal {
           background: white;
-          border-radius: 15px;
-          padding: 30px;
+          border-radius: 20px;
+          padding: 32px;
           max-width: 500px;
           width: 100%;
           max-height: 90vh;
           overflow-y: auto;
-          position: relative;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: modalSlideIn 0.3s ease-out;
         }
 
-        .close-btn {
-          position: absolute;
-          top: 15px;
-          right: 15px;
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-30px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-title {
+          font-size: 24px;
+          font-weight: bold;
+          color: #333;
+          margin: 0;
+        }
+
+        .close-button {
           background: none;
           border: none;
           font-size: 24px;
           cursor: pointer;
           color: #666;
-          width: 30px;
-          height: 30px;
+          padding: 8px;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 50%;
-          transition: all 0.2s;
+          transition: all 0.2s ease;
         }
 
-        .close-btn:hover {
-          background: #f0f0f0;
+        .close-button:hover {
+          background: #f5f5f5;
           color: #333;
-        }
-
-        .modal-title {
-          font-size: 24px;
-          font-weight: 700;
-          margin-bottom: 25px;
-          color: #333;
-          text-align: center;
         }
 
         .form-group {
@@ -172,52 +117,66 @@ class EditProfileModal extends HTMLElement {
           font-size: 14px;
         }
 
-        .form-input {
+        .form-input,
+        .form-textarea {
           width: 100%;
           padding: 12px 16px;
           border: 2px solid #e1e5e9;
-          border-radius: 8px;
+          border-radius: 12px;
           font-size: 16px;
-          transition: all 0.3s ease;
+          font-family: inherit;
+          transition: all 0.2s ease;
           box-sizing: border-box;
+          background: #fafbfc;
         }
 
-        .form-input:focus {
+        .form-input:focus,
+        .form-textarea:focus {
           outline: none;
           border-color: #AAAB54;
+          background: white;
           box-shadow: 0 0 0 3px rgba(170, 171, 84, 0.1);
         }
 
-        textarea.form-input {
+        .form-textarea {
           resize: vertical;
-          min-height: 80px;
+          min-height: 100px;
+          font-family: inherit;
         }
 
-        .form-actions {
+        .char-counter {
+          text-align: right;
+          font-size: 12px;
+          margin-top: 4px;
+          color: #666;
+        }
+
+        .form-buttons {
           display: flex;
-          gap: 15px;
-          justify-content: flex-end;
-          margin-top: 30px;
+          gap: 12px;
+          margin-top: 32px;
         }
 
         .btn {
-          padding: 12px 24px;
+          flex: 1;
+          padding: 14px 24px;
           border: none;
-          border-radius: 8px;
+          border-radius: 12px;
           font-size: 16px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, #AAAB54, #999A4A);
+          background: #AAAB54;
           color: white;
         }
 
         .btn-primary:hover {
-          background: linear-gradient(135deg, #999A4A, #8a8b3a);
+          background: #999A4A;
           transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(170, 171, 84, 0.3);
         }
 
         .btn-secondary {
@@ -231,186 +190,128 @@ class EditProfileModal extends HTMLElement {
           color: #333;
         }
 
-        .error-message {
-          color: #dc3545;
-          font-size: 14px;
-          margin-top: 10px;
-          padding: 10px;
-          background: #f8d7da;
-          border: 1px solid #f5c6cb;
-          border-radius: 4px;
+        .message {
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin-bottom: 16px;
+          font-weight: 500;
+          text-align: center;
           display: none;
         }
 
-        .success-message {
-          color: #155724;
-          font-size: 14px;
-          margin-top: 10px;
-          padding: 10px;
-          background: #d4edda;
-          border: 1px solid #c3e6cb;
-          border-radius: 4px;
-          display: none;
+        .message.error {
+          background: #fee;
+          color: #c33;
+          border: 1px solid #fcc;
         }
 
-        .char-count {
-          font-size: 12px;
-          color: #666;
-          text-align: right;
-          margin-top: 5px;
+        .message.success {
+          background: #efe;
+          color: #393;
+          border: 1px solid #cfc;
         }
 
-        @media (max-width: 768px) {
-          .modal-content {
+        @media (max-width: 600px) {
+          .modal {
+            padding: 24px;
             margin: 10px;
-            padding: 20px;
+            max-height: 95vh;
           }
 
-          .form-actions {
+          .modal-title {
+            font-size: 20px;
+          }
+
+          .form-buttons {
             flex-direction: column;
-          }
-
-          .btn {
-            width: 100%;
           }
         }
       </style>
 
-      <div class="modal-container">
-        <div class="modal-content">
-          <button class="close-btn" id="close-modal">&times;</button>
-          
+      <div class="modal">
+        <div class="modal-header">
           <h2 class="modal-title">Editar Perfil</h2>
-          
-          <form id="edit-profile-form">
-            <div class="form-group">
-              <label class="form-label" for="nombre">Nombre completo</label>
-              <input 
-                type="text" 
-                id="nombre" 
-                name="nombre" 
-                class="form-input" 
-                placeholder="Tu nombre completo"
-                required
-              >
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="nombreDeUsuario">Nombre de usuario</label>
-              <input 
-                type="text" 
-                id="nombreDeUsuario" 
-                name="nombreDeUsuario" 
-                class="form-input" 
-                placeholder="@usuario"
-                required
-              >
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="descripcion">Descripción</label>
-              <textarea 
-                id="descripcion" 
-                name="descripcion" 
-                class="form-input" 
-                placeholder="Cuéntanos algo sobre ti..."
-                maxlength="200"
-              ></textarea>
-              <div class="char-count">
-                <span id="char-count">0</span>/200
-              </div>
-            </div>
-
-            <div class="error-message" id="error-message"></div>
-            <div class="success-message" id="success-message"></div>
-
-            <div class="form-actions">
-              <button type="button" class="btn btn-secondary cancel-btn">
-                Cancelar
-              </button>
-              <button type="submit" class="btn btn-primary">
-                Guardar cambios
-              </button>
-            </div>
-          </form>
+          <button class="close-button" id="close-btn">&times;</button>
         </div>
+
+        <div id="error-message" class="message error"></div>
+        <div id="success-message" class="message success"></div>
+
+        <form id="edit-profile-form" novalidate>
+          <div class="form-group">
+            <label for="nombre" class="form-label">Nombre completo</label>
+            <input type="text" id="nombre" name="nombre" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label for="nombreDeUsuario" class="form-label">Nombre de usuario</label>
+            <input type="text" id="nombreDeUsuario" name="nombreDeUsuario" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea id="descripcion" name="descripcion" class="form-textarea" maxlength="200" placeholder="Cuéntanos un poco sobre ti..."></textarea>
+            <div class="char-counter" id="char-counter">0/200</div>
+          </div>
+
+          <div class="form-buttons">
+            <button type="button" class="btn btn-secondary" id="cancel-btn">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="save-btn">Guardar Cambios</button>
+          </div>
+        </form>
       </div>
     `;
   }
 
-  /* ------------------------------------------------------------------
-   * Configuración de eventos - CORREGIDA
-   * ------------------------------------------------------------------ */
   private setupEventListeners(): void {
     if (!this.shadowRoot) return;
 
-    // CORREGIDO: Verificar que los elementos existen antes de agregar listeners
-    const closeBtn = this.shadowRoot.querySelector("#close-modal");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        this.hide();
-      });
-    }
+    const form = this.shadowRoot.querySelector('#edit-profile-form') as HTMLFormElement;
+    const closeBtn = this.shadowRoot.querySelector('#close-btn');
+    const cancelBtn = this.shadowRoot.querySelector('#cancel-btn');
 
-    // Cerrar al hacer clic fuera del contenido
-    const modalContainer = this.shadowRoot.querySelector(".modal-container");
-    if (modalContainer) {
-      modalContainer.addEventListener("click", (e) => {
-        if (e.target === modalContainer) this.hide();
-      });
-    }
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleFormSubmit(e);
+    });
 
-    // Formulario
-    const form = this.shadowRoot.querySelector("#edit-profile-form") as HTMLFormElement;
-    if (form) {
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        this.handleFormSubmit(e);
-      });
-    }
+    closeBtn?.addEventListener('click', () => this.hide());
+    cancelBtn?.addEventListener('click', () => this.hide());
 
-    // Botón cancelar
-    const cancelBtn = this.shadowRoot.querySelector(".cancel-btn");
-    if (cancelBtn) {
-      cancelBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        this.hide();
-      });
-    }
+    document.addEventListener('keydown', this.handleKeydown);
+    this.addEventListener('click', (e) => {
+      if (e.target === this) this.hide();
+    });
 
-    // Tecla ESC
-    this.keyDownHandler = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && this._isVisible) this.hide();
-    };
-    document.addEventListener("keydown", this.keyDownHandler);
-
-    // Contador de caracteres para descripción
     this.setupCharacterCounter();
   }
 
-  /* ------------------------------------------------------------------
-   * Contador de caracteres
-   * ------------------------------------------------------------------ */
-  private setupCharacterCounter(): void {
-    const descriptionInput = this.shadowRoot?.querySelector("#descripcion") as HTMLTextAreaElement;
-    const charCount = this.shadowRoot?.querySelector("#char-count") as HTMLElement;
+  private removeEventListeners(): void {
+    document.removeEventListener('keydown', this.handleKeydown);
+  }
 
-    if (!descriptionInput || !charCount) return;
+  private handleKeydown = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape' && this._isVisible) {
+      this.hide();
+    }
+  };
+
+  private setupCharacterCounter(): void {
+    const descriptionInput = this.shadowRoot?.querySelector('#descripcion') as HTMLTextAreaElement;
+    const charCounter = this.shadowRoot?.querySelector('#char-counter') as HTMLElement;
+
+    if (!descriptionInput || !charCounter) return;
 
     const updateCharCount = () => {
       const count = descriptionInput.value.length;
-      charCount.textContent = count.toString();
-      charCount.style.color = count > 180 ? "#dc3545" : count > 150 ? "#ffc107" : "#666";
+      charCounter.textContent = `${count}/200`;
+      charCounter.style.color = count > 180 ? "#dc3545" : count > 150 ? "#ffc107" : "#666";
     };
 
     descriptionInput.addEventListener("input", updateCharCount);
     updateCharCount();
   }
 
-  /* ------------------------------------------------------------------
-   * Manejo del formulario
-   * ------------------------------------------------------------------ */
   private handleFormSubmit(e: Event): void {
     if (!this.shadowRoot || !this.currentUser) return;
 
@@ -424,23 +325,15 @@ class EditProfileModal extends HTMLElement {
       descripcion: (formData.get("descripcion") as string)?.trim() || this.currentUser.descripcion || "",
     };
 
-    // Validaciones
     if (!newUserData.nombre) return this.showError("El nombre es requerido");
     if (!newUserData.nombreDeUsuario) return this.showError("El nombre de usuario es requerido");
     if (newUserData.nombreDeUsuario.length < 3) return this.showError("El nombre de usuario debe tener al menos 3 caracteres");
     if (!/^[a-zA-Z0-9_.-]+$/.test(newUserData.nombreDeUsuario)) return this.showError("El nombre de usuario solo puede contener letras, números, guiones y puntos");
 
-    // Simular guardado
     this.showSuccess("Perfil actualizado correctamente");
 
-    // Actualizar store
-    // Define an interface for UserActions
-    interface UserActions {
-      updateUserData: (userData: UserData) => void;
-    }
-    
-    if (typeof window !== 'undefined' && (window as unknown as { UserActions?: UserActions }).UserActions) {
-      (window as unknown as { UserActions: UserActions }).UserActions.updateUserData(newUserData);
+    if (typeof window !== 'undefined' && window.UserActions) {
+      window.UserActions.updateUserData(newUserData);
     }
 
     setTimeout(() => {
@@ -448,9 +341,6 @@ class EditProfileModal extends HTMLElement {
     }, 1500);
   }
 
-  /* ------------------------------------------------------------------
-   * Actualizar campos del formulario
-   * ------------------------------------------------------------------ */
   private updateFormFields(): void {
     if (!this.shadowRoot || !this.currentUser) return;
 
@@ -463,9 +353,6 @@ class EditProfileModal extends HTMLElement {
     if (descripcionInput) descripcionInput.value = this.currentUser.descripcion || "";
   }
 
-  /* ------------------------------------------------------------------
-   * Mostrar mensajes
-   * ------------------------------------------------------------------ */
   private showError(message: string): void {
     this.showMessage(message, "error");
   }
@@ -476,9 +363,6 @@ class EditProfileModal extends HTMLElement {
 
   private showMessage(message: string, type: "error" | "success"): void {
     if (!this.shadowRoot) return;
-
-    this.shadowRoot.querySelector(".error-message")?.remove();
-    this.shadowRoot.querySelector(".success-message")?.remove();
 
     const messageEl = this.shadowRoot.querySelector(`#${type}-message`) as HTMLElement;
     if (messageEl) {
@@ -491,9 +375,23 @@ class EditProfileModal extends HTMLElement {
     }
   }
 
-  /* ------------------------------------------------------------------
-   * Métodos públicos
-   * ------------------------------------------------------------------ */
+  public show(): void {
+    this._isVisible = true;
+    this.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    
+    setTimeout(() => {
+      const firstInput = this.shadowRoot?.querySelector('#nombre') as HTMLInputElement;
+      firstInput?.focus();
+    }, 100);
+  }
+
+  public hide(): void {
+    this._isVisible = false;
+    this.classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
   public getCurrentUser(): UserData | null {
     return this.currentUser;
   }
@@ -518,7 +416,6 @@ class EditProfileModal extends HTMLElement {
   }
 }
 
-// Registrar el componente
-customElements.define("edit-profile-modal", EditProfileModal);
+// ✅ SIN REGISTRO AUTOMÁTICO - se registra desde index.ts
 export { EditProfileModal };
 export default EditProfileModal;

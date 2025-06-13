@@ -1,37 +1,19 @@
-import { userStore, UserState } from "../../../Services/flux/UserStore";
-import { UserData } from "../../../Services/flux/UserActions";
+import { UserData } from '../../../Services/flux/UserActions';
 
-// Interfaces para Firebase (solo si está disponible)
-interface FirebaseUserProfile {
-    uid: string;
-    email: string;
-    displayName: string | null;
-    photoURL: string | null;
-    isVerified: boolean;
-}
+const FIXED_PROFILE_PHOTO = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
 interface AuthState {
-    isAuthenticated: boolean;
-    user: FirebaseUserProfile | null;
-    isLoading: boolean;
-    error: string | null;
+    user?: {
+        photoURL?: string | null;
+        displayName?: string | null;
+        email?: string | null;
+    } | null;
+    isAuthenticated?: boolean;
+    isLoading?: boolean;
 }
 
-interface UserInfoElement extends HTMLElement {
-    forceUpdate(): void;
-    debugInfo(): void;
-}
-
-const FIXED_PROFILE_PHOTO = "https://randomuser.me/api/portraits/women/44.jpg";
-
-class UserInfo extends HTMLElement implements UserInfoElement {
+class UserInfo extends HTMLElement {
     private currentUser: UserData | null = null;
-    private storeListener = this.handleStoreChange.bind(this);
-    private _isConnected = false;
-    
-    // Firebase integration (opcional)
-    private firebaseService?: unknown;
-    private firebaseUnsubscribe?: () => void;
     private authState: AuthState | null = null;
 
     constructor() {
@@ -40,198 +22,37 @@ class UserInfo extends HTMLElement implements UserInfoElement {
     }
 
     connectedCallback(): void {
-        this._isConnected = true;
-        
-        userStore.subscribe(this.storeListener);
-        
-        // Intentar inicializar Firebase si está disponible
-        this.initializeFirebaseIfAvailable();
-        
-        setTimeout(() => {
-            const initialState = userStore.getState();
-            this.handleStoreChange(initialState);
-        }, 100);
+        this.render();
+        this.loadUserData();
     }
 
     disconnectedCallback(): void {
-        this._isConnected = false;
-        
-        userStore.unsubscribe(this.storeListener);
-        
-        if (this.firebaseUnsubscribe) {
-            this.firebaseUnsubscribe();
-        }
-    }
-
-    private async initializeFirebaseIfAvailable(): Promise<void> {
-        try {
-            const { FirebaseUserService } = await import('../../../Services/firebase/FirebaseUserService');
-            this.firebaseService = FirebaseUserService.getInstance();
-            
-            // Type assertion para acceder a los métodos
-            const service = this.firebaseService as {
-                subscribe: (callback: (state: AuthState) => void) => () => void;
-            };
-            
-            this.firebaseUnsubscribe = service.subscribe(this.handleFirebaseAuthChange.bind(this));
-        } catch (_error) {
-            // Firebase no disponible, continuar solo con Flux
-            console.log('Firebase no disponible, usando solo sistema Flux');
-        }
-    }
-
-    private handleFirebaseAuthChange(authState: AuthState): void {
-        this.authState = authState;
-        
-        // Si hay usuario de Firebase y no hay usuario en Flux, sincronizar
-        if (authState.isAuthenticated && authState.user && !this.currentUser) {
-            this.syncFirebaseToFlux(authState.user);
-        }
-        
-        this.render();
-    }
-
-    private syncFirebaseToFlux(firebaseUser: FirebaseUserProfile): void {
-        // Crear datos compatibles con Flux desde Firebase
-        const fluxUserData: UserData = {
-            foto: firebaseUser.photoURL || FIXED_PROFILE_PHOTO,
-            nombreDeUsuario: this.generateUsername(firebaseUser.displayName, firebaseUser.email),
-            nombre: firebaseUser.displayName || this.extractNameFromEmail(firebaseUser.email),
-            descripcion: `Usuario verificado ${firebaseUser.isVerified ? '✓' : ''}`.trim(),
-            rol: "persona" // ✅ AGREGADO
-        };
-
-        // Actualizar Flux store con datos de Firebase
-        import('../../../Services/flux/UserActions').then(({ UserActions }) => {
-            UserActions.loadUserData(fluxUserData); // ✅ CORREGIDO
-        });
-    }
-
-    private generateUsername(displayName: string | null, email: string): string {
-        if (displayName) {
-            return displayName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-        }
-        
-        const emailUsername = email.split('@')[0];
-        return emailUsername.replace(/[^a-z0-9_]/g, '');
-    }
-
-    private extractNameFromEmail(email: string): string {
-        const username = email.split('@')[0];
-        return username.split('.').map(part => 
-            part.charAt(0).toUpperCase() + part.slice(1)
-        ).join(' ');
-    }
-
-    public forceUpdate(): void {
-        const currentState = userStore.getState();
-        this.handleStoreChange(currentState);
-    }
-
-    public getCurrentUser(): UserData | null {
-        return this.currentUser;
-    }
-
-    public updateUser(userData: Partial<UserData>): void {
-        if (!this.currentUser) return;
-
-        const updatedUser = { ...this.currentUser, ...userData };
-        
-        import('../../../Services/flux/UserActions').then(({ UserActions }) => {
-            UserActions.loadUserData(updatedUser); // ✅ CORREGIDO
-        });
-    }
-
-    public debugInfo(): void {
-        console.group('🔍 UserInfo Debug');
-        console.log('Usuario actual:', this.currentUser);
-        console.log('Conectado:', this._isConnected);
-        console.log('AuthState Firebase:', this.authState);
-        console.log('Servicio Firebase:', !!this.firebaseService);
-        console.groupEnd();
-    }
-
-    private handleStoreChange(state: UserState): void {
-        const newUser = state.currentUser;
-        
-        // Solo actualizar si hay cambios reales
-        if (JSON.stringify(this.currentUser) !== JSON.stringify(newUser)) {
-            this.currentUser = newUser;
-            this.render();
-        }
+        // Cleanup si es necesario
     }
 
     private render(): void {
-        if (!this.shadowRoot || !this._isConnected) return;
+        if (!this.shadowRoot) return;
 
-        // Determinar qué datos mostrar
-        const displayUser = this.getDisplayUser();
-        const isLoading = this.isLoading();
-
-        this.shadowRoot.innerHTML = `
+        this.shadowRoot.innerHTML = /*html*/ `
             <style>
-                * {
-                    box-sizing: border-box;
-                    margin: 0;
-                    padding: 0;
-                }
-
                 :host {
                     display: block;
                     width: 100%;
                 }
 
                 .user-info-container {
-                    background: #ffffff;
-                    border-radius: 12px;
-                    padding: 20px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                    transition: all 0.3s ease;
-                }
-
-                .user-info-container:hover {
-                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-                }
-
-                .loading {
-                    text-align: center;
-                    padding: 40px 20px;
-                    color: #666;
-                }
-
-                .loading-spinner {
-                    display: inline-block;
-                    width: 32px;
-                    height: 32px;
-                    border: 3px solid #f3f3f3;
-                    border-top: 3px solid #007bff;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    margin-bottom: 12px;
-                }
-
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-
-                .no-user {
-                    text-align: center;
-                    padding: 40px 20px;
-                    color: #666;
-                }
-
-                .no-user-icon {
-                    font-size: 48px;
-                    margin-bottom: 12px;
-                    opacity: 0.5;
+                    background: white;
+                    border-radius: 16px;
+                    padding: 24px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                    border: 1px solid #f0f0f0;
                 }
 
                 .user-header {
                     display: flex;
                     align-items: center;
                     gap: 16px;
-                    margin-bottom: 20px;
+                    margin-bottom: 16px;
                 }
 
                 .user-avatar {
@@ -239,145 +60,89 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                     height: 80px;
                     border-radius: 50%;
                     object-fit: cover;
-                    border: 3px solid #e0e0e0;
-                    transition: border-color 0.3s ease;
+                    border: 3px solid #AAAB54;
+                    box-shadow: 0 4px 12px rgba(170, 171, 84, 0.2);
                 }
 
-                .user-avatar:hover {
-                    border-color: #007bff;
-                }
-
-                .user-basic-info {
+                .user-details {
                     flex: 1;
-                    min-width: 0;
                 }
 
                 .user-name {
-                    font-size: 1.25rem;
-                    font-weight: 600;
+                    font-size: 24px;
+                    font-weight: bold;
                     color: #333;
-                    margin-bottom: 4px;
-                    word-wrap: break-word;
+                    margin: 0 0 4px 0;
                 }
 
                 .user-username {
-                    font-size: 1rem;
+                    font-size: 16px;
                     color: #666;
-                    margin-bottom: 8px;
-                    word-wrap: break-word;
-                }
-
-                .user-status {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .status-badge {
-                    padding: 4px 8px;
-                    border-radius: 12px;
-                    font-size: 0.8rem;
-                    font-weight: 500;
-                }
-
-                .status-online {
-                    background: #d4edda;
-                    color: #155724;
-                }
-
-                .status-synced {
-                    background: #cce5ff;
-                    color: #004085;
-                }
-
-                .status-offline {
-                    background: #f8d7da;
-                    color: #721c24;
+                    margin: 0 0 8px 0;
                 }
 
                 .user-description {
-                    margin-top: 16px;
-                    padding: 16px;
-                    background: #f8f9fa;
-                    border-radius: 8px;
-                    border-left: 4px solid #007bff;
-                }
-
-                .description-text {
-                    color: #555;
-                    line-height: 1.5;
-                    font-style: italic;
-                }
-
-                .no-description {
-                    color: #999;
-                    font-style: italic;
-                }
-
-                .user-actions {
-                    margin-top: 20px;
-                    display: flex;
-                    gap: 12px;
-                    flex-wrap: wrap;
-                }
-
-                .action-btn {
-                    padding: 8px 16px;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                    transition: all 0.2s ease;
-                    text-decoration: none;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                }
-
-                .btn-primary {
-                    background: #007bff;
-                    color: white;
-                }
-
-                .btn-primary:hover {
-                    background: #0056b3;
-                }
-
-                .btn-secondary {
-                    background: #6c757d;
-                    color: white;
-                }
-
-                .btn-secondary:hover {
-                    background: #545b62;
+                    font-size: 14px;
+                    color: #777;
+                    line-height: 1.4;
+                    margin: 0;
                 }
 
                 .user-stats {
+                    display: flex;
+                    gap: 24px;
                     margin-top: 16px;
-                    padding: 16px;
-                    background: #f8f9fa;
-                    border-radius: 8px;
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-                    gap: 16px;
+                    padding-top: 16px;
+                    border-top: 1px solid #f0f0f0;
                 }
 
                 .stat-item {
                     text-align: center;
                 }
 
-                .stat-value {
-                    font-size: 1.5rem;
-                    font-weight: 600;
-                    color: #007bff;
+                .stat-number {
                     display: block;
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: #AAAB54;
                 }
 
                 .stat-label {
-                    font-size: 0.8rem;
+                    font-size: 12px;
                     color: #666;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
+                }
+
+                .loading-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 40px;
+                }
+
+                .loading-spinner {
+                    width: 40px;
+                    height: 40px;
+                    border: 3px solid #f3f3f3;
+                    border-top: 3px solid #AAAB54;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+
+                .error-container {
+                    text-align: center;
+                    padding: 24px;
+                    color: #666;
+                }
+
+                .edit-button-container {
+                    margin-top: 16px;
                 }
 
                 @media (max-width: 600px) {
@@ -385,172 +150,143 @@ class UserInfo extends HTMLElement implements UserInfoElement {
                         flex-direction: column;
                         text-align: center;
                     }
-                    
-                    .user-actions {
+
+                    .user-stats {
                         justify-content: center;
                     }
-                    
-                    .action-btn {
-                        flex: 1;
-                        justify-content: center;
+
+                    .user-name {
+                        font-size: 20px;
                     }
                 }
             </style>
 
-            <div class="user-info-container">
-                ${isLoading ? this.renderLoading() : 
-                  displayUser ? this.renderUserInfo(displayUser) : this.renderNoUser()}
-            </div>
-        `;
-
-        this.setupEventListeners();
-    }
-
-    private renderLoading(): string {
-        return `
-            <div class="loading">
-                <div class="loading-spinner"></div>
-                <p>Cargando información del usuario...</p>
+            <div class="user-info-container" id="user-container">
+                <!-- El contenido se renderiza dinámicamente -->
             </div>
         `;
     }
 
-    private renderNoUser(): string {
-        return `
-            <div class="no-user">
-                <div class="no-user-icon">👤</div>
-                <h3>No hay usuario</h3>
-                <p>Inicia sesión para ver tu información</p>
-            </div>
-        `;
+    private loadUserData(): void {
+        // Obtener datos de localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            try {
+                this.currentUser = JSON.parse(storedUser);
+            } catch (error) {
+                console.error('Error parsing stored user data:', error);
+            }
+        }
+
+        this.updateDisplay();
     }
 
-    private renderUserInfo(user: UserData): string {
-        return `
+    private updateDisplay(): void {
+        const container = this.shadowRoot?.querySelector('#user-container');
+        if (!container) return;
+
+        if (this.isLoading()) {
+            container.innerHTML = `
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                </div>
+            `;
+            return;
+        }
+
+        const user = this.getDisplayUser();
+
+        if (!user) {
+            container.innerHTML = `
+                <div class="error-container">
+                    <p>No se pudo cargar la información del usuario</p>
+                    <button onclick="window.location.reload()">Reintentar</button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
             <div class="user-header">
-                <img 
-                    class="user-avatar" 
-                    src="${user.foto || FIXED_PROFILE_PHOTO}" 
-                    alt="Avatar de ${user.nombre || 'Usuario'}"
-                    onerror="this.src='${FIXED_PROFILE_PHOTO}'"
-                >
-                <div class="user-basic-info">
+                <img src="${user.foto || FIXED_PROFILE_PHOTO}" 
+                     alt="Foto de perfil" 
+                     class="user-avatar"
+                     onerror="this.src='${FIXED_PROFILE_PHOTO}'">
+                <div class="user-details">
                     <h2 class="user-name">${user.nombre || 'Usuario'}</h2>
                     <p class="user-username">@${user.nombreDeUsuario || 'usuario'}</p>
-                    <div class="user-status">
-                        ${this.renderStatusBadges()}
-                    </div>
+                    <p class="user-description">${user.descripcion || 'Sin descripción disponible'}</p>
                 </div>
             </div>
-
-            ${user.descripcion ? `
-                <div class="user-description">
-                    <p class="description-text">${user.descripcion}</p>
-                </div>
-            ` : `
-                <div class="user-description">
-                    <p class="no-description">Sin descripción</p>
-                </div>
-            `}
-
+            
             <div class="user-stats">
                 <div class="stat-item">
-                    <span class="stat-value">1</span>
-                    <span class="stat-label">Perfil</span>
+                    <span class="stat-number">12</span>
+                    <span class="stat-label">Reseñas</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value">${this.authState?.isAuthenticated ? '✓' : '○'}</span>
-                    <span class="stat-label">Autenticado</span>
+                    <span class="stat-number">8</span>
+                    <span class="stat-label">Seguidos</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value">${userStore.getLastSyncTime() ? '✓' : '○'}</span>
-                    <span class="stat-label">Sincronizado</span>
+                    <span class="stat-number">15</span>
+                    <span class="stat-label">Guardados</span>
                 </div>
             </div>
 
-            <div class="user-actions">
-                <button class="action-btn btn-primary" id="edit-profile-btn">
-                    ✏️ Editar Perfil
-                </button>
-                <button class="action-btn btn-secondary" id="refresh-btn">
-                    🔄 Actualizar
-                </button>
+            <div class="edit-button-container">
+                <lulada-user-edit></lulada-user-edit>
             </div>
         `;
     }
 
-    private renderStatusBadges(): string {
-        const badges = [];
-
-        if (this.authState?.isAuthenticated) {
-            badges.push('<span class="status-badge status-online">En línea</span>');
-        }
-
-        if (userStore.getLastSyncTime()) {
-            badges.push('<span class="status-badge status-synced">Sincronizado</span>');
-        }
-
-        if (badges.length === 0) {
-            badges.push('<span class="status-badge status-offline">Sin conexión</span>');
-        }
-
-        return badges.join('');
+    public refreshUserData(): void {
+        this.loadUserData();
     }
 
-    private setupEventListeners(): void {
-        if (!this.shadowRoot) return;
+    public setUserData(userData: UserData): void {
+        this.currentUser = userData;
+        this.updateDisplay();
+    }
 
-        // Botón editar perfil
-        const editBtn = this.shadowRoot.querySelector('#edit-profile-btn');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => {
-                this.openEditModal();
-            });
-        }
-
-        // Botón actualizar
-        const refreshBtn = this.shadowRoot.querySelector('#refresh-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.forceUpdate();
-            });
+    public openEditModal(): void {
+        const editButton = this.shadowRoot?.querySelector('lulada-user-edit') as any;
+        if (editButton && typeof editButton.openEditModal === 'function') {
+            editButton.openEditModal();
+        } else {
+            this.createEditModal();
         }
     }
 
-    private openEditModal(): void {
-        // Buscar modal existente o crearlo
-        let modal = document.querySelector('edit-profile-modal') as HTMLElement & { setUser?: (user: UserData) => void; show?: () => void };
+    private createEditModal(): void {
+        let modal = document.querySelector('lulada-edit-profile-modal') as any;
         
         if (!modal) {
-            modal = document.createElement('edit-profile-modal');
+            modal = document.createElement('lulada-edit-profile-modal');
             document.body.appendChild(modal);
         }
 
-        // Configurar datos del usuario en el modal
         if (this.currentUser && typeof modal.setUser === 'function') {
             modal.setUser(this.currentUser);
         }
 
-        // Mostrar modal
         if (typeof modal.show === 'function') {
             modal.show();
         }
     }
 
     private getDisplayUser(): UserData | null {
-        // Priorizar datos de Flux, luego Firebase si está disponible
         if (this.currentUser) {
             return this.currentUser;
         }
 
-        // Si no hay datos en Flux pero sí en Firebase, crear datos temporales
         if (this.authState?.user && this.authState.isAuthenticated) {
             return {
                 foto: this.authState.user.photoURL || FIXED_PROFILE_PHOTO,
-                nombreDeUsuario: this.generateUsername(this.authState.user.displayName, this.authState.user.email),
-                nombre: this.authState.user.displayName || this.extractNameFromEmail(this.authState.user.email),
+                nombreDeUsuario: this.generateUsername(this.authState.user.displayName || null, this.authState.user.email || null),
+                nombre: this.authState.user.displayName || this.extractNameFromEmail(this.authState.user.email || null),
                 descripcion: 'Usuario de Firebase',
-                rol: "persona" // ✅ AGREGADO
+                rol: "persona"
             };
         }
 
@@ -558,11 +294,33 @@ class UserInfo extends HTMLElement implements UserInfoElement {
     }
 
     private isLoading(): boolean {
-        return userStore.isLoading() || (this.authState?.isLoading ?? false);
+        return this.authState?.isLoading ?? false;
+    }
+
+    private generateUsername(displayName: string | null, email: string | null): string {
+        if (displayName) {
+            return displayName.toLowerCase().replace(/\s+/g, '_');
+        }
+        if (email) {
+            return email.split('@')[0];
+        }
+        return 'usuario_' + Math.random().toString(36).substr(2, 5);
+    }
+
+    private extractNameFromEmail(email: string | null): string {
+        if (!email) return 'Usuario';
+        const name = email.split('@')[0];
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    public debug(): void {
+        console.group('🔍 UserInfo Debug');
+        console.log('Usuario actual:', this.currentUser);
+        console.log('Auth state:', this.authState);
+        console.log('Componente conectado:', this.isConnected);
+        console.groupEnd();
     }
 }
 
-// Registrar el componente
-customElements.define('user-info', UserInfo);
-
+// ✅ SIN REGISTRO AUTOMÁTICO - se registra desde index.ts
 export { UserInfo };

@@ -1,332 +1,398 @@
-import { FirebaseUserService, AuthState } from '../../Services/firebase/FirebaseUserService';
-
-export class Home extends HTMLElement {
-    private firebaseService?: FirebaseUserService;
-    private unsubscribe?: () => void;
+// Página principal de inicio de la aplicación
+class Home extends HTMLElement {
 
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
-        
+    }
+
+    connectedCallback() {
+        console.log('🏠 Home component conectado');
+        this.render();
+        this.setupEventListeners();
+        window.addEventListener('resize', this.handleResize.bind(this));
+        this.handleResize();
+    }
+
+    disconnectedCallback() {
+        window.removeEventListener('resize', this.handleResize.bind(this));
+    }
+
+    // Dibuja el HTML y CSS del componente
+    render() {
         if (this.shadowRoot) {
             this.shadowRoot.innerHTML = `
-                <style>
-                    :host {
-                        display: block;
-                        font-family: Arial, sans-serif;
-                        width: 100%;
-                        min-height: 100vh;
-                        background-color: #f8f9fa;
-                        position: relative;
-                    }
-                    
-                    /* Header móvil - oculto por defecto */
-                    .responsive-header {
-                        display: none;
-                    }
-                    
-                    /* Header desktop - sticky */
-                    .header-wrapper {
-                        width: 100%;
-                        background-color: white;
-                        position: sticky;
-                        top: 0;
-                        z-index: 100;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                    }
-                    
-                    /* Layout principal: sidebar + contenido + sugerencias */
-                    .main-layout {
-                        display: flex;
-                        width: 100%;
-                        min-height: calc(100vh - 80px);
-                    }
-                    
-                    /* Sidebar izquierdo */
-                    .sidebar {
-                        width: 250px;
-                        flex-shrink: 0;
-                        background-color: white;
-                        border-right: 1px solid #e0e0e0;
-                    }
-                    
-                    /* Contenedor del contenido principal */
-                    .content {
-                        flex-grow: 1;
-                        display: flex;
-                        min-width: 0;
-                    }
-                    
-                    /* Sección de reseñas/publicaciones */
-                    .reviews-section {
-                        padding: 20px;
-                        background-color: #f8f9fa;
-                        flex-grow: 1;
-                        box-sizing: border-box;
-                        position: relative;
-                    }
-                    
-                    /* Sidebar derecho con sugerencias */
+            <style>
+                :host {
+                    display: block;
+                    font-family: Arial, sans-serif;
+                    min-height: 100vh;
+                    background-color: #f8f9fa;
+                }
+                
+                .responsive-header {
+                    display: none;
+                }
+                
+                .desktop-logo {
+                    display: block;
+                }
+                
+                .header-section {
+                    background: white;
+                    width: 100%;
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                
+                .main-layout {
+                    display: flex;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    min-height: calc(100vh - 120px);
+                }
+                
+                .sidebar {
+                    width: 250px;
+                    background: white;
+                    border-right: 1px solid #e0e0e0;
+                    position: sticky;
+                    top: 120px;
+                    height: fit-content;
+                }
+
+                .medium-content {
+                    flex-grow: 1;
+                    display: flex; 
+                    flex-direction: column;
+                    max-width: calc(100% - 500px);
+                }
+
+                .content {
+                    flex-grow: 1;
+                    display: flex; 
+                    padding: 20px;
+                    gap: 20px;
+                }
+                
+                .reviews-section {
+                    background-color: white;
+                    flex-grow: 1;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    padding: 20px;
+                }
+
+                .suggestions-section {
+                    width: 250px;
+                    background: white;
+                    border-left: 1px solid #e0e0e0;
+                    position: sticky;
+                    top: 120px;
+                    height: fit-content;
+                    padding: 20px;
+                }
+
+                .welcome-message {
+                    background: linear-gradient(135deg, #AAAB54, #999A4A);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                }
+
+                .welcome-message h2 {
+                    margin: 0 0 10px 0;
+                    font-size: 24px;
+                }
+
+                .welcome-message p {
+                    margin: 0;
+                    opacity: 0.9;
+                }
+
+                .quick-actions {
+                    margin-bottom: 20px;
+                }
+
+                .action-button {
+                    width: 100%;
+                    padding: 12px;
+                    margin-bottom: 10px;
+                    background: #AAAB54;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 500;
+                    transition: background-color 0.2s;
+                }
+
+                .action-button:hover {
+                    background: #999A4A;
+                }
+
+                .action-button.secondary {
+                    background: #f8f9fa;
+                    color: #666;
+                    border: 1px solid #dee2e6;
+                }
+
+                .action-button.secondary:hover {
+                    background: #e9ecef;
+                }
+
+                /* Estilos responsivos */
+                @media (max-width: 1024px) {
                     .suggestions-section {
-                        width: 250px;
-                        padding: 20px 10px;
-                        flex-shrink: 0;
-                        background-color: white;
-                        border-left: 1px solid #e0e0e0;
+                        display: none;
                     }
                     
-                    /* Barra navegación móvil - oculta por defecto */
-                    .responsive-nav-bar {
-                        display: none;
-                        position: fixed;
-                        bottom: 0;
-                        left: 0;
-                        right: 0;
-                        background-color: white;
-                        z-index: 1000;
-                        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+                    .medium-content {
+                        max-width: 100%;
                     }
+                }
 
-                    /* Indicador discreto de autenticación */
-                    .auth-status {
-                        position: absolute;
-                        top: 10px;
-                        right: 20px;
-                        background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
-                        border: 1px solid rgba(34, 197, 94, 0.2);
-                        border-radius: 6px;
-                        padding: 4px 8px;
-                        font-size: 11px;
-                        color: #16a34a;
-                        font-weight: 500;
-                        display: none;
-                        align-items: center;
-                        gap: 4px;
-                        font-family: 'Inter', sans-serif;
-                        z-index: 10;
+                @media (max-width: 768px) {
+                    .responsive-header {
+                        display: block;
                     }
-
-                    .auth-status.visible {
-                        display: flex;
-                    }
-
-                    .status-dot {
-                        width: 6px;
-                        height: 6px;
-                        background: #22c55e;
-                        border-radius: 50%;
-                        animation: pulse 2s infinite;
-                    }
-
-                    @keyframes pulse {
-                        0%, 100% { opacity: 1; }
-                        50% { opacity: 0.5; }
-                    }
-
-                    /* Estilos cuando usuario está autenticado */
-                    :host(.authenticated) .reviews-section {
-                        border-left: 3px solid rgba(34, 197, 94, 0.3);
-                    }
-
-                    /* Responsive: pantallas ≤ 900px */
-                    @media (max-width: 900px) {
-                        .responsive-header { display: block !important; }
-                        .header-wrapper { display: none !important; }
-                        .sidebar { display: none !important; }
-                        .suggestions-section { display: none !important; }
-                        .responsive-nav-bar { display: block !important; }
-                        
-                        .content {
-                            padding-bottom: 80px;
-                            width: 100%;
-                        }
-                        
-                        .reviews-section {
-                            padding: 15px;
-                        }
-
-                        .auth-status {
-                            top: 5px;
-                            right: 10px;
-                            font-size: 10px;
-                            padding: 3px 6px;
-                        }
-                    }
-
-                    /* Pantallas muy pequeñas ≤ 600px */
-                    @media (max-width: 600px) {
-                        .reviews-section {
-                            padding: 10px;
-                        }
-                        
-                        .content {
-                            padding-bottom: 85px;
-                        }
-                    }
-                </style>
-                
-                <!-- Header móvil -->
-                <div class="responsive-header">
-                    <lulada-responsive-header></lulada-responsive-header>
-                </div>
-                
-                <!-- Header desktop -->
-                <div class="header-wrapper">
-                    <lulada-header></lulada-header>
-                </div>
-                
-                <!-- Layout principal -->
-                <div class="main-layout">
-                    <!-- Sidebar izquierdo -->
-                    <div class="sidebar">
-                        <lulada-sidebar></lulada-sidebar>
-                    </div>
                     
-                    <!-- Contenido principal -->
+                    .desktop-logo {
+                        display: none;
+                    }
+                    
+                    .header-section {
+                        display: none;
+                    }
+                    
+                    .main-layout {
+                        flex-direction: column;
+                        margin: 0;
+                        max-width: 100%;
+                    }
+                    
+                    .sidebar {
+                        width: 100%;
+                        order: 3;
+                        position: static;
+                        border-right: none;
+                        border-top: 1px solid #e0e0e0;
+                    }
+                    
+                    .content {
+                        order: 2;
+                        padding: 10px;
+                    }
+                    
+                    .reviews-section {
+                        margin: 0;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .content {
+                        padding: 5px;
+                    }
+                    
+                    .welcome-message h2 {
+                        font-size: 20px;
+                    }
+                }
+            </style>
+
+            <!-- Header para dispositivos móviles -->
+            <div class="responsive-header">
+                <lulada-responsive-header></lulada-responsive-header>
+            </div>
+
+            <!-- Header principal con logo y navegación -->
+            <div class="header-section">
+                <div class="desktop-logo">
+                    <lulada-header-home></lulada-header-home>
+                </div>
+            </div>
+
+            <!-- Layout principal con sidebar, contenido y sugerencias -->
+            <div class="main-layout">
+                <!-- Sidebar izquierdo -->
+                <div class="sidebar">
+                    <lulada-sidebar></lulada-sidebar>
+                </div>
+
+                <!-- Contenido principal -->
+                <div class="medium-content">
                     <div class="content">
                         <div class="reviews-section">
-                            <!-- Indicador discreto de autenticación -->
-                            <div class="auth-status" id="auth-status">
-                                <div class="status-dot"></div>
-                                Sesión activa
+                            <!-- Mensaje de bienvenida -->
+                            <div class="welcome-message">
+                                <h2>¡Bienvenido a Lulada! 🍽️</h2>
+                                <p>Descubre los mejores restaurantes de Cali y comparte tus experiencias</p>
                             </div>
-                            
+
+                            <!-- Acciones rápidas -->
+                            <div class="quick-actions">
+                                <button class="action-button" id="antojar-btn">
+                                    📝 Escribir una reseña
+                                </button>
+                                <button class="action-button secondary" id="explore-btn">
+                                    🔍 Explorar restaurantes
+                                </button>
+                            </div>
+
+                            <!-- Contenedor de reseñas -->
                             <lulada-reviews-container></lulada-reviews-container>
-                        </div>
-                        
-                        <!-- Sugerencias -->
-                        <div class="suggestions-section">
-                            <lulada-suggestions></lulada-suggestions>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Barra navegación móvil -->
-                <div class="responsive-nav-bar">
-                    <lulada-responsive-bar></lulada-responsive-bar>
+
+                <!-- Panel de sugerencias derecho -->
+                <div class="suggestions-section">
+                    <lulada-suggestions></lulada-suggestions>
                 </div>
+            </div>
+
+            <!-- Barra de navegación inferior para móviles -->
+            <div class="responsive-header">
+                <lulada-responsive-bar></lulada-responsive-bar>
+            </div>
             `;
         }
     }
-    
-    // Se ejecuta cuando el componente se añade al DOM
-    connectedCallback(): void {
-        this.setupLocationFiltering();
-        this.initializeFirebaseIntegration();
-    }
 
-    disconnectedCallback(): void {
-        if (this.unsubscribe) {
-            this.unsubscribe();
-        }
-    }
+    // Configurar event listeners
+    private setupEventListeners() {
+        if (!this.shadowRoot) return;
 
-    private initializeFirebaseIntegration(): void {
-        try {
-            // Intentar cargar Firebase solo si está disponible
-            import('../../Services/firebase/FirebaseUserService')
-                .then(({ FirebaseUserService }) => {
-                    this.firebaseService = FirebaseUserService.getInstance();
-                    this.unsubscribe = this.firebaseService.subscribe(this.handleAuthStateChange.bind(this));
-                })
-                .catch(() => {
-                    // Firebase no disponible, continuar sin él
-                    console.log('Firebase no disponible, continuando sin autenticación');
-                });
-        } catch (_error) {
-            // Error cargando Firebase, continuar normalmente
-            console.log('Error inicializando Firebase, continuando sin autenticación');
-        }
-    }
+        // Botón para abrir el popup de Antojar
+        const antojarBtn = this.shadowRoot.querySelector('#antojar-btn');
+        antojarBtn?.addEventListener('click', () => {
+            this.handleAntojarClick();
+        });
 
-    private handleAuthStateChange(authState: AuthState): void {
-        const authStatusElement = this.shadowRoot?.getElementById('auth-status');
-        
-        if (authState.isAuthenticated && authState.user) {
-            // Mostrar indicador de sesión activa
-            if (authStatusElement) {
-                authStatusElement.classList.add('visible');
-            }
-            this.classList.add('authenticated');
-            
-            // Toast de bienvenida discreto
-            this.showWelcomeToast(authState.user.displayName || 'Usuario');
-        } else {
-            // Ocultar indicador
-            if (authStatusElement) {
-                authStatusElement.classList.remove('visible');
-            }
-            this.classList.remove('authenticated');
-        }
-    }
+        // Botón para navegar a Explore
+        const exploreBtn = this.shadowRoot.querySelector('#explore-btn');
+        exploreBtn?.addEventListener('click', () => {
+            this.handleExploreClick();
+        });
 
-    private showWelcomeToast(displayName: string): void {
-        // Solo mostrar una vez por sesión
-        const lastWelcome = sessionStorage.getItem('last_welcome_shown');
-        const now = Date.now().toString();
-        
-        if (lastWelcome && (Date.now() - parseInt(lastWelcome)) < 60000) {
-            return;
-        }
-
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 10001;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            max-width: 280px;
-        `;
-
-        toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="font-size: 16px;">👋</div>
-                <div>¡Hola ${displayName}!</div>
-            </div>
-        `;
-
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.transform = 'translateX(0)';
-        }, 100);
-
-        setTimeout(() => {
-            toast.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                }
-            }, 300);
-        }, 3000);
-
-        sessionStorage.setItem('last_welcome_shown', now);
-    }
-    
-    // Configurar filtros de ubicación (funcionalidad existente)
-    private setupLocationFiltering(): void {
-        document.addEventListener('location-filter-changed', () => {
-            // Lógica existente de filtros
+        // Escuchar eventos de usuario actualizado
+        document.addEventListener('userDataUpdated', (event: any) => {
+            console.log('🔄 Datos de usuario actualizados en Home:', event.detail);
         });
     }
 
-    // Métodos públicos para debug y uso externo
-    public getAuthState(): AuthState | null {
-        return this.firebaseService?.getAuthState() || null;
+    // Manejar clic en botón Antojar
+    private handleAntojarClick() {
+        console.log('📝 Abriendo popup de Antojar...');
+        
+        if (window.AntojarPopupService) {
+            window.AntojarPopupService.getInstance().showPopup();
+        } else {
+            console.warn('⚠️ AntojarPopupService no está disponible');
+            
+            // Fallback: mostrar mensaje temporal
+            const tempMessage = document.createElement('div');
+            tempMessage.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #AAAB54;
+                color: white;
+                padding: 16px;
+                border-radius: 8px;
+                z-index: 10000;
+            `;
+            tempMessage.textContent = '📝 Función de escribir reseña próximamente...';
+            document.body.appendChild(tempMessage);
+            
+            setTimeout(() => {
+                if (document.body.contains(tempMessage)) {
+                    document.body.removeChild(tempMessage);
+                }
+            }, 3000);
+        }
     }
 
-    public isUserAuthenticated(): boolean {
-        return this.firebaseService?.isAuthenticated() || false;
+    // Manejar clic en botón Explore
+    private handleExploreClick() {
+        console.log('🔍 Navegando a Explore...');
+        
+        const navEvent = new CustomEvent('navigate', {
+            detail: '/explore',
+            bubbles: true,
+            composed: true
+        });
+        document.dispatchEvent(navEvent);
     }
+
+    // Manejar cambios de tamaño de ventana
+    private handleResize() {
+        const isMobile = window.innerWidth <= 768;
+        console.log(`📱 Modo ${isMobile ? 'móvil' : 'escritorio'} activado`);
+        
+        // Aquí puedes agregar lógica específica para responsive si es necesario
+    }
+
+    // Método público para refrescar el contenido
+    public refresh() {
+        console.log('🔄 Refrescando contenido de Home...');
+        
+        // Recargar componentes si es necesario
+        const reviewsContainer = this.shadowRoot?.querySelector('lulada-reviews-container') as any;
+        if (reviewsContainer && typeof reviewsContainer.refresh === 'function') {
+            reviewsContainer.refresh();
+        }
+        
+        const suggestions = this.shadowRoot?.querySelector('lulada-suggestions') as any;
+        if (suggestions && typeof suggestions.refresh === 'function') {
+            suggestions.refresh();
+        }
+    }
+
+    // Método para debugging
+    public debug() {
+        console.log('🔍 Home Debug Info:');
+        console.log('- Componente conectado:', this.isConnected);
+        console.log('- ShadowRoot existe:', !!this.shadowRoot);
+        console.log('- Usuario autenticado:', localStorage.getItem('isAuthenticated'));
+        console.log('- Datos de usuario:', localStorage.getItem('currentUser'));
+        
+        const components = [
+            'lulada-header-home',
+            'lulada-sidebar', 
+            'lulada-reviews-container',
+            'lulada-suggestions',
+            'lulada-responsive-header',
+            'lulada-responsive-bar'
+        ];
+        
+        console.log('- Componentes presentes:');
+        components.forEach(comp => {
+            const element = this.shadowRoot?.querySelector(comp);
+            console.log(`  ${comp}: ${element ? '✅' : '❌'}`);
+        });
+    }
+}
+
+// Hacer métodos disponibles globalmente para debugging
+if (typeof window !== 'undefined') {
+    (window as any).debugHome = () => {
+        const homeComponent = document.querySelector('lulada-home') as Home;
+        if (homeComponent) {
+            homeComponent.debug();
+        }
+    };
+    
+    (window as any).refreshHome = () => {
+        const homeComponent = document.querySelector('lulada-home') as Home;
+        if (homeComponent) {
+            homeComponent.refresh();
+        }
+    };
 }
 
 export default Home;
