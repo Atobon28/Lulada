@@ -1,4 +1,4 @@
-import { AppDispatcher, Action } from "./Dispacher";
+import { AppDispatcher, Action } from "./Dispatcher";
 
 // Define la estructura de datos para las interacciones (likes y bookmarks)
 export interface InteractionState {

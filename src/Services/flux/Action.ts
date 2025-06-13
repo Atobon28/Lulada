@@ -1,6 +1,6 @@
 // Este archivo maneja todas las acciones que puede hacer el usuario en la aplicación
 
-import { AppDispatcher } from './Dispacher';
+import { AppDispatcher } from './Dispatcher';
 
 // Para cuando alguien escribe una reseña de comida
 interface ReviewData {

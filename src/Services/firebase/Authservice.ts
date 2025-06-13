@@ -1,24 +1,15 @@
-// src/Services/firebase/Authservice.ts - ACTUALIZADO CON CREACIÓN DE PERFIL
+// services/firebase/Authservice.ts - CORREGIDO
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  signOut,
-  User,
-  AuthError
+  signOut, 
+  User 
 } from 'firebase/auth';
-
-import { Auth, db, doc, setDoc, getDoc, updateDoc } from './firebase';
-import { UserData } from '../flux/UserActions';
+import { Auth } from './firebase';
 import { firebaseUserSync } from './FirebaseUserSync';
+import { UserData } from '../flux/UserActions';
 
-// Interfaces
-export interface RegisterUserData {
-  email: string;
-  firstName: string;
-  lastName: string;
-  userType: 'person' | 'restaurant';
-}
-
+// Interfaces para respuestas de autenticación
 export interface AuthResponse {
   success: boolean;
   user?: User;
@@ -31,99 +22,51 @@ export interface LogoutResponse {
   error?: string;
 }
 
-// Interfaz para datos de Firestore
-interface FirestoreUserData {
-  email: string;
-  firstName: string;
-  lastName: string;
-  userType: 'person' | 'restaurant';
-  createdAt: Date;
-  displayName?: string;
-  name?: string;
-  [key: string]: unknown;
+// Función auxiliar para identificar errores de Firebase
+function isFirebaseError(error: unknown): error is { code: string; message: string } {
+  return typeof error === 'object' && error !== null && 'code' in error && 'message' in error;
 }
 
-// Interfaz para window con propiedades de debug
-interface WindowWithDebug extends Window {
-  debugFirebaseAuth?: () => void;
-}
-
-// Type guards
-function isFirebaseError(error: unknown): error is AuthError {
-  return error !== null && 
-         typeof error === 'object' && 
-         'code' in error && 
-         typeof (error as AuthError).code === 'string' && 
-         (error as AuthError).code.startsWith('auth/');
-}
-
-function isValidUserData(data: unknown): data is UserData {
-  if (!data || typeof data !== 'object') {
-    return false;
-  }
-  
-  const obj = data as Record<string, unknown>;
-  
-  return typeof obj.email === 'string' && 
-         typeof obj.firstName === 'string' && 
-         typeof obj.lastName === 'string' && 
-         (obj.userType === 'person' || obj.userType === 'restaurant');
-}
-
-// Mapeo de errores Firebase a mensajes amigables
-function getFirebaseErrorMessage(error: AuthError): string {
+// Función para obtener mensajes de error amigables
+function getFirebaseErrorMessage(error: { code: string; message: string }): string {
   switch (error.code) {
-    case "auth/email-already-in-use":
-      return "Este correo ya está registrado. Intenta iniciar sesión";
-    case "auth/invalid-email":
-      return "Formato de correo inválido";
-    case "auth/operation-not-allowed":
-      return "Operación no permitida";
-    case "auth/weak-password":
-      return "La contraseña es muy débil. Usa al menos 6 caracteres";
-    case "auth/user-disabled":
-      return "Esta cuenta ha sido deshabilitada";
-    case "auth/user-not-found":
-      return "No existe una cuenta con este correo";
-    case "auth/wrong-password":
-      return "Contraseña incorrecta";
-    case "auth/invalid-credential":
-      return "Credenciales inválidas. Verifica tu correo y contraseña";
-    case "auth/too-many-requests":
-      return "Demasiados intentos fallidos. Intenta más tarde";
-    case "auth/network-request-failed":
-      return "Error de conexión. Verifica tu internet";
+    case 'auth/email-already-in-use':
+      return 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+    case 'auth/weak-password':
+      return 'La contraseña debe tener al menos 6 caracteres.';
+    case 'auth/invalid-email':
+      return 'El formato del correo electrónico no es válido.';
+    case 'auth/user-not-found':
+      return 'No se encontró una cuenta con este correo electrónico.';
+    case 'auth/wrong-password':
+      return 'La contraseña es incorrecta.';
+    case 'auth/too-many-requests':
+      return 'Demasiados intentos fallidos. Intenta de nuevo más tarde.';
+    case 'auth/network-request-failed':
+      return 'Error de conexión. Verifica tu conexión a internet.';
     default:
-      return error.message || "Error desconocido";
+      return error.message || 'Error inesperado. Intenta de nuevo.';
   }
 }
 
-// Función para registrar usuario - ACTUALIZADA
+// Función para registrar un nuevo usuario - ACTUALIZADA
 export const registerUser = async (
-  email: string,
-  password: string,
-  firstName: string,
-  lastName: string,
-  userType: 'person' | 'restaurant'
+  email: string, 
+  password: string, 
+  userData: UserData
 ): Promise<AuthResponse> => {
   try {
-    console.log("[FirebaseAuth] Iniciando registro para:", email);
+    console.log("[FirebaseAuth] Registrando usuario:", email);
     
     // Validaciones básicas
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !password || !userData) {
       return { success: false, error: "Todos los campos son requeridos" };
     }
-
+    
     if (password.length < 6) {
       return { success: false, error: "La contraseña debe tener al menos 6 caracteres" };
     }
 
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return { success: false, error: "Formato de correo inválido" };
-    }
-    
     // Crear usuario en Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       Auth,
@@ -132,34 +75,31 @@ export const registerUser = async (
     );
     const user = userCredential.user;
 
-    console.log("[FirebaseAuth] Usuario creado en Auth:", user.uid);
+    console.log("[FirebaseAuth] Usuario creado en Firebase Auth:", user.uid);
 
-    // Crear datos compatibles con el sistema Flux
+    // Crear el UserData para Flux con todos los campos necesarios
     const fluxUserData: UserData = {
-      foto: "https://randomuser.me/api/portraits/women/44.jpg", // Foto por defecto
-      nombreDeUsuario: `@${firstName.toLowerCase()}${lastName.toLowerCase()}`,
-      nombre: `${firstName} ${lastName}`,
-      descripcion: userType === 'person' ? 
-        "Nuevo usuario de Lulada" : 
-        "Nuevo restaurante en Lulada",
-      rol: userType === 'person' ? 'persona' : 'restaurante'
+      foto: userData.foto || "https://randomuser.me/api/portraits/women/44.jpg",
+      nombreDeUsuario: userData.nombreDeUsuario || `@${email.split('@')[0]}`,
+      nombre: userData.nombre || user.displayName || email.split('@')[0] || 'Usuario',
+      descripcion: userData.descripcion || "Usuario de Lulada",
+      locationText: userData.locationText || "",
+      menuLink: userData.menuLink || "",
+      rol: userData.rol || 'persona'
     };
 
     // Crear perfil en Firestore usando el servicio de sincronización
     console.log("[FirebaseAuth] Creando perfil en Firestore...");
-    const createProfileResult = await firebaseUserSync.createUserProfile(user, fluxUserData);
+    const syncResult = await firebaseUserSync.createUserProfile(user, fluxUserData);
     
-    if (!createProfileResult.success) {
-      console.error("[FirebaseAuth] Error creando perfil:", createProfileResult.error);
-      // Intentar eliminar el usuario de Auth si falló la creación del perfil
-      try {
-        await user.delete();
-      } catch (deleteError) {
-        console.error("[FirebaseAuth] Error eliminando usuario tras fallo:", deleteError);
-      }
+    if (!syncResult.success) {
+      console.warn("[FirebaseAuth] Error creando perfil en Firestore:", syncResult.error);
+      // No retornamos error aquí porque el usuario ya fue creado en Auth
       return { 
-        success: false, 
-        error: "Error creando el perfil. Intenta de nuevo." 
+        success: true, 
+        user, 
+        userData: fluxUserData,
+        error: "Usuario creado pero hubo un problema guardando el perfil. Intenta de nuevo." 
       };
     }
 
@@ -321,7 +261,7 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
 };
 
 // Funciones de utilidad para desarrollo/testing
-export const debugFirebaseAuth = () => {
+export const debugFirebaseAuth = (): void => {
   console.log("🔥 === FIREBASE AUTH DEBUG ===");
   console.log("- Usuario actual:", Auth.currentUser?.email || "No autenticado");
   console.log("- UID:", Auth.currentUser?.uid || "N/A");
@@ -331,6 +271,11 @@ export const debugFirebaseAuth = () => {
   console.log("- Cuenta creada:", Auth.currentUser?.metadata.creationTime || "N/A");
   console.log("=== FIN FIREBASE AUTH DEBUG ===");
 };
+
+// Interfaz para propiedades de debug en window
+interface WindowWithDebug extends Window {
+  debugFirebaseAuth?: () => void;
+}
 
 // Agregar funciones de debug al objeto global
 if (typeof window !== 'undefined') {

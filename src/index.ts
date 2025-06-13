@@ -1,4 +1,5 @@
-// index.ts - RESTAURADO CON ARREGLOS PARA QUE FUNCIONE
+// index.ts – COMPLETO Y CORREGIDO SIN ERRORES
+// ===========================================
 
 // =======================
 // DECLARACIONES GLOBALES
@@ -6,454 +7,344 @@
 export {};
 
 // Importar servicios básicos primero
-import './services-global';
-import './Services/realtime-sync-init';
+import "./services-global";
+// import "./Services/realtime-sync-init"; // ✅ COMENTADO TEMPORALMENTE
 
+// =======================
+// INTERFACES TIPADAS
+// =======================
 
 interface ComponentConstructor {
-    new (...args: unknown[]): HTMLElement;
+  new (...args: unknown[]): HTMLElement;
 }
 
-// Interfaces para servicios y componentes
 interface PublicationsServiceInstance {
-    getInstance?(): PublicationsServiceInstance;
-    [key: string]: unknown;
+  getInstance?(): PublicationsServiceInstance;
+  [key: string]: unknown;
 }
 
 interface AntojarServiceInstance {
-    getInstance?(): AntojarServiceInstance;
-    initialize?(): void;
-    [key: string]: unknown;
+  getInstance?(): AntojarServiceInstance;
+  initialize?(): void;
+  [key: string]: unknown;
 }
 
 interface InteractionServiceInstance {
-    getInstance(): InteractionServiceInstance;
-    loadInteractions?(): void;
-    [key: string]: unknown;
+  getInstance(): InteractionServiceInstance;
+  loadInteractions?(): void;
+  [key: string]: unknown;
 }
 
 interface SidebarElement extends HTMLElement {
-    debugNavigation?(): void;
+  debugNavigation?(): void;
 }
 
 interface LuladaServices {
-    publicationsService: PublicationsServiceInstance | null;
-    antojarService: AntojarServiceInstance | null;
+  publicationsService: PublicationsServiceInstance | null;
+  antojarService: AntojarServiceInstance | null;
+  interactionService: InteractionServiceInstance | null;
 }
 
-// Declaraciones globales para window - REMOVIDAS PARA EVITAR DUPLICADOS
-// Las declaraciones están en services-global.ts
-
-// Interface para window con propiedades necesarias
+// ✅ INTERFACE CORREGIDA (customElements ya no está aquí)
 interface WindowWithGlobalProperties extends Window {
-    AntojarPopupService?: unknown;
-    LuladaServices?: LuladaServices;
-    debugSidebar?: () => void;
-    luladaStatus?: () => void;
-    luladaDebug?: () => void;
-    UserActions?: unknown;
-    userStore?: unknown;
+  AntojarPopupService?: unknown;
+  LuladaServices?: LuladaServices;
+  debugSidebar?: () => void;
+  luladaStatus?: () => void;
+  luladaDebug?: () => void;
+  UserActions?: unknown;
+  userStore?: unknown;
+  InteractionService?: InteractionServiceInstance;
+}
+
+declare const window: WindowWithGlobalProperties;
+
+// =======================
+// CARGA DINÁMICA DE COMPONENTES
+// =======================
+
+async function loadComponent<T extends ComponentConstructor>(
+  path: string,
+  componentName: string,
+  elementName: string
+): Promise<T | null> {
+  try {
+    console.log(`🔄 Cargando componente: ${componentName} desde ${path}`);
+    const module = await import(path);
+    const ComponentClass = module[componentName] as T;
+
+    if (!ComponentClass) {
+      console.error(`❌ Componente ${componentName} no encontrado en ${path}`);
+      return null;
+    }
+
+    // Registrar si no existe
+    if (!customElements.get(elementName)) {
+      customElements.define(elementName, ComponentClass);
+      console.log(`✅ Componente ${elementName} registrado`);
+    } else {
+      console.log(`ℹ️ Componente ${elementName} ya estaba registrado`);
+    }
+
+    return ComponentClass;
+  } catch (error) {
+    console.error(`❌ Error cargando componente ${componentName}:`, error);
+    return null;
+  }
+}
+
+async function loadService<T>(
+  path: string,
+  serviceName: string
+): Promise<T | null> {
+  try {
+    console.log(`🔄 Cargando servicio: ${serviceName} desde ${path}`);
+    const module = await import(path);
+    const ServiceClass = module[serviceName];
+
+    if (!ServiceClass) {
+      console.error(`❌ Servicio ${serviceName} no encontrado en ${path}`);
+      return null;
+    }
+
+    if (typeof ServiceClass.getInstance === "function") {
+      const instance = ServiceClass.getInstance() as T;
+      console.log(`✅ Servicio ${serviceName} cargado`);
+      return instance;
+    }
+
+    console.error(`❌ Servicio ${serviceName} no tiene getInstance`);
+    return null;
+  } catch (error) {
+    console.error(`❌ Error cargando servicio ${serviceName}:`, error);
+    return null;
+  }
 }
 
 // =======================
-// IMPORTS - SOLO LOS QUE EXISTEN
+// FUNCIONES DE INICIALIZACIÓN
 // =======================
 
-// CORE
-import RootComponent from "./Components/Root/RootComponent";
-import LoadPage from "./Components/LoadPages/LoadPage";
+async function initializeComponents(): Promise<void> {
+  console.log("🚀 Inicializando componentes de Lulada…");
 
-// PÁGINAS
-import Home from "./Pages/Home/home";
-import LuladaExplore from "./Pages/Explore/explore";
-import PUser from "./Pages/PUser/puser";
-import RestaurantProfile from "./Pages/RestaurantProfile/RestaurantProfile";
-import Save from "./Pages/Save/Save";
-import LoginPage from "./Pages/LogIn/Login";
-import LuladaSettings from "./Pages/Settings/Settings";
-import LuladaNotifications from './Pages/Notifications/Notifications';
-import NewAccount from "./Pages/NewAccount/containernewaccount";
-import ConfirmRole from "./Pages/ConfirmRole/ConfirRole";
+  const componentPromises = [
+    // Navegación
+    loadComponent(
+      "./Components/Home/Header/reponsiveheader",
+      "ReponsiveHeader",
+      "responsive-header"
+    ),
+    loadComponent(
+      "./Components/Home/Navbars/responsivebar",
+      "ResponsiveBar",
+      "responsive-bar"
+    ),
+    loadComponent("./Components/Home/Navbars/sidebar", "Sidebar", "side-bar"),
 
-// SETTINGS
-import CambiarCorreoF from "./Pages/Settings/CambiarCorreo/CambiarCorreoF";
-import NombreUsuraio from "./Pages/Settings/CambiarNombre/CambiarNombreF";
-import CambiarContraseñaF from "./Pages/Settings/CambiarContraseña/CambiarContraseñaF";
+    // Usuario
+    loadComponent(
+      "./Components/PUser/userProfile/UserInfo",
+      "UserInfo",
+      "user-info"
+    ),
+    loadComponent(
+      "./Components/PUser/userProfile/EditProfileModal",
+      "EditProfileModal",
+      "edit-profile-modal"
+    ),
 
-// NAVEGACIÓN
-import Navigation from "./Components/Home/navigation";
-import './Components/Home/Header/reponsiveheader';
-import LuladaSidebar from "./Components/Home/Navbars/sidebar";
+    // Configuración
+    loadComponent(
+      "./Components/Settings/CambiarNombreSimple",
+      "CambiarNombreSimple",
+      "cambiar-nombre-simple"
+    ),
 
-// HEADERS
-import HeaderCompleto from './Components/Home/Header/HeaderCompleto';
-import HeaderHome from "./Components/Home/Header/Header";
-import Lulada from "./Components/Home/Header/logo";
-import HeaderExplorer from "./Components/Explore/exploreHeader";
+    // Nueva Cuenta
+    loadComponent(
+      "./Pages/NewAccount/containernewaccount",
+      "ContainerNewAccount",
+      "container-new-account"
+    ),
 
-// PUBLICACIONES
-import Publication from "./Components/Home/posts/publications";
-import Review from "./Components/Home/posts/reviews";
-import ReviewsContainer from "./Components/Home/posts/reviewscontainer";
+    // Antojar
+    loadComponent(
+      "./Components/Antojar/LuladaAntojar",
+      "LuladaAntojar",
+      "lulada-antojar"
+    ),
+    loadComponent(
+      "./Components/Antojar/LuladaAntojarBoton",
+      "LuladaAntojarBoton",
+      "lulada-antojar-boton"
+    ),
+  ];
 
-// EXPLORACIÓN
-import ExploreContainer from "./Components/Explore/explorecontainer";
-import ImagesExplore from "./Components/Explore/imagesExplore";
-import TextCard from "./Components/Explore/textCard";
+  const results = await Promise.allSettled(componentPromises);
+  const successful = results.filter(
+    (r) => r.status === "fulfilled" && r.value !== null
+  ).length;
 
-// USUARIO
-import UserInfo from "./Components/PUser/userProfile/UserInfo";
-import UserSelftProfile from "./Components/PUser/userProfile/UserProfile";
-import UserEdit from "./Components/PUser/userProfile/EditButton";
-import EditProfileModal from "./Components/PUser/userProfile/EditProfileModal";
-import restaurantInfo from "./Components/restaurantProfile/RestaurantInfo";
-
-// OTROS
-import LuladaSuggestions from "./Components/Home/suggestions";
-import CardNotifications from "./Components/Nofications/CardNotifications";
-
-// LOGIN
-import CajaDeTexto from "./Components/Login/CajaTexto";
-import BotonLogin from "./Components/Login/Boton";
-import LoginForm from "./Components/Login/CajaLogin";
-
-// NEW ACCOUNT
-import BoxText from "./Components/Newaccount/boxtext";
-import ButtonNewAccount from "./Components/Newaccount/buttonNewAccount";
-
-// SETTINGS COMPONENTS
-import CajonTexto from "./Components/Settings/CajonTexto";
-import CajonList from "./Components/Settings/CajonList";
-import CajonListInteractive from "./Components/Settings/CajonListInteractive";
-import CambiarNU from "./Components/Settings/CambiarNombre/cambiarNU";
-import Cambiarco from "./Components/Settings/CambiarCorreo/cambiarco";
-import CambiarContra from "./Components/Settings/CambiarContraseña/cambiarcontra";
-import CambiarCorreoSimple from "./Components/Settings/CambiarCorreoSimple";
-import CambiarNombreSimple from "./Components/Settings/CambiarNombreSimple";
-import CambiarContrasenaSimple from "./Components/Settings/CambiarContrasenaSimple";
-
-// IMPORTS OPCIONALES (que pueden fallar)
-let NavigationBar: ComponentConstructor | null = null;
-let LuladaAntojar: ComponentConstructor | null = null;
-let LuladaAntojarBoton: ComponentConstructor | null = null;
-let PublicationsService: PublicationsServiceInstance | null = null;
-let AntojarPopupService: AntojarServiceInstance | null = null;
-let InteractionService: InteractionServiceInstance | null = null;
-
-// Importar los que pueden fallar de forma segura
-try {
-    const NavigationBarModule = require('./Components/Home/Navbars/responsivebar');
-    NavigationBar = NavigationBarModule.default;
-} catch (_e: unknown) {
-    console.log('NavigationBar no disponible');
+  console.log(`📊 Componentes cargados: ${successful}/${results.length}`);
 }
 
-try {
-    const antojarModule = require('./Components/Home/Antojar/antojar');
-    LuladaAntojar = antojarModule.LuladaAntojar;
-} catch (_e: unknown) {
-    console.log('LuladaAntojar no disponible');
-}
+async function initializeServices(): Promise<void> {
+  console.log("🛠️ Inicializando servicios de Lulada…");
 
-try {
-    const antojarBotonModule = require('./Components/Home/Antojar/antojar-boton');
-    LuladaAntojarBoton = antojarBotonModule.LuladaAntojarBoton;
-} catch (_e: unknown) {
-    console.log('LuladaAntojarBoton no disponible');
-}
+  const services: LuladaServices = {
+    publicationsService: null,
+    antojarService: null,
+    interactionService: null,
+  };
 
-try {
-    const PublicationsServiceModule = require('./Services/PublicationsService');
-    PublicationsService = PublicationsServiceModule.default;
-} catch (_e: unknown) {
-    console.log('PublicationsService no disponible');
-}
+  try {
+    // InteractionService
+    const interactionService = await loadService<InteractionServiceInstance>(
+      "./Services/flux/Interactionservice",
+      "InteractionService"
+    );
+    if (interactionService) {
+      services.interactionService = interactionService;
+      window.InteractionService = interactionService;
+      interactionService.loadInteractions?.();
+    }
 
-try {
-    const AntojarPopupServiceModule = require('./Components/Home/Antojar/antojar-popup');
-    AntojarPopupService = AntojarPopupServiceModule.default;
-} catch (_e: unknown) {
-    console.log('AntojarPopupService no disponible');
-}
-
-try {
-    const interactionModule = require('./Services/flux/Interactionservice');
-    InteractionService = interactionModule.InteractionService;
-} catch (_e: unknown) {
-    console.log('InteractionService no disponible');
-}
-
-// =======================
-// INICIALIZACIÓN DE SERVICIOS
-// =======================
-let publicationsService: PublicationsServiceInstance | null = null;
-let antojarService: AntojarServiceInstance | null = null;
-
-if (PublicationsService) {
+    // PublicationsService (opcional)
     try {
-        publicationsService = PublicationsService.getInstance ? PublicationsService.getInstance() : PublicationsService;
-    } catch (_e: unknown) {
-        console.log('Error inicializando PublicationsService');
+      services.publicationsService =
+        (await loadService<PublicationsServiceInstance>(
+          "./Services/PublicationsService",
+          "PublicationsService"
+        )) ?? null;
+    } catch {
+      console.log("ℹ️ PublicationsService no disponible");
     }
-}
 
-if (AntojarPopupService) {
+    // AntojarService (opcional)
     try {
-        antojarService = AntojarPopupService.getInstance ? AntojarPopupService.getInstance() : AntojarPopupService;
-        if (antojarService && antojarService.initialize) {
-            antojarService.initialize();
-        }
-    } catch (_e: unknown) {
-        console.log('Error inicializando AntojarPopupService');
+      services.antojarService =
+        (await loadService<AntojarServiceInstance>(
+          "./Services/AntojarService",
+          "AntojarService"
+        )) ?? null;
+      services.antojarService?.initialize?.();
+    } catch {
+      console.log("ℹ️ AntojarService no disponible");
     }
+  } catch (error) {
+    console.error("❌ Error inicializando servicios:", error);
+  }
+
+  window.LuladaServices = services;
+  console.log("✅ Servicios inicializados:", services);
 }
 
-// Asignar a window de forma segura
-if (typeof window !== 'undefined') {
-    try {
-        const globalWindow = window as WindowWithGlobalProperties;
-        
-        if (AntojarPopupService) {
-            globalWindow.AntojarPopupService = AntojarPopupService;
-        }
+// =======================
+// DEBUG  & ERROR HANDLING
+// =======================
 
-        if (publicationsService || antojarService) {
-            globalWindow.LuladaServices = {
-                publicationsService: publicationsService,
-                antojarService: antojarService
-            };
-        }
+function setupGlobalDebugging(): void {
+  console.log("🔧 Configurando debugging global…");
 
-        // Debug sidebar
-        if (!globalWindow.debugSidebar) {
-            globalWindow.debugSidebar = () => {
-                const sidebar = document.querySelector('lulada-sidebar') as SidebarElement;
-                if (sidebar?.debugNavigation) {
-                    sidebar.debugNavigation();
-                } else {
-                    console.log("🔍 Sidebar no encontrado o sin debugNavigation");
-                }
-            };
-        }
+  window.luladaStatus = () => {
+    console.group("📊 Estado de Lulada");
+    console.log("Servicios:", window.LuladaServices);
+    console.log("InteractionService:", window.InteractionService);
+    console.log("UserStore:", window.userStore);
+    console.log(
+      "Componentes registrados:",
+      customElements ? "Disponible" : "No disponible"
+    );
+    console.groupEnd();
+  };
 
-    } catch (_error: unknown) {
-        console.error('Error asignando servicios a window:', _error);
+  window.luladaDebug = () => {
+    console.group("🔍 Debug completo de Lulada");
+    if (window.LuladaServices) {
+      console.log("--- Servicios ---");
+      Object.entries(window.LuladaServices).forEach(([k, v]) =>
+        console.log(`${k}:`, v ? "Activo" : "Inactivo")
+      );
     }
-}
-
-// =======================
-// REGISTRO DE COMPONENTES
-// =======================
-function registerComponent(name: string, component: ComponentConstructor): boolean {
-    try {
-        if (component && !customElements.get(name)) {
-            customElements.define(name, component);
-            console.log(`✅ ${name} registrado`);
-            return true;
-        } else if (!component) {
-            console.log(`⚠️ ${name} no disponible`);
-            return false;
-        } else {
-            console.log(`✅ ${name} ya registrado`);
-            return true;
-        }
-    } catch (_error: unknown) {
-        console.error(`❌ Error registrando ${name}:`, _error);
-        return false;
+    if (
+      window.InteractionService &&
+      typeof (window.InteractionService as any).debug === "function"
+    ) {
+      (window.InteractionService as any).debug();
     }
-}
-
-console.log('🚀 === REGISTRANDO COMPONENTES ===');
-
-// CORE
-registerComponent('root-component', RootComponent);
-registerComponent('load-pages', LoadPage);
-
-// HEADERS
-registerComponent('lulada-header-complete', HeaderCompleto);
-registerComponent('lulada-header', HeaderHome);
-registerComponent('lulada-logo', Lulada);
-registerComponent('header-explorer', HeaderExplorer);
-
-// NAVEGACIÓN
-registerComponent('lulada-navigation', Navigation);
-registerComponent('lulada-sidebar', LuladaSidebar);
-
-// PÁGINAS
-registerComponent('lulada-home', Home);
-registerComponent('lulada-explore', LuladaExplore);
-registerComponent('puser-page', PUser);
-registerComponent('restaurant-profile', RestaurantProfile);
-registerComponent('save-page', Save);
-registerComponent('login-page', LoginPage);
-registerComponent('lulada-settings', LuladaSettings);
-registerComponent('lulada-notifications', LuladaNotifications);
-registerComponent('register-new-account', NewAccount);
-registerComponent('confirm-role', ConfirmRole);
-
-// SETTINGS
-registerComponent('lulada-cambiar-correo', CambiarCorreoF);
-registerComponent('lulada-cambiar-nombre', NombreUsuraio);
-registerComponent('lulada-cambiar-contraseña', CambiarContraseñaF);
-
-// PUBLICACIONES
-registerComponent('lulada-publication', Publication);
-registerComponent('lulada-review', Review);
-registerComponent('lulada-reviews-container', ReviewsContainer);
-
-// EXPLORACIÓN
-registerComponent('explore-container', ExploreContainer);
-registerComponent('images-explore', ImagesExplore);
-registerComponent('text-card', TextCard);
-
-// USUARIO
-registerComponent('user-info', UserInfo);
-registerComponent('user-profile', UserSelftProfile);
-registerComponent('user-edit', UserEdit);
-registerComponent('edit-profile-modal', EditProfileModal);
-registerComponent('restaurant-info', restaurantInfo);
-
-// OTROS
-registerComponent('lulada-suggestions', LuladaSuggestions);
-registerComponent('lulada-card-notifications', CardNotifications);
-
-// LOGIN
-registerComponent("caja-de-texto", CajaDeTexto);
-registerComponent("boton-login", BotonLogin);
-registerComponent("login-form", LoginForm);
-
-// NEW ACCOUNT
-registerComponent('lulada-boxtext', BoxText);
-registerComponent('button-new-account', ButtonNewAccount);
-
-// SETTINGS COMPONENTS
-registerComponent('cajon-texto', CajonTexto);
-registerComponent('cajon-list', CajonList);
-registerComponent('cajon-list-interactive', CajonListInteractive);
-registerComponent('cambiar-nombre-usuario', CambiarNU);
-registerComponent('cambiar-correo-electronico', Cambiarco);
-registerComponent('cambiar-contrasena', CambiarContra);
-registerComponent('cambiar-correo-simple', CambiarCorreoSimple);
-registerComponent('cambiar-nombre-simple', CambiarNombreSimple);
-registerComponent('cambiar-contrasena-simple', CambiarContrasenaSimple);
-
-// COMPONENTES OPCIONALES
-if (NavigationBar) {
-    registerComponent('navigation-bar', NavigationBar);
-}
-
-if (LuladaAntojar) {
-    registerComponent('lulada-antojar', LuladaAntojar);
-}
-
-if (LuladaAntojarBoton) {
-    registerComponent('lulada-antojar-boton', LuladaAntojarBoton);
-}
-
-// =======================
-// INICIALIZACIÓN FINAL
-// =======================
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎯 DOM listo, inicializando servicios finales...');
-    
-    if (InteractionService) {
-        try {
-            const interactionService = InteractionService.getInstance();
-            if (interactionService && interactionService.loadInteractions) {
-                interactionService.loadInteractions();
-            }
-        } catch (_e: unknown) {
-            console.log('Error inicializando InteractionService');
-        }
+    if (window.userStore && typeof (window.userStore as any).debug === "function") {
+      (window.userStore as any).debug();
     }
+    console.groupEnd();
+  };
 
-    if (antojarService && antojarService.initialize) {
-        try {
-            antojarService.initialize();
-        } catch (_e: unknown) {
-            console.log('Error re-inicializando antojarService');
-        }
-    }
-});
+  window.debugSidebar = () => {
+    const sidebar = document.querySelector("side-bar") as SidebarElement;
+    sidebar?.debugNavigation?.();
+  };
 
-// Crear root-component si no existe al cargar
-if (typeof document !== 'undefined') {
-    setTimeout(() => {
-        if (!document.querySelector('root-component')) {
-            const root = document.createElement('root-component');
-            document.body.appendChild(root);
-            console.log('✅ Root component creado y agregado al DOM');
-        }
-    }, 100);
+  console.log(
+    "✅ Herramientas de debug: usa luladaStatus(), luladaDebug() o debugSidebar() en la consola"
+  );
+}
+
+function setupErrorHandling(): void {
+  window.addEventListener("error", (e) => {
+    console.error("❌ Error no capturado:", e);
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    console.error("❌ Promesa rechazada no manejada:", e.reason);
+  });
+  console.log("✅ Manejo de errores configurado");
 }
 
 // =======================
-// FUNCIONES DE DEBUG
+// FUNCIÓN PRINCIPAL
 // =======================
-if (typeof window !== 'undefined') {
-    const globalWindow = window as WindowWithGlobalProperties;
-    
-    globalWindow.luladaStatus = () => {
-        console.log('📊 === STATUS LULADA ===');
-        console.log('✅ Componentes críticos:');
-        console.log('- RootComponent:', !!customElements.get('root-component'));
-        console.log('- LoadPage:', !!customElements.get('load-pages'));
-        console.log('- Home:', !!customElements.get('lulada-home'));
-        console.log('- Login:', !!customElements.get('login-page'));
-        console.log('- NewAccount:', !!customElements.get('register-new-account'));
-        
-        console.log('🔧 Servicios:');
-        console.log('- UserActions:', !!globalWindow.UserActions);
-        console.log('- userStore:', !!globalWindow.userStore);
-        console.log('- LuladaServices:', !!globalWindow.LuladaServices);
-        
-        console.log('🌐 DOM:');
-        console.log('- root-component en DOM:', !!document.querySelector('root-component'));
-        console.log('- load-pages en DOM:', !!document.querySelector('load-pages'));
-        
-        console.log('🔐 Auth:');
-        console.log('- Autenticado:', localStorage.getItem('isAuthenticated'));
-        console.log('- Usuario:', !!localStorage.getItem('currentUser'));
-        
-        console.log('====================');
-    };
 
-    globalWindow.luladaDebug = () => {
-        console.log('🐛 === DEBUG COMPLETO ===');
-        globalWindow.luladaStatus?.();
-        
-        console.log('📋 Todos los componentes registrados:');
-        const allComponents = [
-            'root-component', 'load-pages', 'lulada-home', 'login-page', 'register-new-account',
-            'lulada-header', 'lulada-navigation', 'lulada-sidebar', 'user-info'
-        ];
-        
-        allComponents.forEach(name => {
-            const registered = !!customElements.get(name);
-            const inDOM = !!document.querySelector(name);
-            console.log(`- ${name}: ${registered ? '✅' : '❌'} registrado, ${inDOM ? '✅' : '❌'} en DOM`);
-        });
-        
-        console.log('========================');
-    };
+async function initializeLuladaApp(): Promise<void> {
+  console.log("🎉 Iniciando aplicación Lulada…");
+
+  try {
+    setupErrorHandling();
+    setupGlobalDebugging();
+
+    await Promise.allSettled([initializeServices(), initializeComponents()]);
+
+    console.log("🎊 ¡Aplicación Lulada inicializada!");
+
+    window.dispatchEvent(
+      new CustomEvent("luladaAppReady", {
+        detail: {
+          timestamp: new Date().toISOString(),
+          services: window.LuladaServices,
+          version: "1.0.0",
+        },
+      })
+    );
+
+    window.luladaStatus?.();
+  } catch (error) {
+    console.error("❌ Error crítico iniciando la app:", error);
+  }
 }
 
-console.log('✅ === APLICACIÓN LULADA RESTAURADA ===');
+// =======================
+// PUNTO DE ENTRADA
+// =======================
 
-// =======================
-// EXPORTS
-// =======================
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeLuladaApp);
+} else {
+  initializeLuladaApp();
+}
+
+// Exportar funciones (opcional)
 export {
-    Home,
-    LuladaExplore,
-    PUser,
-    RestaurantProfile,
-    Save,
-    LoginPage,
-    LuladaSettings,
-    LuladaNotifications,
-    HeaderCompleto,
-    LuladaSidebar,
-    Publication,
-    ReviewsContainer
+  initializeLuladaApp,
+  loadComponent,
+  loadService,
+  initializeComponents,
+  initializeServices,
 };

@@ -24,6 +24,15 @@ export const UserActions = {
         });
     },
 
+    // FUNCIÓN PRINCIPAL para actualizar datos completos del usuario
+    updateUserData: (userData: UserData) => {
+        console.log('UserActions: Actualizando datos completos del usuario:', userData);
+        AppDispatcher.dispatch({
+            type: 'UPDATE_USER_DATA',
+            payload: userData
+        });
+    },
+
     // FUNCIÓN PRINCIPAL para cambiar el @nombre de usuario
     updateUsername: (newUsername: string) => {
         console.log('UserActions: Actualizando username a:', newUsername);
@@ -72,30 +81,48 @@ export const UserActions = {
         });
     },
 
-    // FUNCIÓN PRINCIPAL para cambiar la biografía del usuario
+    // Función para cambiar la descripción/biografía
     updateDescription: (newDescription: string) => {
-        console.log('UserActions: Actualizando descripción a:', newDescription);
+        console.log('UserActions: Actualizando descripción del perfil');
         AppDispatcher.dispatch({
             type: 'UPDATE_DESCRIPTION',
             payload: newDescription
         });
     },
 
-    // Función para cambiar varios datos del perfil a la vez
-    updateProfile: (updates: Partial<UserData>) => {
-        console.log('UserActions: Actualizando perfil con:', updates);
+    // Función especial para restaurantes: actualizar ubicación
+    updateLocation: (locationText: string) => {
+        console.log('UserActions: Actualizando ubicación del restaurante');
         AppDispatcher.dispatch({
-            type: 'UPDATE_PROFILE',
-            payload: updates
+            type: 'UPDATE_LOCATION',
+            payload: locationText
         });
     },
 
-    // Función para volver el perfil a como estaba originalmente
+    // Función especial para restaurantes: actualizar link del menú
+    updateMenuLink: (menuLink: string) => {
+        console.log('UserActions: Actualizando link del menú');
+        AppDispatcher.dispatch({
+            type: 'UPDATE_MENU_LINK',
+            payload: menuLink
+        });
+    },
+
+    // Función para cambiar el rol del usuario (persona/restaurante)
+    updateRole: (newRole: string) => {
+        console.log('UserActions: Actualizando rol del usuario a:', newRole);
+        AppDispatcher.dispatch({
+            type: 'UPDATE_ROLE',
+            payload: newRole
+        });
+    },
+
+    // Función para limpiar/reiniciar el perfil
     resetProfile: () => {
-        console.log('UserActions: Reseteando perfil a valores por defecto');
+        console.log('UserActions: Reiniciando perfil del usuario');
         AppDispatcher.dispatch({
             type: 'RESET_PROFILE',
-            payload: undefined
+            payload: null
         });
     }
 };

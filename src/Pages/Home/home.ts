@@ -233,7 +233,7 @@ export class Home extends HTMLElement {
                     // Firebase no disponible, continuar sin él
                     console.log('Firebase no disponible, continuando sin autenticación');
                 });
-        } catch (error) {
+        } catch (_error) {
             // Error cargando Firebase, continuar normalmente
             console.log('Error inicializando Firebase, continuando sin autenticación');
         }
